@@ -108,7 +108,7 @@ void DataTrackerCallback::update()
 
     auto cs = m_callback(m_dataTracker);
     if (m_owner)
-        m_owner->d_componentstate.setValue(cs); // but what if the state of the component was invalid for a reason that doesn't depend on this update?
+        m_owner->d_componentState.setValue(cs); // but what if the state of the component was invalid for a reason that doesn't depend on this update?
     cleanDirty();
 }
 
@@ -124,13 +124,13 @@ void DataTrackerEngine::addCallback( std::function<sofa::core::objectmodel::Comp
 void DataTrackerEngine::update()
 {
     updateAllInputsIfDirty();
-    core::objectmodel::ComponentState cs;
+    core::objectmodel::ComponentState cs = core::objectmodel::ComponentState::Valid;
 
     for(auto& callback : m_callbacks)
         cs = callback();
 
     if (m_owner)
-        m_owner->d_componentstate.setValue(cs);
+        m_owner->d_componentState.setValue(cs);
     cleanDirty();
 }
 

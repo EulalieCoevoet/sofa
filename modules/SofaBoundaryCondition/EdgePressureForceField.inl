@@ -25,7 +25,7 @@
 #include <SofaBoundaryCondition/EdgePressureForceField.h>
 #include <SofaBaseTopology/TopologySparseData.inl>
 #include <sofa/core/visual/VisualParams.h>
-#include <sofa/defaulttype/RGBAColor.h>
+#include <sofa/helper/types/RGBAColor.h>
 #include <vector>
 #include <set>
 
@@ -78,7 +78,7 @@ void EdgePressureForceField<DataTypes>::init()
     if (m_topology == nullptr)
     {
         msg_error() << "No topology component found at path: " << l_topology.getLinkedPath() << ", nor in current context: " << this->getContext()->name;
-        sofa::core::objectmodel::BaseObject::d_componentstate.setValue(sofa::core::objectmodel::ComponentState::Invalid);
+        sofa::core::objectmodel::BaseObject::d_componentState.setValue(sofa::core::objectmodel::ComponentState::Invalid);
         return;
     }
 
@@ -88,7 +88,7 @@ void EdgePressureForceField<DataTypes>::init()
     if (edgeGeo==nullptr)
     {
         msg_error() << " object must have an EdgeSetTopology.";
-        sofa::core::objectmodel::BaseObject::d_componentstate.setValue(sofa::core::objectmodel::ComponentState::Invalid);
+        sofa::core::objectmodel::BaseObject::d_componentState.setValue(sofa::core::objectmodel::ComponentState::Invalid);
         return;
     }
 
@@ -432,7 +432,7 @@ void EdgePressureForceField<DataTypes>::draw(const core::visual::VisualParams* v
     const VecCoord& x = this->mstate->read(core::ConstVecCoordId::position())->getValue();
     vparams->drawTool()->disableLighting();
 
-    const sofa::defaulttype::RGBAColor& color = sofa::defaulttype::RGBAColor::yellow();
+    const sofa::helper::types::RGBAColor& color = sofa::helper::types::RGBAColor::yellow();
 
     std::vector<sofa::defaulttype::Vector3> vertices;
 

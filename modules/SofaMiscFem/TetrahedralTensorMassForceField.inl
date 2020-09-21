@@ -24,7 +24,7 @@
 
 #include <SofaMiscFem/TetrahedralTensorMassForceField.h>
 #include <sofa/core/visual/VisualParams.h>
-#include <sofa/defaulttype/RGBAColor.h>
+#include <sofa/helper/types/RGBAColor.h>
 #include <fstream> // for reading the file
 #include <iostream> //for debugging
 #include <SofaBaseTopology/TopologyData.inl>
@@ -297,7 +297,7 @@ template <class DataTypes> void TetrahedralTensorMassForceField<DataTypes>::init
     if (m_topology == nullptr)
     {
         msg_error() << "No topology component found at path: " << l_topology.getLinkedPath() << ", nor in current context: " << this->getContext()->name;
-        sofa::core::objectmodel::BaseObject::d_componentstate.setValue(sofa::core::objectmodel::ComponentState::Invalid);
+        sofa::core::objectmodel::BaseObject::d_componentState.setValue(sofa::core::objectmodel::ComponentState::Invalid);
         return;
     }
 
@@ -492,7 +492,7 @@ void TetrahedralTensorMassForceField<DataTypes>::draw(const core::visual::Visual
     if (vparams->displayFlags().getShowWireFrame())
         vparams->drawTool()->setPolygonMode(0,true);
 
-    sofa::defaulttype::RGBAColor color(0,1,0,1);
+    sofa::helper::types::RGBAColor color(0,1,0,1);
     std::vector<sofa::defaulttype::Vector3> vertices;
 
     const VecCoord& x = this->mstate->read(core::ConstVecCoordId::position())->getValue();

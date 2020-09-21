@@ -26,7 +26,7 @@
 #include <SofaBaseTopology/TopologySparseData.inl>
 #include <sofa/core/visual/VisualParams.h>
 #include <SofaBaseTopology/QuadSetGeometryAlgorithms.h>
-#include <sofa/defaulttype/RGBAColor.h>
+#include <sofa/helper/types/RGBAColor.h>
 #include <vector>
 #include <set>
 
@@ -76,7 +76,7 @@ void QuadPressureForceField<DataTypes>::init()
     if (m_topology == nullptr)
     {
         msg_error() << "No topology component found at path: " << l_topology.getLinkedPath() << ", nor in current context: " << this->getContext()->name;
-        sofa::core::objectmodel::BaseObject::d_componentstate.setValue(sofa::core::objectmodel::ComponentState::Invalid);
+        sofa::core::objectmodel::BaseObject::d_componentState.setValue(sofa::core::objectmodel::ComponentState::Invalid);
         return;
     }
 
@@ -251,7 +251,7 @@ void QuadPressureForceField<DataTypes>::draw(const core::visual::VisualParams* v
 
     vparams->drawTool()->disableLighting();
     std::vector<sofa::defaulttype::Vector3> vertices;
-    sofa::defaulttype::RGBAColor color = sofa::defaulttype::RGBAColor::green();
+    sofa::helper::types::RGBAColor color = sofa::helper::types::RGBAColor::green();
 
     const sofa::helper::vector <unsigned int>& my_map = quadPressureMap.getMap2Elements();
 

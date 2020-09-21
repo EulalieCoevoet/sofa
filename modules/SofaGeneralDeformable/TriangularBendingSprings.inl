@@ -25,7 +25,7 @@
 #include <SofaGeneralDeformable/TriangularBendingSprings.h>
 #include <sofa/core/visual/VisualParams.h>
 #include <sofa/core/topology/TopologyChange.h>
-#include <sofa/defaulttype/RGBAColor.h>
+#include <sofa/helper/types/RGBAColor.h>
 #include <fstream> // for reading the file
 #include <iostream> //for debugging
 
@@ -479,14 +479,14 @@ void TriangularBendingSprings<DataTypes>::init()
     if (m_topology == nullptr)
     {
         msg_error() << "No topology component found at path: " << l_topology.getLinkedPath() << ", nor in current context: " << this->getContext()->name;
-        sofa::core::objectmodel::BaseObject::d_componentstate.setValue(sofa::core::objectmodel::ComponentState::Invalid);
+        sofa::core::objectmodel::BaseObject::d_componentState.setValue(sofa::core::objectmodel::ComponentState::Invalid);
         return;
     }
 
-    if (m_topology->d_componentstate.getValue() == sofa::core::objectmodel::ComponentState::Invalid || m_topology->getNbTriangles()==0)
+    if (m_topology->d_componentState.getValue() == sofa::core::objectmodel::ComponentState::Invalid || m_topology->getNbTriangles()==0)
     {
         msg_error() << " object must have a Triangular Set Topology.";
-        sofa::core::objectmodel::BaseObject::d_componentstate.setValue(sofa::core::objectmodel::ComponentState::Invalid);
+        sofa::core::objectmodel::BaseObject::d_componentState.setValue(sofa::core::objectmodel::ComponentState::Invalid);
         return;
     }
     edgeInfo.createTopologicalEngine(m_topology,edgeHandler);
@@ -731,22 +731,22 @@ void TriangularBendingSprings<DataTypes>::draw(const core::visual::VisualParams*
             {
                 if (d<edgeInf[i].restlength*0.9999)
                 {
-                    colors.push_back(sofa::defaulttype::RGBAColor::red());
+                    colors.push_back(sofa::helper::types::RGBAColor::red());
                 }
                 else
                 {
-                    colors.push_back(sofa::defaulttype::RGBAColor::green());
+                    colors.push_back(sofa::helper::types::RGBAColor::green());
                 }
             }
             else
             {
                 if (d<edgeInf[i].restlength*0.9999)
                 {
-                    colors.push_back(sofa::defaulttype::RGBAColor(1,0.5, 0,1));
+                    colors.push_back(sofa::helper::types::RGBAColor(1,0.5, 0,1));
                 }
                 else
                 {
-                    colors.push_back(sofa::defaulttype::RGBAColor(0,1,0.5,1));
+                    colors.push_back(sofa::helper::types::RGBAColor(0,1,0.5,1));
                 }
             }
 

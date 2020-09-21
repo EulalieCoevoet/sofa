@@ -27,7 +27,7 @@
 #include <sofa/core/topology/TopologyChange.h>
 #include <fstream> // for reading the file
 #include <iostream> //for debugging
-#include <sofa/defaulttype/RGBAColor.h>
+#include <sofa/helper/types/RGBAColor.h>
 #include <SofaBaseTopology/TopologyData.inl>
 
 namespace sofa
@@ -373,7 +373,7 @@ void FastTriangularBendingSprings<DataTypes>::init()
     if (m_topology == nullptr)
     {
         msg_error() << "No topology component found at path: " << l_topology.getLinkedPath() << ", nor in current context: " << this->getContext()->name;
-        sofa::core::objectmodel::BaseObject::d_componentstate.setValue(sofa::core::objectmodel::ComponentState::Invalid);
+        sofa::core::objectmodel::BaseObject::d_componentState.setValue(sofa::core::objectmodel::ComponentState::Invalid);
         return;
     }
 
@@ -486,7 +486,7 @@ void FastTriangularBendingSprings<DataTypes>::draw(const core::visual::VisualPar
     vparams->drawTool()->disableLighting();
 
     const helper::vector<EdgeSpring>& edgeInf = d_edgeSprings.getValue();
-    sofa::defaulttype::RGBAColor color = sofa::defaulttype::RGBAColor::green();
+    sofa::helper::types::RGBAColor color = sofa::helper::types::RGBAColor::green();
     std::vector<sofa::defaulttype::Vector3> vertices;
 
     for(i=0; i<edgeInf.size(); ++i)
