@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -28,9 +25,7 @@
 #include <SofaMiscForceField/LennardJonesForceField.h>
 #include <sofa/core/visual/VisualParams.h>
 #include <sofa/simulation/Simulation.h>
-#include <sofa/helper/system/config.h>
-#include <sofa/helper/gl/template.h>
-#include <math.h>
+#include <cmath>
 #include <iostream>
 
 
@@ -45,6 +40,20 @@ namespace component
 namespace forcefield
 {
 
+template<class DataTypes>
+LennardJonesForceField<DataTypes>::LennardJonesForceField()
+    : a(1)
+    , b(1)
+    , aInit  (initData(&aInit  ,Real(0), "aInit"  ,"a for Gravitational FF which corresponds to G*m1*m2 alpha should be equal to 1 and beta to 0."))
+    , alpha  (initData(&alpha  ,Real(6), "alpha"  ,"Alpha"))
+    , beta   (initData(&beta   ,Real(12),"beta"   ,"Beta"))
+    , dmax   (initData(&dmax   ,Real(2), "dmax"   ,"DMax"))
+    , fmax   (initData(&fmax   ,Real(1), "fmax"   ,"FMax"))
+    , d0     (initData(&d0     ,Real(1), "d0"     ,"d0"))
+    , p0     (initData(&p0     ,Real(1), "p0"     ,"p0"))
+    , damping(initData(&damping,Real(0), "damping","Damping"))
+{
+}
 
 template<class DataTypes>
 void LennardJonesForceField<DataTypes>::init()
@@ -62,17 +71,23 @@ void LennardJonesForceField<DataTypes>::init()
 
         // Validity check: compute force and potential at d0
         Real f0 = a*alpha.getValue()*(Real)pow(d0.getValue(),-alpha.getValue()-1)-b*beta.getValue()*(Real)pow(d0.getValue(),-beta.getValue()-1);
-        if (fabs(f0)>0.001)
-            serr << "Lennard-Jones initialization failed: f0="<<f0<<sendl;
+
+        msg_error_when(fabs(f0) > 0.001) << "Lennard-Jones initialization failed: f0=" << f0;
         Real cp0 = (a*(Real)pow(d0.getValue(),-alpha.getValue())-b*(Real)pow(d0.getValue(),-beta.getValue()));
-        if (fabs(cp0/p0.getValue()-1)>0.001)
-            serr << "Lennard-Jones initialization failed: cp0="<<cp0<<sendl;
+
+        msg_error_when(fabs(cp0 / p0.getValue() - 1) > 0.001) << "Lennard-Jones initialization failed: cp0=" << cp0;
+
         // Debug
-        for (Real d = 0; d<dmax.getValue(); d+= dmax.getValue()/60)
+        if (this->f_printLog.getValue())
         {
-            Real f = a*alpha.getValue()*(Real)pow(d,-alpha.getValue()-1)-b*beta.getValue()*(Real)pow(d,-beta.getValue()-1);
-            sout << "f("<<d<<")="<<f<<sendl;
-        }
+            std::stringstream tmp;
+            for (Real d = 0; d<dmax.getValue(); d += dmax.getValue() / 60)
+            {
+                Real f = a * alpha.getValue()*(Real)pow(d, -alpha.getValue() - 1) - b * beta.getValue()*(Real)pow(d, -beta.getValue() - 1);
+                tmp << "f(" << d << ")=" << f;
+            }
+            msg_info() << tmp.str();
+        }        
     }
 }
 
@@ -202,6 +217,8 @@ void LennardJonesForceField<DataTypes>::draw(const core::visual::VisualParams* v
     if (!vparams->displayFlags().getShowForceFields()) return;
     const VecCoord& p1 = this->mstate->read(core::ConstVecCoordId::position())->getValue();
 
+    vparams->drawTool()->saveLastState();
+
     std::vector< defaulttype::Vector3 > points[2];
 
     const Real d02 = this->d0.getValue()*this->d0.getValue();
@@ -222,6 +239,7 @@ void LennardJonesForceField<DataTypes>::draw(const core::visual::VisualParams* v
     vparams->drawTool()->drawLines(points[0], 1, defaulttype::Vec<4,float>(1,1,1,1));
     vparams->drawTool()->drawLines(points[1], 1, defaulttype::Vec<4,float>(0,0,1,1));
 
+    vparams->drawTool()->restoreLastState();
 }
 
 } // namespace forcefield

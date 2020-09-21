@@ -1,3 +1,24 @@
+/******************************************************************************
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
+*******************************************************************************
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_ENGINE_DisplacementMatrixEngine_INL
 #define SOFA_COMPONENT_ENGINE_DisplacementMatrixEngine_INL
 
@@ -46,7 +67,7 @@ void DisplacementTransformEngine< DataTypes, OutputType >::init()
 }
 
 template < class DataTypes, class OutputType >
-void DisplacementTransformEngine< DataTypes, OutputType >::update()
+void DisplacementTransformEngine< DataTypes, OutputType >::doUpdate()
 {
     // parent method
     Inherit::init();
@@ -59,11 +80,9 @@ void DisplacementTransformEngine< DataTypes, OutputType >::update()
     // Check the size of x0
     if( size != size0 )
     {
-        serr << "x and x0 have not the same size: respectively " << size << " and " << size0 << sendl;
+        msg_error() << "x and x0 have not the same size: respectively " << size << " and " << size0;
         return;
     }
-
-    cleanDirty();
 
     // Clean the output
     helper::vector< OutputType >& displacements = *d_displacements.beginWriteOnly();
@@ -74,7 +93,6 @@ void DisplacementTransformEngine< DataTypes, OutputType >::update()
         mult( displacements[i], inverses[i], x[i] );
     }
     d_displacements.endEdit();
-    //serr << "update(), displaceMats  = " << d_displaceMats.getValue() << sendl;
 }
 
 ///////////////////////////////////////////////////////////////
@@ -123,7 +141,7 @@ void DisplacementMatrixEngine< DataTypes >::reinit()
 
     if( size0 != sizeS)
     {
-        serr << "x0 and S have not the same size: respectively " << ", " << size0 << " and " << sizeS << sendl;
+        msg_error() << "x0 and S have not the same size: respectively " << ", " << size0 << " and " << sizeS;
         return;
     }
 
@@ -143,7 +161,7 @@ void DisplacementMatrixEngine< DataTypes >::reinit()
 }
 
 template < class DataTypes >
-void DisplacementMatrixEngine< DataTypes >::update()
+void DisplacementMatrixEngine< DataTypes >::doUpdate()
 {
     const VecCoord& x = this->d_x.getValue();
     const VecCoord& x0 = this->d_x0.getValue();
@@ -155,11 +173,9 @@ void DisplacementMatrixEngine< DataTypes >::update()
     // Check the size of x0
     if( size != size0 || size != sizeS)
     {
-        serr << "x, x0 and S have not the same size: respectively " << size << ", " << size0 << " and " << sizeS << sendl;
+        msg_error() << "x, x0 and S have not the same size: respectively " << size << ", " << size0 << " and " << sizeS;
         return;
     }
-
-    this->cleanDirty();
 
     helper::vector< Matrix4x4 >& displacements = *this->d_displacements.beginWriteOnly();
     displacements.resize(size);

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -57,17 +54,15 @@ public:
 protected:
     PointSetTopologyContainer(int nPoints = 0);
 
-    virtual ~PointSetTopologyContainer() {}
+    ~PointSetTopologyContainer() override {}
 public:
 
-    virtual void init();
-
-
+    void init() override;
 
     /// Procedural creation methods
     /// @{
-    virtual void clear();
-    virtual void addPoint(double px, double py, double pz);
+    void clear() override;
+    void addPoint(double px, double py, double pz) override;
     /// @}
 
 
@@ -76,32 +71,35 @@ public:
     /// @{
 
     /** \brief Returns the number of vertices in this topology. */
-    int getNbPoints() const { return (int)nbPoints.getValue(); }
+    int getNbPoints() const override { return (int)nbPoints.getValue(); }
 
     /** \brief Returns the number of topological element of the current topology.
      * This function avoids to know which topological container is in used.
      */
-    virtual unsigned int getNumberOfElements() const;
+    virtual size_t getNumberOfElements() const;
 
     /** \brief Returns a reference to the Data of points array container. */
     Data<InitTypes::VecCoord>& getPointDataArray() {return d_initPoints;}
 
     /** \brief Set the number of vertices in this topology. */
-    void setNbPoints(int n);
+    void setNbPoints(int n) override;
 
 
     /** \brief check if vertices in this topology have positions. */
-    virtual bool hasPos() const;
+    bool hasPos() const override;
 
     /** \brief Returns the X coordinate of the ith DOF. */
-    virtual SReal getPX(int i) const;
+    SReal getPX(int i) const override;
 
     /** \brief Returns the Y coordinate of the ith DOF. */
-    virtual SReal getPY(int i) const;
+    SReal getPY(int i) const override;
 
     /** \brief Returns the Z coordinate of the ith DOF. */
-    virtual SReal getPZ(int i) const;
+    SReal getPZ(int i) const override;
 
+   	/** \brief Returns the type of the topology */
+   	sofa::core::topology::TopologyObjectType getTopologyType() const override {return sofa::core::topology::POINT;}
+    
     /// @}
 
 
@@ -112,7 +110,7 @@ public:
     /** \brief Checks if the Topology is coherent
      *
      */
-    virtual bool checkTopology() const;
+    bool checkTopology() const override;
 
     /** \brief add one DOF in this topology (simply increment the number of DOF)
      *
@@ -151,21 +149,20 @@ public:
         return in;
     }
 
-
-
+    const sofa::helper::vector<PointID>& getPoints() const;
 
 protected:
     /// \brief Function creating the data graph linked to d_point
-    virtual void updateTopologyEngineGraph();
+    void updateTopologyEngineGraph() override;
 
     /// \brief functions to really update the graph of Data/DataEngines linked to the different Data array, using member variable.
-    virtual void updateDataEngineGraph(sofa::core::objectmodel::BaseData& my_Data, sofa::helper::list <sofa::core::topology::TopologyEngine *>& my_enginesList);
+    virtual void updateDataEngineGraph(sofa::core::objectmodel::BaseData& my_Data, std::list<sofa::core::topology::TopologyEngine *>& my_enginesList);
 
 
     /// Use a specific boolean @see m_pointTopologyDirty in order to know if topology Data is dirty or not.
     /// Set/Get function access to this boolean
-    void setPointTopologyToDirty() {m_pointTopologyDirty = true;}
-    void cleanPointTopologyFromDirty() {m_pointTopologyDirty = false;}
+    void setPointTopologyToDirty();
+    void cleanPointTopologyFromDirty();
     const bool& isPointTopologyDirty() {return m_pointTopologyDirty;}
 
     /// \brief function to add a topologyEngine to the current list of engines.
@@ -175,20 +172,28 @@ protected:
     virtual void displayDataGraph(sofa::core::objectmodel::BaseData& my_Data);
 
 public:
+    Data<InitTypes::VecCoord> d_initPoints; ///< Initial position of points    
 
-    Data<unsigned int> nbPoints;
+    Data<bool> d_checkTopology; ///< Bool parameter to activate internal topology checks in several methods 
 
-    Data<InitTypes::VecCoord> d_initPoints;
 protected:
+
+
     /// Boolean used to know if the topology Data of this container is dirty
     bool m_pointTopologyDirty;
 
     /// List of engines related to this specific container
-    sofa::helper::list <sofa::core::topology::TopologyEngine *> m_enginesList;
+    std::list<sofa::core::topology::TopologyEngine *> m_enginesList;
 
     /// \brief variables used to display the graph of Data/DataEngines linked to this Data array.
     sofa::helper::vector < sofa::helper::vector <std::string> > m_dataGraph;
     sofa::helper::vector < sofa::helper::vector <std::string> > m_enginesGraph;
+
+private:
+    
+    Data<unsigned int> nbPoints; ///< Number of points
+
+    Data<sofa::helper::vector<PointID> > points; ///< List of point indices
 };
 
 } // namespace topology

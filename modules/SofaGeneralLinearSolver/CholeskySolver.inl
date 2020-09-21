@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -34,7 +31,7 @@
 #include "sofa/helper/system/thread/CTime.h"
 #include <sofa/core/objectmodel/BaseContext.h>
 #include <sofa/core/behavior/LinearSolver.h>
-#include <math.h>
+#include <cmath>
 
 namespace sofa
 {
@@ -93,7 +90,8 @@ void CholeskySolver<TMatrix,TVector>::invert(Matrix& M)
     double ss,d;
 
     L.resize(n,n);
-    if( M.element(0,0) <= 0 ) serr<<"CholeskySolver<TMatrix,TVector>::invert, matrix is not positive definite " << sendl;
+    msg_error_when(M.element(0, 0) <= 0) << "Invert, matrix is not positive definite ";
+
     d = 1.0 / sqrt(M.element(0,0));
     for (int i=0; i<n; i++)
     {
@@ -105,7 +103,8 @@ void CholeskySolver<TMatrix,TVector>::invert(Matrix& M)
         ss=0;
         for (int k=0; k<j; k++) ss+=L.element(k,j)*L.element(k,j);
 
-        if( M.element(j,j)-ss <= 0 ) serr<<"CholeskySolver<TMatrix,TVector>::invert, matrix is not positive definite " << sendl;
+        msg_error_when(M.element(j, j) - ss <= 0) << "Invert, matrix is not positive definite ";
+
         d = 1.0 / sqrt(M.element(j,j)-ss);
         L.set(j,j,(M.element(j,j)-ss) * d);
 
@@ -118,34 +117,6 @@ void CholeskySolver<TMatrix,TVector>::invert(Matrix& M)
         }
     }
 }
-
-/*
-template<class TMatrix, class TVector>
-void CholeskySolver<TMatrix,TVector>::invert(Matrix& M) {
-	int n = M.colSize();
-	L.resize(n,n);
-	double somme;
-
-	L.set(0,0,sqrt(M.element(0,0)));
-
-	for (int i=1; i<n; i++) {
-		for (int j=0; j<i; j++) {
-			somme = 0.0;
-
-			for (int k=0; k<j; k++) {
-				somme = somme + L.element(i,k)*L.element(j,k);
-			}
-			L.set(i,j,(M.element(i,j)-somme) / L.element(j,j));
-		}
-
-		somme = 0.0;
-		for (int k=0; k<i; k++) {
-			somme = somme + L.element(i,k)*L.element(i,k);
-		}
-		L.set(i,i,sqrt(M.element(i,i)-somme));
-	}
-}
-*/
 
 } // namespace linearsolver
 

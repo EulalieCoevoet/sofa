@@ -1,30 +1,27 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #define SOFA_COMPONENT_CONSTRAINTSET_UNILATERALINTERACTIONCONSTRAINT_CPP
 #include <SofaConstraint/UnilateralInteractionConstraint.inl>
-#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/defaulttype/VecTypes.h>
 #include <SofaBaseMechanics/MechanicalObject.h>
 #include <sofa/core/ObjectFactory.h>
 
@@ -40,24 +37,15 @@ namespace constraintset
 using namespace sofa::defaulttype;
 using namespace sofa::helper;
 
-SOFA_DECL_CLASS(UnilateralInteractionConstraint)
-
+//TODO(dmarchal) What does this TODO mean ?
 int UnilateralInteractionConstraintClass = core::RegisterObject("TODO-UnilateralInteractionConstraint")
-#ifndef SOFA_FLOAT
-        .add< UnilateralInteractionConstraint<Vec3dTypes> >()
-#endif
-#ifndef SOFA_DOUBLE
-        .add< UnilateralInteractionConstraint<Vec3fTypes> >()
-#endif
+        .add< UnilateralInteractionConstraint<Vec3Types> >()
+
         ;
 
 
-#ifndef SOFA_FLOAT
-template class SOFA_CONSTRAINT_API UnilateralInteractionConstraint<Vec3dTypes>;
-#endif
-#ifndef SOFA_DOUBLE
-template class SOFA_CONSTRAINT_API UnilateralInteractionConstraint<Vec3fTypes>;
-#endif
+template class SOFA_CONSTRAINT_API UnilateralInteractionConstraint<Vec3Types>;
+
 
 
 void UnilateralConstraintResolutionWithFriction::init(int line, double** w, double* force)
@@ -68,8 +56,6 @@ void UnilateralConstraintResolutionWithFriction::init(int line, double** w, doub
     _W[3]=w[line+1][line+1];
     _W[4]=w[line+1][line+2];
     _W[5]=w[line+2][line+2];
-
-//	return;
 
     ////////////////// christian : the following does not work ! /////////
     if(_prev)
@@ -102,10 +88,10 @@ void UnilateralConstraintResolutionWithFriction::resolution(int line, double** /
 
     normFt = sqrt(force[line+1]*force[line+1] + force[line+2]*force[line+2]);
 
-	double fN = _mu*force[line];
+    double fN = _mu*force[line];
     if(normFt > fN)
     {
-		double factor = fN / normFt;
+        double factor = fN / normFt;
         force[line+1] *= factor;
         force[line+2] *= factor;
     }
@@ -123,7 +109,7 @@ void UnilateralConstraintResolutionWithFriction::store(int line, double* force, 
     if(_active)
     {
         *_active = (force[line] != 0);
-        _active = NULL; // Won't be used in the haptic thread
+        _active = nullptr; // Won't be used in the haptic thread
     }
 }
 

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -26,9 +23,7 @@
 #define SOFA_COMPONENT_ENGINE_CLUSTERING_H
 #include "config.h"
 
-#if !defined(__GNUC__) || (__GNUC__ > 3 || (_GNUC__ == 3 && __GNUC_MINOR__ > 3))
-#pragma once
-#endif
+
 
 #include <sofa/core/DataEngine.h>
 #include <sofa/core/objectmodel/BaseObject.h>
@@ -81,28 +76,25 @@ public:
 
     ClusteringEngine();
 
-    virtual ~ClusteringEngine() {}
+    ~ClusteringEngine() override {}
 
-    void init();
-    void update();
+    void init() override;
+    void doUpdate() override;
 
-    void draw(const core::visual::VisualParams* vparams);
+    void draw(const core::visual::VisualParams* vparams) override;
 
-    Data<bool> useTopo;
+    Data<bool> d_useTopo; ///< Use avalaible topology to compute neighborhood.
     //Data<unsigned int> maxIter;
 
-    Data<Real> radius;
-    Data<Real> fixedRadius;
-    Data<int> number;
-    Data< VecCoord > fixedPosition;  ///< input (non mechanical particle reference position)
-    Data< VecCoord > position; ///< input (reference mstate position)
-    Data< VVI > cluster;       ///< result
+    Data<Real> d_radius; ///< Neighborhood range.
+    Data<Real> d_fixedRadius; ///< Neighborhood range (for non mechanical particles).
+    Data<int> d_nbClusters; ///< Number of clusters (-1 means that all input points are selected).
+    Data< VecCoord > d_fixedPosition;  ///< input (non mechanical particle reference position)
+    Data< VecCoord > d_position; ///< input (reference mstate position)
+    Data< VVI > d_cluster;       ///< result
 
-    sofa::core::objectmodel::DataFileName input_filename;
-    sofa::core::objectmodel::DataFileName output_filename;
-
-    virtual std::string getTemplateName() const    { return templateName(this);    }
-    static std::string templateName(const ClusteringEngine<DataTypes>* = NULL) {   return DataTypes::Name(); }
+    sofa::core::objectmodel::DataFileName input_filename; ///< import precomputed clusters
+    sofa::core::objectmodel::DataFileName output_filename; ///< export clusters
 
 private:
     sofa::core::behavior::MechanicalState<DataTypes>* mstate;
@@ -129,13 +121,9 @@ private:
     bool save();
 };
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_ENGINE_CLUSTERINGENGINE_CPP)
-#ifndef SOFA_FLOAT
-extern template class SOFA_GENERAL_ENGINE_API ClusteringEngine<defaulttype::Vec3dTypes>;
-#endif //SOFA_FLOAT
-#ifndef SOFA_DOUBLE
-extern template class SOFA_GENERAL_ENGINE_API ClusteringEngine<defaulttype::Vec3fTypes>;
-#endif //SOFA_DOUBLE
+#if  !defined(SOFA_COMPONENT_ENGINE_CLUSTERINGENGINE_CPP)
+extern template class SOFA_GENERAL_ENGINE_API ClusteringEngine<defaulttype::Vec3Types>;
+ 
 #endif
 
 } // namespace engine

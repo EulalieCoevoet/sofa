@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -54,6 +51,7 @@ class ForceFeedback;
 
 
 using namespace sofa::defaulttype;
+using namespace sofa::helper;
 using core::objectmodel::Data;
 
 /** Holds data retrieved from HDAPI. */
@@ -97,43 +95,43 @@ class OmniDriver : public Controller
 
 public:
     SOFA_CLASS(OmniDriver, Controller);
-    Data<double> scale;
-    Data<double> forceScale;
-    Data<Vec3d> positionBase;
-    Data<Quat> orientationBase;
-    Data<Vec3d> positionTool;
-    Data<Quat> orientationTool;
-    Data<bool> permanent;
-    Data<bool> omniVisu;
-    Data<bool> toolSelector;
-    Data<int> toolCount;
+    Data<double> scale; ///< Default scale applied to the Phantom Coordinates. 
+    Data<double> forceScale; ///< Default forceScale applied to the force feedback. 
+    Data<Vec3d> positionBase; ///< Position of the interface base in the scene world coordinates
+    Data<Quat> orientationBase; ///< Orientation of the interface base in the scene world coordinates
+    Data<Vec3d> positionTool; ///< Position of the tool in the omni end effector frame
+    Data<Quat> orientationTool; ///< Orientation of the tool in the omni end effector frame
+    Data<bool> permanent; ///< Apply the force feedback permanently
+    Data<bool> omniVisu; ///< Visualize the position of the interface in the virtual scene
+    Data<bool> toolSelector; ///< Switch tools with 2nd button
+    Data<int> toolCount; ///< Number of tools to switch between
 
     OmniData	data;
 
     OmniDriver();
     virtual ~OmniDriver();
 
-    virtual void init();
-    virtual void bwdInit();
-    virtual void reset();
-    void reinit();
+    virtual void init() override;
+    virtual void bwdInit() override;
+    virtual void reset() override;
+    void reinit() override;
 
     int initDevice(OmniData& data);
 
-    void cleanup();
+    void cleanup() override;
     virtual void draw();
-	virtual void draw(const core::visual::VisualParams*) override;
+    virtual void draw(const core::visual::VisualParams*) override;
 
     void setForceFeedbacks(vector<ForceFeedback*> ffs);
 
-    void onKeyPressedEvent(core::objectmodel::KeypressedEvent *);
-    void onKeyReleasedEvent(core::objectmodel::KeyreleasedEvent *);
+    void onKeyPressedEvent(core::objectmodel::KeypressedEvent *) override;
+    void onKeyReleasedEvent(core::objectmodel::KeyreleasedEvent *) override;
 
     void setDataValue();
     void reinitVisual();
 
 private:
-    void handleEvent(core::objectmodel::Event *);
+    void handleEvent(core::objectmodel::Event *) override;
     sofa::component::visualmodel::OglModel::SPtr visu_base, visu_end;
     bool noDevice;
 

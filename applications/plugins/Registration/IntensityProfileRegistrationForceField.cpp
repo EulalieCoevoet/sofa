@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -38,67 +35,36 @@ namespace forcefield
 
     using namespace defaulttype;
 
-      SOFA_DECL_CLASS(IntensityProfileRegistrationForceField)
-
       // Register in the Factory
       int IntensityProfileRegistrationForceFieldClass = core::RegisterObject("Compute normal forces on a point set based on the closest intensity profile in the target image")
-    #ifndef SOFA_FLOAT
-      .add< IntensityProfileRegistrationForceField<Vec3dTypes,ImageUC> >(true)
-      .add< IntensityProfileRegistrationForceField<Vec3dTypes,ImageUS> >()
-      .add< IntensityProfileRegistrationForceField<Vec3dTypes,ImageD> >()
-      .add< IntensityProfileRegistrationForceField<Vec3dTypes,ImageC> >()
-      .add< IntensityProfileRegistrationForceField<Vec3dTypes,ImageI> >()
-      .add< IntensityProfileRegistrationForceField<Vec3dTypes,ImageUI> >()
-      .add< IntensityProfileRegistrationForceField<Vec3dTypes,ImageS> >()
-      .add< IntensityProfileRegistrationForceField<Vec3dTypes,ImageL> >()
-      .add< IntensityProfileRegistrationForceField<Vec3dTypes,ImageUL> >()
-      .add< IntensityProfileRegistrationForceField<Vec3dTypes,ImageF> >()
-      .add< IntensityProfileRegistrationForceField<Vec3dTypes,ImageB> >()
+          .add< IntensityProfileRegistrationForceField<Vec3Types,ImageUC> >(true)
+      .add< IntensityProfileRegistrationForceField<Vec3Types,ImageUS> >()
+      .add< IntensityProfileRegistrationForceField<Vec3Types,ImageD> >()
+      .add< IntensityProfileRegistrationForceField<Vec3Types,ImageC> >()
+      .add< IntensityProfileRegistrationForceField<Vec3Types,ImageI> >()
+      .add< IntensityProfileRegistrationForceField<Vec3Types,ImageUI> >()
+      .add< IntensityProfileRegistrationForceField<Vec3Types,ImageS> >()
+      .add< IntensityProfileRegistrationForceField<Vec3Types,ImageL> >()
+      .add< IntensityProfileRegistrationForceField<Vec3Types,ImageUL> >()
+      .add< IntensityProfileRegistrationForceField<Vec3Types,ImageF> >()
+      .add< IntensityProfileRegistrationForceField<Vec3Types,ImageB> >()
 
-    #endif
-    #ifndef SOFA_DOUBLE
-      .add< IntensityProfileRegistrationForceField<Vec3fTypes,ImageUC> >(true)
-      .add< IntensityProfileRegistrationForceField<Vec3fTypes,ImageUS> >()
-      .add< IntensityProfileRegistrationForceField<Vec3fTypes,ImageD> >()
-      .add< IntensityProfileRegistrationForceField<Vec3fTypes,ImageC> >()
-      .add< IntensityProfileRegistrationForceField<Vec3fTypes,ImageI> >()
-      .add< IntensityProfileRegistrationForceField<Vec3fTypes,ImageUI> >()
-      .add< IntensityProfileRegistrationForceField<Vec3fTypes,ImageS> >()
-      .add< IntensityProfileRegistrationForceField<Vec3fTypes,ImageL> >()
-      .add< IntensityProfileRegistrationForceField<Vec3fTypes,ImageUL> >()
-      .add< IntensityProfileRegistrationForceField<Vec3fTypes,ImageF> >()
-      .add< IntensityProfileRegistrationForceField<Vec3fTypes,ImageB> >()
-
-    #endif
+    
     ;
 
-    #ifndef SOFA_FLOAT
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3dTypes,ImageUC>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3dTypes,ImageUS>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3dTypes,ImageD>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3dTypes,ImageC>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3dTypes,ImageI>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3dTypes,ImageUI>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3dTypes,ImageS>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3dTypes,ImageL>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3dTypes,ImageUL>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3dTypes,ImageF>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3dTypes,ImageB>;
+          template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3Types,ImageUC>;
+      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3Types,ImageUS>;
+      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3Types,ImageD>;
+      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3Types,ImageC>;
+      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3Types,ImageI>;
+      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3Types,ImageUI>;
+      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3Types,ImageS>;
+      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3Types,ImageL>;
+      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3Types,ImageUL>;
+      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3Types,ImageF>;
+      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3Types,ImageB>;
 
-    #endif
-    #ifndef SOFA_DOUBLE
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3fTypes,ImageUC>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3fTypes,ImageUS>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3fTypes,ImageD>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3fTypes,ImageC>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3fTypes,ImageI>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3fTypes,ImageUI>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3fTypes,ImageS>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3fTypes,ImageL>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3fTypes,ImageUL>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3fTypes,ImageF>;
-      template class SOFA_REGISTRATION_API IntensityProfileRegistrationForceField<Vec3fTypes,ImageB>;
-#endif
+    
 
 
             

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -28,7 +25,8 @@
 #include <SofaConstraint/UnilateralInteractionConstraint.h>
 #include <sofa/core/visual/VisualParams.h>
 #include <sofa/defaulttype/Vec.h>
-#include <sofa/helper/gl/template.h>
+#include <sofa/defaulttype/RGBAColor.h>
+
 namespace sofa
 {
 
@@ -37,6 +35,52 @@ namespace component
 
 namespace constraintset
 {
+
+template<class DataTypes>
+UnilateralInteractionConstraint<DataTypes>::UnilateralInteractionConstraint(MechanicalState* object1, MechanicalState* object2)
+    : Inherit(object1, object2)
+    , epsilon(Real(0.001))
+    , yetIntegrated(false)
+    , customTolerance(0.0)
+    , contactsStatus(nullptr)
+{
+}
+
+template<class DataTypes>
+UnilateralInteractionConstraint<DataTypes>::~UnilateralInteractionConstraint()
+{
+    if(contactsStatus)
+        delete[] contactsStatus;
+}
+
+template<class DataTypes>
+void UnilateralInteractionConstraint<DataTypes>::clear(int reserve)
+{
+    contacts.clear();
+    if (reserve)
+        contacts.reserve(reserve);
+}
+
+template<class DataTypes>
+void UnilateralInteractionConstraint<DataTypes>::addContact(double mu, Deriv norm, Coord P, Coord Q, Real contactDistance, int m1, int m2, long id, PersistentID localid)
+{
+    addContact(mu, norm, P, Q, contactDistance, m1, m2,
+            this->getMState2()->read(core::ConstVecCoordId::freePosition())->getValue()[m2],
+            this->getMState1()->read(core::ConstVecCoordId::freePosition())->getValue()[m1],
+            id, localid);
+}
+
+template<class DataTypes>
+void UnilateralInteractionConstraint<DataTypes>::addContact(double mu, Deriv norm, Real contactDistance, int m1, int m2, long id, PersistentID localid)
+{
+    addContact(mu, norm,
+            this->getMState2()->read(core::ConstVecCoordId::position())->getValue()[m2],
+            this->getMState1()->read(core::ConstVecCoordId::position())->getValue()[m1],
+            contactDistance, m1, m2,
+            this->getMState2()->read(core::ConstVecCoordId::freePosition())->getValue()[m2],
+            this->getMState1()->read(core::ConstVecCoordId::freePosition())->getValue()[m1],
+            id, localid);
+}
 
 template<class DataTypes>
 void UnilateralInteractionConstraint<DataTypes>::addContact(double mu, Deriv norm, Coord P, Coord Q, Real contactDistance, int m1, int m2, Coord /*Pfree*/, Coord /*Qfree*/, long id, PersistentID localid)
@@ -57,14 +101,6 @@ void UnilateralInteractionConstraint<DataTypes>::addContact(double mu, Deriv nor
     c.contactId = id;
     c.localId	= localid;
     c.contactDistance = contactDistance;
-
-    /*
-    if (this->f_printLog.getValue())
-    {
-    	std::cout << "P : " << P << " - PFree : " << Pfree << std::endl;
-    	std::cout << "Q : " << Q << " - QFree : " << Qfree << std::endl;
-    }
-    */
 }
 
 
@@ -232,6 +268,12 @@ void UnilateralInteractionConstraint<DataTypes>::getPositionViolation(defaulttyp
 template<class DataTypes>
 void UnilateralInteractionConstraint<DataTypes>::getVelocityViolation(defaulttype::BaseVector *v)
 {
+    auto P = this->getMState2()->readPositions();
+    auto Q = this->getMState1()->readPositions();
+
+    const SReal dt = this->getContext()->getDt();
+    const SReal invDt = SReal(1.0) / dt;
+
     const VecDeriv &PvfreeVec = this->getMState2()->read(core::ConstVecDerivId::freeVelocity())->getValue();
     const VecDeriv &QvfreeVec = this->getMState1()->read(core::ConstVecDerivId::freeVelocity())->getValue();
 
@@ -241,9 +283,11 @@ void UnilateralInteractionConstraint<DataTypes>::getVelocityViolation(defaulttyp
     {
         const Contact& c = contacts[i];
 
-        const Deriv QP_vfree = PvfreeVec[c.m2] - QvfreeVec[c.m1];
+        const Deriv QP_invDt = (P[c.m2] - Q[c.m1])*invDt;
+        const Deriv QP_vfree  = PvfreeVec[c.m2] - QvfreeVec[c.m1];
+        const Deriv dFreeVec = QP_vfree + QP_invDt;
 
-        v->set(c.id, dot(QP_vfree, c.norm)); // dfree
+        v->set(c.id, dot(dFreeVec, c.norm) - c.contactDistance*invDt ); // dvfree = 1/dt *  [ dot ( P - Q, n) - contactDist ] + dot(v_P - v_Q , n ) ]  
 
         if (c.mu > 0.0)
         {
@@ -271,7 +315,7 @@ void UnilateralInteractionConstraint<DataTypes>::getConstraintViolation(const co
         break;
 
     default :
-        serr << "UnilateralInteractionConstraint doesn't implement " << cparams->getName() << " constraint violation\n";
+        msg_error() << "UnilateralInteractionConstraint doesn't implement " << cparams->getName() << " constraint violation\n";
         break;
     }
 }
@@ -315,7 +359,7 @@ void UnilateralInteractionConstraint<DataTypes>::getConstraintResolution(const c
     if(contactsStatus)
     {
         delete[] contactsStatus;
-        contactsStatus = NULL;
+        contactsStatus = nullptr;
     }
 
     if (contacts.size() > 0)
@@ -329,13 +373,11 @@ void UnilateralInteractionConstraint<DataTypes>::getConstraintResolution(const c
         Contact& c = contacts[i];
         if(c.mu > 0.0)
         {
-//			bool& temp = contactsStatus.at(i);
-            UnilateralConstraintResolutionWithFriction* ucrwf = new UnilateralConstraintResolutionWithFriction(c.mu, NULL, &contactsStatus[i]);
-            ucrwf->tolerance = customTolerance;
+            UnilateralConstraintResolutionWithFriction* ucrwf = new UnilateralConstraintResolutionWithFriction(c.mu, nullptr, &contactsStatus[i]);
+            ucrwf->setTolerance(customTolerance);
             resTab[offset] = ucrwf;
 
             // TODO : cette méthode de stockage des forces peu mal fonctionner avec 2 threads quand on utilise l'haptique
-//			resTab[offset] = new UnilateralConstraintResolutionWithFriction(c.mu, &prevForces, &contactsStatus[i]);
             offset += 3;
         }
         else
@@ -356,61 +398,40 @@ bool UnilateralInteractionConstraint<DataTypes>::isActive() const
 template<class DataTypes>
 void UnilateralInteractionConstraint<DataTypes>::draw(const core::visual::VisualParams* vparams)
 {
-#ifndef SOFA_NO_OPENGL
-//	return; // TEMP
-    if (!vparams->displayFlags().getShowInteractionForceFields()) return;
-    if (!vparams->isSupported(sofa::core::visual::API_OpenGL)) return;
 
-    glDisable(GL_LIGHTING);
+    if (!vparams->displayFlags().getShowInteractionForceFields()) return;
+
+    vparams->drawTool()->saveLastState();
+
+    vparams->drawTool()->disableLighting();
+    vparams->drawTool()->saveLastState();
+
+    std::vector<sofa::defaulttype::Vector3> redVertices;
+    std::vector<sofa::defaulttype::Vector3> otherVertices;
+    std::vector<sofa::defaulttype::Vec4f> otherColors;
 
     for (unsigned int i=0; i<contacts.size(); i++)
     {
         const Contact& c = contacts[i];
 
-//		if(contactsStatus && contactsStatus[i]) glColor4f(1,0,0,1); else
-//		if(c.dfree < 0) glColor4f(1,0,1,1); else
-//		glColor4f(1,0.5,0,1);
+        redVertices.push_back(c.P);
+        redVertices.push_back(c.Q);
 
-        glLineWidth(5);
-        glBegin(GL_LINES);
+        otherVertices.push_back(c.P);        
+        otherVertices.push_back(c.P + c.norm);
+        otherColors.push_back(sofa::defaulttype::RGBAColor::white());
 
-        glColor4f(1,0,0,1);
-        helper::gl::glVertexT(c.P);
-        helper::gl::glVertexT(c.Q);
+        otherVertices.push_back(c.Q);
+        otherVertices.push_back(c.Q - c.norm);
+        otherColors.push_back(sofa::defaulttype::RGBAColor(0,0.5,0.5,1));
 
-        glEnd();
-
-        glLineWidth(3);
-        glBegin(GL_LINES);
-
-        /*glColor4f(0,0,1,1);
-        helper::gl::glVertexT(c.Pfree);
-        helper::gl::glVertexT(c.Qfree);*/
-
-        glColor4f(1,1,1,1);
-        helper::gl::glVertexT(c.P);
-        glColor4f(0,0.5,0.5,1);
-        helper::gl::glVertexT(c.P + c.norm);
-
-        glColor4f(0,0,0,1);
-        helper::gl::glVertexT(c.Q);
-        glColor4f(0,0.5,0.5,1);
-        helper::gl::glVertexT(c.Q - c.norm);
-
-        glEnd();
-        /*
-        if (c.dfree < 0)
-        {
-        	glLineWidth(5);
-        	glColor4f(0,1,0,1);
-        	helper::gl::glVertexT(c.Pfree);
-        	helper::gl::glVertexT(c.Qfree);
-        }
-        */
-
-        glLineWidth(1);
     }
-#endif /* SOFA_NO_OPENGL */
+    vparams->drawTool()->drawLines(redVertices, 5, sofa::defaulttype::RGBAColor::red());
+    vparams->drawTool()->drawLines(otherVertices, 3, otherColors);
+
+
+    vparams->drawTool()->restoreLastState();
+
 }
 
 } // namespace constraintset

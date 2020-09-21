@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -28,7 +25,7 @@
 #include <sofa/core/objectmodel/Base.h>
 #include <SofaGeneralEngine/TransformEngine.h>
 #include <sofa/core/visual/VisualParams.h>
-#include <sofa/helper/rmath.h> //M_PI
+#include <sofa/helper/rmath.h> //R_PI
 
 #include <cassert>
 
@@ -128,7 +125,7 @@ struct RotationSpecialized : public TransformOperation<DataTypes>
 
     void configure(const defaulttype::Vector3 &r, bool inverse)
     {
-        q=helper::Quater<Real>::createQuaterFromEuler( r*(M_PI/180.0));
+        q=helper::Quater<Real>::createQuaterFromEuler( r*(R_PI/180.0));
         if (inverse)
             q = q.inverse();
     }
@@ -161,8 +158,8 @@ struct RotationSpecialized<DataTypes, 2, false> : public TransformOperation<Data
 
     void configure(const defaulttype::Vector3 &r, bool inverse)
     {
-        q=helper::Quater<Real>::createQuaterFromEuler( r*(M_PI/180.0));
-		rotZ = static_cast<Real>(r.z() * (M_PI/180.0f));
+        q=helper::Quater<Real>::createQuaterFromEuler( r*(R_PI/180.0));
+		rotZ = static_cast<Real>(r.z() * (R_PI/180.0f));
         if (inverse)
             rotZ = -rotZ;
     }
@@ -170,7 +167,7 @@ struct RotationSpecialized<DataTypes, 2, false> : public TransformOperation<Data
     void configure(const defaulttype::Quaternion &/*qi*/, bool /*inverse*/, sofa::core::objectmodel::Base* pBase)
     {
         assert(pBase);
-        pBase->serr << "'void RotationSpecialized::configure(const defaulttype::Quaternion &qi, bool inverse)' is not implemented for two-dimensional data types" << pBase->sendl;
+        msg_error(pBase) << "'void RotationSpecialized::configure(const defaulttype::Quaternion &qi, bool inverse)' is not implemented for two-dimensional data types";
         assert(false && "This method should not be called without been implemented");
     }
 
@@ -192,7 +189,7 @@ struct RotationSpecialized<DataTypes, 3, false> : public TransformOperation<Data
 
     void configure(const defaulttype::Vector3 &r, bool inverse)
     {
-        q=helper::Quater<Real>::createQuaterFromEuler( r*(M_PI/180.0));
+        q=helper::Quater<Real>::createQuaterFromEuler( r*(R_PI/180.0));
         if (inverse)
             q = q.inverse();
     }
@@ -273,7 +270,7 @@ private:
 
 
 template <class DataTypes>
-void TransformEngine<DataTypes>::update()
+void TransformEngine<DataTypes>::doUpdate()
 {
     const defaulttype::Vector3 &s=scale.getValue();
     const defaulttype::Vector3 &r=rotation.getValue();
@@ -297,9 +294,6 @@ void TransformEngine<DataTypes>::update()
 
     //Get input
     const VecCoord& in = f_inputX.getValue();
-
-    cleanDirty();
-
     VecCoord& out = *(f_outputX.beginWriteOnly());
 
     //Set Output
@@ -316,7 +310,6 @@ void TransformEngine<DataTypes>::update()
         delete operations.back();
         operations.pop_back();
     }
-
     f_outputX.endEdit();
 }
 

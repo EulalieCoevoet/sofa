@@ -6,11 +6,10 @@ using std::cout;
 using std::endl;
 
 #include <sofa/helper/system/PluginManager.h>
-#include <SofaComponentBase/initComponentBase.h>
-#include <SofaComponentCommon/initComponentCommon.h>
-#include <SofaComponentGeneral/initComponentGeneral.h>
-#include <SofaComponentAdvanced/initComponentAdvanced.h>
-#include <SofaComponentMisc/initComponentMisc.h>
+#include <SofaBase/initSofaBase.h>
+#include <SofaCommon/initSofaCommon.h>
+#include <SofaGeneral/initSofaGeneral.h>
+#include <SofaMisc/initSofaMisc.h>
 #include <SofaSimulationGraph/DAGSimulation.h>
 #include <SofaBaseMechanics/MechanicalObject.h>
 #include <sofa/core/ObjectFactory.h>
@@ -32,26 +31,24 @@ typedef sofa::component::container::MechanicalObject< defaulttype::Vec3Types > V
 SofaScene::SofaScene()
 {
     _groot = _iroot = NULL;
-	sofa::core::ExecParams::defaultInstance()->setAspectID(0);
-    boost::shared_ptr<sofa::core::ObjectFactory::ClassEntry> classVisualModel;// = NULL;
+    std::shared_ptr<sofa::core::ObjectFactory::ClassEntry> classVisualModel;// = NULL;
 	sofa::core::ObjectFactory::AddAlias("VisualModel", "OglModel", true, &classVisualModel);
 
     sofaSimulation = sofa::simulation::graph::getSimulation(); // creates one if it is not already created
-    sofa::component::initComponentBase();
-    sofa::component::initComponentCommon();
-    sofa::component::initComponentGeneral();
-    sofa::component::initComponentAdvanced();
-    sofa::component::initComponentMisc();
+    sofa::component::initSofaBase();
+    sofa::component::initSofaCommon();
+    sofa::component::initSofaGeneral();
+    sofa::component::initSofaMisc();
 }
 
 void SofaScene::step( SReal dt)
 {
-    sofaSimulation->animate(_groot,dt);
+    sofaSimulation->animate(_groot.get(),dt);
 }
 
 void SofaScene::printGraph()
 {
-    sofaSimulation->print(_groot);
+    sofaSimulation->print(_groot.get());
 }
 
 void SofaScene::loadPlugins( std::vector<std::string> plugins )
@@ -81,7 +78,7 @@ void SofaScene::open(const std::string& fileName )
 
 //    _currentFileName = fileName;
 
-    sofaSimulation->init(_groot);
+    sofaSimulation->init(_groot.get());
 
     printGraph();
     SReal xm,xM,ym,yM,zm,zM;
@@ -96,12 +93,12 @@ void SofaScene::setScene(simulation::Node *node )
     _groot = sofaSimulation->createNewGraph("root").get();
     _groot->addChild(node);
     _iroot = _groot->createChild("iroot").get();
-    sofaSimulation->init(_groot);
+    sofaSimulation->init(_groot.get());
 }
 
 void SofaScene::reset()
 {
-    sofaSimulation->reset(_groot);
+    sofaSimulation->reset(_groot.get());
 }
 
 //void SofaScene::open(const char *filename)
@@ -127,7 +124,7 @@ void SofaScene::reset()
 void SofaScene::getBoundingBox( SReal* xmin, SReal* xmax, SReal* ymin, SReal* ymax, SReal* zmin, SReal* zmax )
 {
     SReal pmin[3], pmax[3];
-    sofaSimulation->computeBBox( _groot, pmin, pmax );
+    sofaSimulation->computeBBox( _groot.get(), pmin, pmax );
     *xmin = pmin[0]; *xmax = pmax[0];
     *ymin = pmin[1]; *ymax = pmax[1];
     *zmin = pmin[2]; *zmax = pmax[2];
@@ -139,15 +136,15 @@ void SofaScene::insertInteractor( Interactor * interactor )
 	    _iroot->addChild(interactor->getNode());
 }
 
-simulation::Node* SofaScene::groot() { return sofaSimulation->GetRoot().get(); }
+simulation::Node* SofaScene::groot() { return _groot.get(); }
 
 void SofaScene::initVisual(){
-    sofaSimulation->initTextures(sofaSimulation->GetRoot().get());
+    sofaSimulation->initTextures(_groot.get());
 }
 
 void SofaScene::updateVisual()
 {
-    sofaSimulation->updateVisual(sofaSimulation->GetRoot().get()); // needed to update normals and VBOs ! (i think it should be better if updateVisual() was called from draw(), why it is not already the case ?)
+    sofaSimulation->updateVisual(_groot.get()); // needed to update normals and VBOs ! (i think it should be better if updateVisual() was called from draw(), why it is not already the case ?)
 }
 
 //void SofaScene::draw( sofa::core::visual::VisualParams* v)

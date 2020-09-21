@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -35,7 +32,7 @@
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/core/Multi2Mapping.inl>
 #include <sofa/core/BaseMapping.h>
-#include <sofa/core/core.h>
+#include <sofa/core/config.h>
 #include <sofa/core/VecId.h>
 
 #include "Flexible/shapeFunction/BaseShapeFunction.h"
@@ -120,9 +117,9 @@ public:
     ~RigidScaleToRigidMultiMapping();
 
 	/************************** SOFA METHOD ****************************/
-    void init();
-    void reinit();
-    void reset();
+    void init() override;
+    void reinit() override;
+    void reset() override;
 
     using Inherit::apply;
     using Inherit::applyJ;
@@ -132,44 +129,43 @@ public:
     void apply(const core::MechanicalParams* /*mparams*/ /* PARAMS FIRST */
 			   , const helper::vector<OutDataVecCoord*>& /*dataVecOutPos*/
 			   , const helper::vector<const In1DataVecCoord*>& /*dataVecIn1Pos*/
-			   , const helper::vector<const In2DataVecCoord*>& /*dataVecIn2Pos*/);
+               , const helper::vector<const In2DataVecCoord*>& /*dataVecIn2Pos*/) override;
 
     void applyJ(const core::MechanicalParams* /*mparams*/ /* PARAMS FIRST */
 			    , const helper::vector< OutDataVecDeriv*>& /*dataVecOutVel*/		
 				, const helper::vector<const In1DataVecDeriv*>& /*dataVecIn1Vel*/ 
-				, const helper::vector<const In2DataVecDeriv*>& /*dataVecIn2Vel*/);
+                , const helper::vector<const In2DataVecDeriv*>& /*dataVecIn2Vel*/) override;
 
     void applyJT(const core::MechanicalParams* /*mparams*/ /* PARAMS FIRST */
 				 , const helper::vector< In1DataVecDeriv*>& /*dataVecOut1Force*/
 				 , const helper::vector< In2DataVecDeriv*>& /*dataVecOut2Force*/
-				 , const helper::vector<const OutDataVecDeriv*>& /*dataVecInForce*/);
+                 , const helper::vector<const OutDataVecDeriv*>& /*dataVecInForce*/) override;
 
     void applyJT(const helper::vector< InMatrixDeriv1*>& /*outConstraint1*/ 
 				 , const helper::vector< InMatrixDeriv2*>& /*outConstraint2*/
-				 , const helper::vector<const OutMatrixDeriv*>& /*inConstraint*/);
+                 , const helper::vector<const OutMatrixDeriv*>& /*inConstraint*/);
 	
 	void applyJT(const core::ConstraintParams* /* cparams */
 				 , const helper::vector< In1DataMatrixDeriv*>& /* dataMatOut1Const */
 				 , const helper::vector< In2DataMatrixDeriv*>&  /* dataMatOut2Const */
-				 , const helper::vector<const OutDataMatrixDeriv*>& /* dataMatInConst */);
+                 , const helper::vector<const OutDataMatrixDeriv*>& /* dataMatInConst */) override;
 	
-    void applyDJT(const core::MechanicalParams* /*mparams*/, core::MultiVecDerivId /*inForce*/, core::ConstMultiVecDerivId /*outForce*/);
+    void applyDJT(const core::MechanicalParams* /*mparams*/, core::MultiVecDerivId /*inForce*/, core::ConstMultiVecDerivId /*outForce*/) override;
 
     void computeAccFromMapping(const core::MechanicalParams* /*mparams*/ /* PARAMS FIRST */
 							   , const helper::vector< OutDataVecDeriv*>& /*dataVecOutAcc*/
 							   , const helper::vector<const In1DataVecDeriv*>& /*dataVecIn1Vel*/
 							   , const helper::vector<const In2DataVecDeriv*>& /*dataVecIn2Vel*/
 							   , const helper::vector<const In1DataVecDeriv*>& /*dataVecIn1Acc*/
-							   , const helper::vector<const In2DataVecDeriv*>& /*dataVecIn2Acc*/);
+                               , const helper::vector<const In2DataVecDeriv*>& /*dataVecIn2Acc*/) override;
 
     void computeAccFromMapping(const core::MechanicalParams* /*mparams*/, OutVecDeriv& /*f*/,const OutVecCoord& /*x*/, const OutVecDeriv& /*v*/);
 
-    void updateK( const core::MechanicalParams* /*mparams*/, core::ConstMultiVecDerivId /*outForce*/ );
+    void updateK( const core::MechanicalParams* /*mparams*/, core::ConstMultiVecDerivId /*outForce*/ ) override;
 
-    const helper::vector<sofa::defaulttype::BaseMatrix*>* getJs();
-    const sofa::defaulttype::BaseMatrix* getJ();
-
-    const sofa::defaulttype::BaseMatrix* getK();		                   
+    const helper::vector<sofa::defaulttype::BaseMatrix*>* getJs() override;
+    const sofa::defaulttype::BaseMatrix* getJ() override;
+    const sofa::defaulttype::BaseMatrix* getK() override;
 
     Data< helper::vector<unsigned> > index; ///< Two indices per child: the index of the rigid, and the index of scale
     Data< bool > useGeometricStiffness; ///< To indication if we use the geometric stiffness

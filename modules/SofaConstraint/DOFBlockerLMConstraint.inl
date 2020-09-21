@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -28,9 +25,8 @@
 #include <SofaConstraint/DOFBlockerLMConstraint.h>
 #include <sofa/core/visual/VisualParams.h>
 #include <sofa/simulation/Simulation.h>
-#include <sofa/helper/gl/Axis.h>
-#include <sofa/helper/gl/template.h>
 #include <SofaBaseTopology/TopologySubsetData.inl>
+#include <sofa/defaulttype/RGBAColor.h>
 
 
 namespace sofa
@@ -41,8 +37,6 @@ namespace component
 
 namespace constraintset
 {
-
-
 
 // Define TestNewPointFunction
 template< class DataTypes>
@@ -97,11 +91,27 @@ void DOFBlockerLMConstraint<DataTypes>::init()
 {
     core::behavior::LMConstraint<DataTypes,DataTypes>::init();
 
-    topology = this->getContext()->getMeshTopology();
+    if (l_topology.empty())
+    {
+        msg_info() << "link to Topology container should be set to ensure right behavior. First Topology found in current context will be used.";
+        l_topology.set(this->getContext()->getMeshTopologyLink());
+    }
 
-    // Initialize functions and parameters
-    f_indices.createTopologicalEngine(topology, pointHandler);
-    f_indices.registerTopologicalData();
+    sofa::core::topology::BaseMeshTopology* _topology = l_topology.get();
+
+    if (_topology)
+    {
+        msg_info() << "Topology path used: '" << l_topology.getLinkedPath() << "'";
+        
+        // Initialize functions and parameters
+        m_pointHandler = new FCTPointHandler(this, &f_indices);
+        f_indices.createTopologicalEngine(_topology, m_pointHandler);
+        f_indices.registerTopologicalData();        
+    }
+    else
+    {
+        msg_info() << "No topology component found at path: " << l_topology.getLinkedPath() << ", nor in current context: " << this->getContext()->name;
+    }
 }
 
 
@@ -182,11 +192,13 @@ void DOFBlockerLMConstraint<DataTypes>::writeConstraintEquations(unsigned int& l
 template <class DataTypes>
 void DOFBlockerLMConstraint<DataTypes>::draw(const core::visual::VisualParams* vparams)
 {
-#ifndef SOFA_NO_OPENGL
     if (!vparams->displayFlags().getShowForceFields()) return;
     const VecCoord& x =this->constrainedObject1->read(core::ConstVecCoordId::position())->getValue();
 
+    vparams->drawTool()->saveLastState();
+
     const SetIndexArray & indices = f_indices.getValue();
+    sofa::defaulttype::RGBAColor color = sofa::defaulttype::RGBAColor::yellow();
 
     for (SetIndexArray::const_iterator it = indices.begin();
             it != indices.end();
@@ -196,17 +208,16 @@ void DOFBlockerLMConstraint<DataTypes>::draw(const core::visual::VisualParams* v
         Coord pos=x[index];
         defaulttype::Vector3 position;
         DataTypes::get(position[0], position[1], position[2], pos);
-        glColor3f(1,1,0);
         const helper::vector<Deriv>& axis=BlockedAxis.getValue();
         for (unsigned int i=0; i<axis.size(); ++i)
         {
             defaulttype::Vector3 direction;
             DataTypes::get(direction[0], direction[1], direction[2],axis[i]);
-            helper::gl::Axis::draw(position,position+direction*showSizeAxis.getValue(),
-                    showSizeAxis.getValue()*0.03);
+            vparams->drawTool()->drawArrow(position, position+direction*showSizeAxis.getValue(),
+                                           showSizeAxis.getValue()*0.03,color);
         }
     }
-#endif /* SOFA_NO_OPENGL */
+    vparams->drawTool()->restoreLastState();
 }
 
 } // namespace constraintset

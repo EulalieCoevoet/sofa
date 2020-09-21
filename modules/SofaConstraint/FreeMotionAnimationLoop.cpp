@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -31,7 +28,7 @@
 #include <sofa/core/VecId.h>
 
 #include <sofa/helper/AdvancedTimer.h>
-
+#include <sofa/simulation/UpdateInternalDataVisitor.h>
 #include <sofa/simulation/BehaviorUpdatePositionVisitor.h>
 #include <sofa/simulation/MechanicalOperations.h>
 #include <sofa/simulation/SolveVisitor.h>
@@ -43,6 +40,7 @@
 #include <sofa/simulation/UpdateMappingVisitor.h>
 #include <sofa/simulation/UpdateMappingEndEvent.h>
 #include <sofa/simulation/UpdateBoundingBoxVisitor.h>
+#include <SofaConstraint/LCPConstraintSolver.h>
 
 
 namespace sofa
@@ -56,24 +54,27 @@ namespace animationloop
 
 using namespace core::behavior;
 using namespace sofa::simulation;
+using helper::system::thread::CTime;
+using sofa::helper::ScopedAdvancedTimer;
 
 FreeMotionAnimationLoop::FreeMotionAnimationLoop(simulation::Node* gnode)
-    : Inherit(gnode)
+    : Inherit1(gnode)
     , m_solveVelocityConstraintFirst(initData(&m_solveVelocityConstraintFirst , false, "solveVelocityConstraintFirst", "solve separately velocity constraint violations before position constraint violations"))
-    , constraintSolver(NULL)
-    , defaultSolver(NULL)
+    , d_threadSafeVisitor(initData(&d_threadSafeVisitor, false, "threadSafeVisitor", "If true, do not use realloc and free visitors in fwdInteractionForceField."))
+    , constraintSolver(nullptr)
+    , defaultSolver(nullptr)
 {
 }
 
 FreeMotionAnimationLoop::~FreeMotionAnimationLoop()
 {
-    if (defaultSolver != NULL)
+    if (defaultSolver != nullptr)
         defaultSolver.reset();
 }
 
 void FreeMotionAnimationLoop::parse ( sofa::core::objectmodel::BaseObjectDescription* arg )
 {
-    this->simulation::CollisionAnimationLoop::parse(arg);
+    simulation::CollisionAnimationLoop::parse(arg);
 
     defaultSolver = sofa::core::objectmodel::New<constraintset::LCPConstraintSolver>();
     defaultSolver->parse(arg);
@@ -82,23 +83,17 @@ void FreeMotionAnimationLoop::parse ( sofa::core::objectmodel::BaseObjectDescrip
 
 void FreeMotionAnimationLoop::init()
 {
-
-    {
-    simulation::common::VectorOperations vop(core::ExecParams::defaultInstance(), this->getContext());
-    MultiVecDeriv dx(&vop, core::VecDerivId::dx() ); dx.realloc( &vop, true, true );
-    MultiVecDeriv df(&vop, core::VecDerivId::dforce() ); df.realloc( &vop, true, true );
-    }
-
-
-
+    simulation::common::VectorOperations vop(core::ExecParams::defaultInstance(), getContext());
+    MultiVecDeriv dx(&vop, core::VecDerivId::dx()); dx.realloc(&vop, !d_threadSafeVisitor.getValue(), true);
+    MultiVecDeriv df(&vop, core::VecDerivId::dforce()); df.realloc(&vop, !d_threadSafeVisitor.getValue(), true);
 
     getContext()->get(constraintSolver, core::objectmodel::BaseContext::SearchDown);
-    if (constraintSolver == NULL && defaultSolver != NULL)
+    if (constraintSolver == nullptr && defaultSolver != nullptr)
     {
-        serr << "No ConstraintSolver found, using default LCPConstraintSolver" << sendl;
-        this->getContext()->addObject(defaultSolver);
+        msg_error() << "No ConstraintSolver found, using default LCPConstraintSolver";
+        getContext()->addObject(defaultSolver);
         constraintSolver = defaultSolver.get();
-        defaultSolver = NULL;
+        defaultSolver = nullptr;
     }
     else
     {
@@ -110,213 +105,211 @@ void FreeMotionAnimationLoop::init()
 void FreeMotionAnimationLoop::step(const sofa::core::ExecParams* params, SReal dt)
 {
     if (dt == 0)
-        dt = this->gnode->getDt();
+        dt = gnode->getDt();
 
-#ifdef SOFA_DUMP_VISITOR_INFO
-    simulation::Visitor::printNode("Step");
-#endif
+    double startTime = gnode->getTime();
 
-    {
-        sofa::helper::AdvancedTimer::stepBegin("AnimateBeginEvent");
-        AnimateBeginEvent ev ( dt );
-        PropagateEventVisitor act ( params, &ev );
-        this->gnode->execute ( act );
-        sofa::helper::AdvancedTimer::stepEnd("AnimateBeginEvent");
-    }
-
-    double startTime = this->gnode->getTime();
-
-    simulation::common::VectorOperations vop(params, this->getContext());
-    simulation::common::MechanicalOperations mop(params, this->getContext());
+    simulation::common::VectorOperations vop(params, getContext());
+    simulation::common::MechanicalOperations mop(params, getContext());
 
     MultiVecCoord pos(&vop, core::VecCoordId::position() );
     MultiVecDeriv vel(&vop, core::VecDerivId::velocity() );
     MultiVecCoord freePos(&vop, core::VecCoordId::freePosition() );
     MultiVecDeriv freeVel(&vop, core::VecDerivId::freeVelocity() );
 
-    {
-    MultiVecDeriv dx(&vop, core::VecDerivId::dx() ); dx.realloc( &vop, true, true );
-    MultiVecDeriv df(&vop, core::VecDerivId::dforce() ); df.realloc( &vop, true, true );
-    }
+    core::ConstraintParams cparams(*params);
+    cparams.setX(freePos);
+    cparams.setV(freeVel);
+    cparams.setDx(constraintSolver->getDx());
+    cparams.setLambda(constraintSolver->getLambda());
+    cparams.setOrder(m_solveVelocityConstraintFirst.getValue() ? core::ConstraintParams::VEL : core::ConstraintParams::POS_AND_VEL);
 
-
-
+    MultiVecDeriv dx(&vop, core::VecDerivId::dx()); dx.realloc(&vop, !d_threadSafeVisitor.getValue(), true);
+    MultiVecDeriv df(&vop, core::VecDerivId::dforce()); df.realloc(&vop, !d_threadSafeVisitor.getValue(), true);
 
     // This solver will work in freePosition and freeVelocity vectors.
     // We need to initialize them if it's not already done.
-    sofa::helper::AdvancedTimer::stepBegin("MechanicalVInitVisitor");
-    simulation::MechanicalVInitVisitor< core::V_COORD >(params, core::VecCoordId::freePosition(), core::ConstVecCoordId::position(), true).execute(this->gnode);
-    simulation::MechanicalVInitVisitor< core::V_DERIV >(params, core::VecDerivId::freeVelocity(), core::ConstVecDerivId::velocity(), true).execute(this->gnode);
+    {
+        ScopedAdvancedTimer timer("MechanicalVInitVisitor");
+        simulation::MechanicalVInitVisitor< core::V_COORD >(params, core::VecCoordId::freePosition(), core::ConstVecCoordId::position(), true).execute(gnode);
+        simulation::MechanicalVInitVisitor< core::V_DERIV >(params, core::VecDerivId::freeVelocity(), core::ConstVecDerivId::velocity(), true).execute(gnode);
+    }
 
-    sofa::helper::AdvancedTimer::stepEnd("MechanicalVInitVisitor");
 
-    BehaviorUpdatePositionVisitor beh(params , dt);
+#ifdef SOFA_DUMP_VISITOR_INFO
+    simulation::Visitor::printNode("Step");
+#endif
 
-    using helper::system::thread::CTime;
-    using sofa::helper::AdvancedTimer;
+    {
+        ScopedAdvancedTimer("AnimateBeginEvent");
+        AnimateBeginEvent ev ( dt );
+        PropagateEventVisitor act ( params, &ev );
+        gnode->execute ( act );
+    }
 
     double time = 0.0;
-    //double timeTotal = 0.0;
     double timeScale = 1000.0 / (double)CTime::getTicksPerSec();
 
     if (displayTime.getValue())
     {
         time = (double) CTime::getTime();
-        //timeTotal = (double) CTime::getTime();
     }
 
     // Update the BehaviorModels
     // Required to allow the RayPickInteractor interaction
-    if (f_printLog.getValue())
-        serr << "updatePos called" << sendl;
+    dmsg_info() << "updatePos called" ;
 
-    AdvancedTimer::stepBegin("UpdatePosition");
-    this->gnode->execute(&beh);
-    AdvancedTimer::stepEnd("UpdatePosition");
+    {
+        ScopedAdvancedTimer timer("UpdatePosition");
+        BehaviorUpdatePositionVisitor beh(params, dt);        
+        gnode->execute(&beh);
+    }
 
-    if (f_printLog.getValue())
-        serr << "updatePos performed - beginVisitor called" << sendl;
+    dmsg_info() << "updatePos performed - updateInternal called" ;
 
+    UpdateInternalDataVisitor iud(params);
+
+    dmsg_info() << "updateInternal called" ;
+
+    {
+        ScopedAdvancedTimer timer("updateInternalData");
+        gnode->execute(&iud);
+    }
+
+    dmsg_info() << "updateInternal performed - beginVisitor called" ;
+
+
+    // MechanicalBeginIntegrationVisitor
     simulation::MechanicalBeginIntegrationVisitor beginVisitor(params, dt);
-    this->gnode->execute(&beginVisitor);
+    gnode->execute(&beginVisitor);
 
-    if (f_printLog.getValue())
-        serr << "beginVisitor performed - SolveVisitor for freeMotion is called" << sendl;
+    dmsg_info() << "beginVisitor performed - SolveVisitor for freeMotion is called" ;
+
+    // Mapping geometric stiffness coming from previous lambda.
+    {
+        ScopedAdvancedTimer timer("lambdaMultInvDt");
+        simulation::MechanicalVOpVisitor lambdaMultInvDt(params, cparams.lambda(), sofa::core::ConstMultiVecId::null(), cparams.lambda(), 1.0 / dt);
+        lambdaMultInvDt.setMapped(true);
+        getContext()->executeVisitor(&lambdaMultInvDt);
+    }
+
+    {
+        ScopedAdvancedTimer timer("MechanicalComputeGeometricStiffness");
+        simulation::MechanicalComputeGeometricStiffness geometricStiffnessVisitor(&mop.mparams, cparams.lambda());
+        getContext()->executeVisitor(&geometricStiffnessVisitor);
+    }
 
     // Free Motion
-    AdvancedTimer::stepBegin("FreeMotion");
-    simulation::SolveVisitor freeMotion(params, dt, true);
-    this->gnode->execute(&freeMotion);
-    AdvancedTimer::stepEnd("FreeMotion");
+    {
+        ScopedAdvancedTimer timer("FreeMotion");
+        simulation::SolveVisitor freeMotion(params, dt, true);
+        gnode->execute(&freeMotion);
+    }
 
-    mop.propagateXAndV(freePos, freeVel, true); // apply projective constraints
+    
+    mop.projectResponse(freeVel);
+    mop.propagateDx(freeVel, true);
 
-    if (f_printLog.getValue())
-        serr << " SolveVisitor for freeMotion performed" << sendl;
+    if (cparams.constOrder() == core::ConstraintParams::POS ||
+        cparams.constOrder() == core::ConstraintParams::POS_AND_VEL)
+    {
+        ScopedAdvancedTimer timer("freePosEqPosPlusFreeVelDt");
+        simulation::MechanicalVOpVisitor freePosEqPosPlusFreeVelDt(params, freePos, pos, freeVel, dt);
+        freePosEqPosPlusFreeVelDt.setMapped(true);
+        getContext()->executeVisitor(&freePosEqPosPlusFreeVelDt);
+    }
+    dmsg_info() << " SolveVisitor for freeMotion performed" ;
 
     if (displayTime.getValue())
     {
-        sout << " >>>>> Begin display FreeMotionAnimationLoop time" << sendl;
-        sout <<" Free Motion " << ((double)CTime::getTime() - time) * timeScale << " ms" << sendl;
+        msg_info() << " >>>>> Begin display FreeMotionAnimationLoop time  " << msgendl
+                   <<" Free Motion " << ((double)CTime::getTime() - time) * timeScale << " ms" ;
 
         time = (double)CTime::getTime();
     }
 
     // Collision detection and response creation
-    AdvancedTimer::stepBegin("Collision");
-    computeCollision(params);
-    AdvancedTimer::stepEnd  ("Collision");
-
-    mop.propagateX(pos, false); // Why is this done at that point ???
+    {
+        ScopedAdvancedTimer timer("Collision");
+        computeCollision(params);
+    }
 
     if (displayTime.getValue())
     {
-        sout << " computeCollision " << ((double) CTime::getTime() - time) * timeScale << " ms" << sendl;
+        msg_info() << " computeCollision " << ((double) CTime::getTime() - time) * timeScale << " ms";
         time = (double)CTime::getTime();
     }
 
     // Solve constraints
     if (constraintSolver)
     {
-        AdvancedTimer::stepBegin("ConstraintSolver");
+        ScopedAdvancedTimer timer("ConstraintSolver");
 
-        if (m_solveVelocityConstraintFirst.getValue())
+        if (cparams.constOrder() == core::ConstraintParams::VEL )
         {
-            core::ConstraintParams cparams(*params);
-            cparams.setX(freePos);
-            cparams.setV(freeVel);
-
-            cparams.setOrder(core::ConstraintParams::VEL);
             constraintSolver->solveConstraint(&cparams, vel);
-
-            MultiVecDeriv dv(&vop, constraintSolver->getDx());
-            mop.projectResponse(dv);
-            mop.propagateDx(dv);
-
-            // xfree += dv * dt
-            freePos.eq(freePos, dv, dt);
-            mop.propagateX(freePos, false); // ignore projective constraints
-
-            cparams.setOrder(core::ConstraintParams::POS);
-            constraintSolver->solveConstraint(&cparams, pos);
-
-            MultiVecDeriv dx(&vop, constraintSolver->getDx());
-
-            mop.propagateV(vel, true); // apply projective constraints
-            mop.projectResponse(dx);
-            mop.propagateDx(dx, true);
-
-            // "mapped" x = xfree + dx
-            simulation::MechanicalVOpVisitor(params, pos, freePos, dx, 1.0 ).setOnlyMapped(true).execute(this->gnode);
+            pos.eq(pos, vel, dt);
         }
         else
         {
-            core::ConstraintParams cparams(*params);
-            cparams.setX(freePos);
-            cparams.setV(freeVel);
-
             constraintSolver->solveConstraint(&cparams, pos, vel);
-            mop.propagateV(vel, true); // apply projective constraints
-
-            MultiVecDeriv dx(&vop, constraintSolver->getDx());
-            mop.projectResponse(dx);
-            mop.propagateDx(dx, true);
-
-            // "mapped" x = xfree + dx
-            simulation::MechanicalVOpVisitor(params, pos, freePos, dx, 1.0 ).setOnlyMapped(true).execute(this->gnode);
         }
-        AdvancedTimer::stepEnd("ConstraintSolver");
 
+        MultiVecDeriv dx(&vop, constraintSolver->getDx());
+        mop.projectResponse(dx);
+        mop.propagateDx(dx, true);
     }
 
     if ( displayTime.getValue() )
     {
-        sout << " contactCorrections " << ((double)CTime::getTime() - time) * timeScale << " ms" <<sendl;
-        sout << "<<<<<< End display FreeMotionAnimationLoop time." << sendl;
+        msg_info() << " contactCorrections " << ((double)CTime::getTime() - time) * timeScale << " ms"
+                << "<<<<<< End display FreeMotionAnimationLoop time.";
     }
 
     simulation::MechanicalEndIntegrationVisitor endVisitor(params, dt);
-    this->gnode->execute(&endVisitor);
+    gnode->execute(&endVisitor);
 
-    this->gnode->setTime ( startTime + dt );
-    this->gnode->execute<UpdateSimulationContextVisitor>(params);  // propagate time
+    mop.projectPositionAndVelocity(pos, vel);
+    mop.propagateXAndV(pos, vel);
+
+    gnode->setTime ( startTime + dt );
+    gnode->execute<UpdateSimulationContextVisitor>(params);  // propagate time
 
     {
+        ScopedAdvancedTimer("AnimateEndEvent");
         AnimateEndEvent ev ( dt );
         PropagateEventVisitor act ( params, &ev );
-        this->gnode->execute ( act );
+        gnode->execute ( act );
     }
 
-
-    sofa::helper::AdvancedTimer::stepBegin("UpdateMapping");
-    //Visual Information update: Ray Pick add a MechanicalMapping used as VisualMapping
-    this->gnode->execute<UpdateMappingVisitor>(params);
-//	sofa::helper::AdvancedTimer::step("UpdateMappingEndEvent");
     {
-        UpdateMappingEndEvent ev ( dt );
-        PropagateEventVisitor act ( params , &ev );
-        this->gnode->execute ( act );
+        ScopedAdvancedTimer timer("UpdateMapping");
+        //Visual Information update: Ray Pick add a MechanicalMapping used as VisualMapping
+        gnode->execute<UpdateMappingVisitor>(params);
+        {
+            UpdateMappingEndEvent ev ( dt );
+            PropagateEventVisitor act ( params , &ev );
+            gnode->execute ( act );
+        }
     }
-    sofa::helper::AdvancedTimer::stepEnd("UpdateMapping");
 
-#ifndef SOFA_NO_UPDATE_BBOX
-    sofa::helper::AdvancedTimer::stepBegin("UpdateBBox");
-    this->gnode->execute<UpdateBoundingBoxVisitor>(params);
-    sofa::helper::AdvancedTimer::stepEnd("UpdateBBox");
-#endif
+    if (!SOFA_NO_UPDATE_BBOX)
+    {
+        ScopedAdvancedTimer timer("UpdateBBox");
+        gnode->execute<UpdateBoundingBoxVisitor>(params);
+    }
+
 #ifdef SOFA_DUMP_VISITOR_INFO
     simulation::Visitor::printCloseNode("Step");
 #endif
 
 }
 
-
-SOFA_DECL_CLASS(FreeMotionAnimationLoop)
-
-int FreeMotionAnimationLoopClass = core::RegisterObject("Constraint solver")
+int FreeMotionAnimationLoopClass = core::RegisterObject(R"(
+The animation loop to use with constraints.
+You must add this loop at the beginning of the scene if you are using constraints.")")
         .add< FreeMotionAnimationLoop >()
-        .addAlias("FreeMotionMasterSolver")
-        ;
+        .addAlias("FreeMotionMasterSolver");
 
 } // namespace animationloop
 

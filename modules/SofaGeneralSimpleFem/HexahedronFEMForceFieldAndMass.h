@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -72,57 +69,55 @@ protected:
     HexahedronFEMForceFieldAndMass();
 public:
 
-    virtual void init( );
-    virtual void reinit( );
+    void init( ) override;
+    void reinit( ) override;
 
     virtual void computeElementMasses( ); ///< compute the mass matrices
     virtual void computeElementMass( ElementMass &Mass, const helper::fixed_array<Coord,8> &nodes, const int elementIndice, SReal stiffnessFactor=1.0); ///< compute the mass matrix of an element
     Real integrateMass( int signx, int signy, int signz, Real l0, Real l1, Real l2 );
 
-    virtual std::string getTemplateName() const;
-
     // -- Mass interface
-    virtual  void addMDx(const core::MechanicalParams* mparams, DataVecDeriv& f, const DataVecDeriv& dx, SReal factor);
+     void addMDx(const core::MechanicalParams* mparams, DataVecDeriv& f, const DataVecDeriv& dx, SReal factor) override;
 
-    virtual void addMToMatrix(const core::MechanicalParams* mparams, const sofa::core::behavior::MultiMatrixAccessor* matrix);
+    void addMToMatrix(const core::MechanicalParams* mparams, const sofa::core::behavior::MultiMatrixAccessor* matrix) override;
 
     using HexahedronFEMForceFieldT::addKToMatrix;
     using core::behavior::Mass<DataTypes>::addKToMatrix;
-    void addKToMatrix(const core::MechanicalParams* mparams, const sofa::core::behavior::MultiMatrixAccessor* matrix)
+    void addKToMatrix(const core::MechanicalParams* mparams, const sofa::core::behavior::MultiMatrixAccessor* matrix) override
     {
         HexahedronFEMForceFieldT::addKToMatrix(mparams, matrix);
     }
 
-    virtual  void accFromF(const core::MechanicalParams* mparams, DataVecDeriv& a, const DataVecDeriv& f);
+     void accFromF(const core::MechanicalParams* mparams, DataVecDeriv& a, const DataVecDeriv& f) override;
 
-    virtual  void addForce(const core::MechanicalParams* mparams, DataVecDeriv& f, const DataVecCoord& x, const DataVecDeriv& v);
+     void addForce(const core::MechanicalParams* mparams, DataVecDeriv& f, const DataVecCoord& x, const DataVecDeriv& v) override;
 
-    virtual SReal getKineticEnergy(const core::MechanicalParams*, const DataVecDeriv& /*v*/ ) const  ///< vMv/2 using dof->getV()
+    SReal getKineticEnergy(const core::MechanicalParams*, const DataVecDeriv& /*v*/ ) const override ///< vMv/2 using dof->getV() override
     {
-        serr << "HexahedronFEMForceFieldAndMass::getKineticEnergy() not implemented" << sendl;
+        msg_warning() << "HexahedronFEMForceFieldAndMass::getKineticEnergy() not implemented" << msgendl;
         return 0.0;
     }
 
-    virtual SReal getPotentialEnergy(const core::MechanicalParams* /*mparams*/, const DataVecCoord&  /* x */) const
+    SReal getPotentialEnergy(const core::MechanicalParams* /*mparams*/, const DataVecCoord&  /* x */) const override
     {
-        serr << "HexahedronFEMForceFieldAndMass::getPotentialEnergy() not implemented" << sendl;
+        msg_warning() << "Method getPotentialEnergy not implemented yet.";
         return 0.0;
     }
 
-    virtual SReal getPotentialEnergy(const core::MechanicalParams* /*mparams*/) const
+    SReal getPotentialEnergy(const core::MechanicalParams* /*mparams*/) const override
     {
-        serr << "HexahedronFEMForceFieldAndMass::getPotentialEnergy() not implemented" << sendl;
+        msg_warning() << "Method getPotentialEnergy not implemented yet.";
         return 0.0;
     }
 
-    virtual void addDForce(const core::MechanicalParams* mparams, DataVecDeriv& df, const DataVecDeriv& dx);
+    void addDForce(const core::MechanicalParams* mparams, DataVecDeriv& df, const DataVecDeriv& dx) override;
 
-    virtual void addGravityToV(const core::MechanicalParams* mparams, DataVecDeriv& d_v);
+    void addGravityToV(const core::MechanicalParams* mparams, DataVecDeriv& d_v) override;
 
-    SReal getElementMass(unsigned int index) const;
+    SReal getElementMass(unsigned int index) const override;
     // visual model
 
-    virtual void draw(const core::visual::VisualParams* vparams);
+    void draw(const core::visual::VisualParams* vparams) override;
 
     virtual void initTextures() { }
 
@@ -130,16 +125,16 @@ public:
 
 
 
-    void setDensity(Real d) {_density.setValue( d );}
-    Real getDensity() {return _density.getValue();}
+    void setDensity(Real d) {d_density.setValue( d );}
+    Real getDensity() {return d_density.getValue();}
 
 
 
 protected :
 
-    Data<VecElementMass> _elementMasses; ///< mass matrices per element
-    Data<Real> _density;
-    Data<bool> _lumpedMass;
+    Data<VecElementMass> d_elementMasses; ///< mass matrices per element
+    Data<Real> d_density; ///< density == volumetric mass in english (kg.m-3)
+    Data<bool> d_lumpedMass; ///< Does it use lumped masses?
 
     MassVector _particleMasses; ///< masses per particle in order to compute gravity
     helper::vector<Coord> _lumpedMasses; ///< masses per particle computed by lumping mass matrices
@@ -147,13 +142,9 @@ protected :
 
 };
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_FORCEFIELD_HEXAHEDRONFEMFORCEFIELDANDMASS_CPP)
-#ifndef SOFA_FLOAT
-extern template class SOFA_GENERAL_SIMPLE_FEM_API HexahedronFEMForceFieldAndMass< defaulttype::Vec3dTypes >;
-#endif
-#ifndef SOFA_DOUBLE
-extern template class SOFA_GENERAL_SIMPLE_FEM_API HexahedronFEMForceFieldAndMass< defaulttype::Vec3fTypes >;
-#endif
+#if  !defined(SOFA_COMPONENT_FORCEFIELD_HEXAHEDRONFEMFORCEFIELDANDMASS_CPP)
+extern template class SOFA_GENERAL_SIMPLE_FEM_API HexahedronFEMForceFieldAndMass< defaulttype::Vec3Types >;
+
 #endif
 
 } // namespace forcefield

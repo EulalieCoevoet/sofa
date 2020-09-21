@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -455,7 +452,7 @@ void MathOp<VecT>::init()
     std::string op = f_op.getValue().getSelectedItem();
     bool result = MathOpApply< typename MathOpTraits<Value>::Ops >::isSupported(op);
     if (!result)
-        serr << "Operation " << op << " NOT SUPPORTED" << sendl;
+        msg_error() << "Operation " << op << " NOT SUPPORTED";
 
     setDirtyValue();
 }
@@ -469,21 +466,15 @@ void MathOp<VecT>::reinit()
 }
 
 template <class VecT>
-void MathOp<VecT>::update()
+void MathOp<VecT>::doUpdate()
 {
 //    createInputs();
     std::string op = f_op.getValue().getSelectedItem();
 
-    // ensure all inputs are up-to-date before cleaning engine
-    for (unsigned int i=0, iend=vf_inputs.size(); i<iend; ++i)
-        vf_inputs[i]->updateIfDirty();
-
-    cleanDirty();
-
     bool result = MathOpApply< typename MathOpTraits<Value>::Ops >::apply(
         op, &f_output, vf_inputs);
     if (!result)
-        serr << "Operation " << op << " FAILED" << sendl;
+        msg_error() << "Operation " << op << " FAILED";
 }
 
 } // namespace engine

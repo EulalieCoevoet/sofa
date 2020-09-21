@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -37,18 +34,25 @@ namespace collision
 
 using namespace defaulttype;
 
-SOFA_DECL_CLASS(RigidContactMapper)
-
-ContactMapperCreator< ContactMapper<CylinderModel,Vec3Types> > CylinderModelContactMapperClass("default", true);
+ContactMapperCreator< ContactMapper<CylinderCollisionModel<sofa::defaulttype::Rigid3Types>,Vec3Types> > CylinderModelContactMapperClass("default", true);
 ContactMapperCreator< ContactMapper<RigidSphereModel,Vec3Types> > RigidSphereContactMapperClass("default", true);
-ContactMapperCreator< ContactMapper<OBBModel,Vec3Types> > OBBContactMapperClass("default", true);
-ContactMapperCreator< ContactMapper<RigidCapsuleModel,Vec3Types> > RigidCapsuleContactMapperClass("default", true);
+ContactMapperCreator< ContactMapper<OBBCollisionModel<sofa::defaulttype::Rigid3Types>,Vec3Types> > OBBContactMapperClass("default", true);
+ContactMapperCreator< ContactMapper<CapsuleCollisionModel<sofa::defaulttype::Rigid3Types>,Vec3Types> > RigidCapsuleContactMapperClass("default", true);
 
 
-template class SOFA_MESH_COLLISION_API ContactMapper<CylinderModel,Vec3Types>;
+template class SOFA_MESH_COLLISION_API ContactMapper<CylinderCollisionModel<sofa::defaulttype::Rigid3Types>,Vec3Types>;
 template class SOFA_MESH_COLLISION_API ContactMapper<RigidSphereModel,Vec3Types>;
-template class SOFA_MESH_COLLISION_API ContactMapper<OBBModel,Vec3Types>;
-template class SOFA_MESH_COLLISION_API ContactMapper<RigidCapsuleModel,Vec3Types>;
+template class SOFA_MESH_COLLISION_API ContactMapper<OBBCollisionModel<sofa::defaulttype::Rigid3Types>,Vec3Types>;
+template class SOFA_MESH_COLLISION_API ContactMapper<CapsuleCollisionModel<sofa::defaulttype::Rigid3Types>,Vec3Types>;
+
+template SOFA_MESH_COLLISION_API void RigidContactMapper<CylinderCollisionModel<sofa::defaulttype::Rigid3Types>, defaulttype::Vec3Types>::cleanup();
+template SOFA_MESH_COLLISION_API core::behavior::MechanicalState<defaulttype::Vec3Types>* RigidContactMapper<CylinderCollisionModel<sofa::defaulttype::Rigid3Types>, defaulttype::Vec3Types>::createMapping(const char*);
+template SOFA_MESH_COLLISION_API void RigidContactMapper<CapsuleCollisionModel<sofa::defaulttype::Rigid3Types>, defaulttype::Vec3Types>::cleanup();
+template SOFA_MESH_COLLISION_API core::behavior::MechanicalState<defaulttype::Vec3Types>* RigidContactMapper<CapsuleCollisionModel<sofa::defaulttype::Rigid3Types>, defaulttype::Vec3Types>::createMapping(const char*);
+template SOFA_MESH_COLLISION_API void RigidContactMapper<RigidSphereModel, defaulttype::Vec3Types>::cleanup();
+template SOFA_MESH_COLLISION_API core::behavior::MechanicalState<defaulttype::Vec3Types>* RigidContactMapper<RigidSphereModel, defaulttype::Vec3Types>::createMapping(const char*);
+template SOFA_MESH_COLLISION_API void RigidContactMapper<OBBCollisionModel<sofa::defaulttype::Rigid3Types>, defaulttype::Vec3Types>::cleanup();
+template SOFA_MESH_COLLISION_API core::behavior::MechanicalState<defaulttype::Vec3Types>* RigidContactMapper<OBBCollisionModel<sofa::defaulttype::Rigid3Types>, defaulttype::Vec3Types>::createMapping(const char*);
 
 } // namespace collision
 

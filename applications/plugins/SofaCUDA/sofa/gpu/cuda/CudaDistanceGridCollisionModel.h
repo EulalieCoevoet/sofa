@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -29,7 +26,7 @@
 
 #include <sofa/core/CollisionModel.h>
 #include <SofaBaseMechanics/MechanicalObject.h>
-#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/helper/io/Mesh.h>
 #include <sofa/core/topology/BaseMeshTopology.h>
@@ -479,19 +476,19 @@ protected:
 public:
     // Input data parameters
     sofa::core::objectmodel::DataFileName fileCudaRigidDistanceGrid;
-    Data< double > scale;
-    Data< double > sampling;
-    Data< helper::fixed_array<CudaDistanceGrid::Coord,2> > box;
-    Data< int > nx;
-    Data< int > ny;
-    Data< int > nz;
+    Data< double > scale; ///< scaling factor for input file
+    Data< double > sampling; ///< if not zero: sample the surface with points approximately separated by the given sampling distance (expressed in voxels if the value is negative)
+    Data< helper::fixed_array<CudaDistanceGrid::Coord,2> > box; ///< Field bounding box defined by xmin,ymin,zmin, xmax,ymax,zmax
+    Data< int > nx; ///< number of values on X axis
+    Data< int > ny; ///< number of values on Y axis
+    Data< int > nz; ///< number of values on Z axis
     sofa::core::objectmodel::DataFileName dumpfilename;
 
     typedef Rigid3Types InDataTypes;
     typedef Vec3Types DataTypes;
     typedef CudaRigidDistanceGridCollisionElement Element;
 
-    Data< bool > usePoints;
+    Data< bool > usePoints; ///< use mesh vertices for collision detection
 
     CudaRigidDistanceGridCollisionModel();
 
@@ -500,7 +497,7 @@ public:
     core::behavior::MechanicalState<InDataTypes>* getRigidModel() { return rigid; }
     core::behavior::MechanicalState<InDataTypes>* getMechanicalState() { return rigid; }
 
-    void init();
+    void init() override;
 
     CudaDistanceGrid* getGrid(int index=0)
     {
@@ -548,14 +545,14 @@ public:
 
     // -- CollisionModel interface
 
-    void resize(int size);
+    void resize(int size) override;
 
     /// Create or update the bounding volume hierarchy.
-    void computeBoundingTree(int maxDepth=0);
+    void computeBoundingTree(int maxDepth=0) override;
 
-    void draw(const core::visual::VisualParams*,int index);
+    void draw(const core::visual::VisualParams*,int index) override;
 
-    void draw(const core::visual::VisualParams*);
+    void draw(const core::visual::VisualParams*) override;
 };
 
 inline CudaRigidDistanceGridCollisionElement::CudaRigidDistanceGridCollisionElement(CudaRigidDistanceGridCollisionModel* model, int index)

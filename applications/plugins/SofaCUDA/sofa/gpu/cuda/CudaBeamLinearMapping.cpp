@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -37,8 +34,6 @@ namespace gpu
 namespace cuda
 {
 
-SOFA_DECL_CLASS(CudaBeamLinearMapping)
-
 using namespace sofa::component::mapping;
 using namespace defaulttype;
 using namespace core;
@@ -49,9 +44,8 @@ using namespace core::behavior;
 int BeamLinearMappingCudaClass = core::RegisterObject("Set the positions and velocities of points attached to a beam using linear interpolation between DOFs")
 
         .add< BeamLinearMapping<Rigid3fTypes, CudaVec3fTypes> >()
-#ifndef SOFA_FLOAT
-        .add< BeamLinearMapping<Rigid3dTypes, CudaVec3fTypes> >()
-#endif
+        .add< BeamLinearMapping<Rigid3Types, CudaVec3Types> >()
+
 #ifdef SOFA_GPU_CUDA_DOUBLE
         .add< BeamLinearMapping<Rigid3fTypes, CudaVec3dTypes> >()
         .add< BeamLinearMapping<Rigid3dTypes, CudaVec3dTypes> >()
@@ -72,14 +66,13 @@ using namespace defaulttype;
 using namespace core;
 using namespace core::behavior;
 
-template class BeamLinearMapping< Rigid3fTypes, sofa::gpu::cuda::CudaVec3fTypes>;
-#ifndef SOFA_FLOAT
-template class BeamLinearMapping< Rigid3dTypes, sofa::gpu::cuda::CudaVec3fTypes>;
-#endif
+template class SOFA_GPU_CUDA_API BeamLinearMapping< Rigid3fTypes, sofa::gpu::cuda::CudaVec3fTypes>;
+template class SOFA_GPU_CUDA_API BeamLinearMapping< Rigid3Types, sofa::gpu::cuda::CudaVec3Types>;
+
 
 #ifdef SOFA_GPU_CUDA_DOUBLE
-template class BeamLinearMapping< Rigid3fTypes, sofa::gpu::cuda::CudaVec3dTypes>;
-template class BeamLinearMapping< Rigid3dTypes, sofa::gpu::cuda::CudaVec3dTypes>;
+template class SOFA_GPU_CUDA_API BeamLinearMapping< Rigid3fTypes, sofa::gpu::cuda::CudaVec3dTypes>;
+template class SOFA_GPU_CUDA_API BeamLinearMapping< Rigid3dTypes, sofa::gpu::cuda::CudaVec3dTypes>;
 #endif
 
 

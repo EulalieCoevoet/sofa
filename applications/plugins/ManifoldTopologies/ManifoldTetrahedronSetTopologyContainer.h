@@ -1,33 +1,28 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_COMPONENT_TOPOLOGY_MANIFOLDTETRAHEDRONSETTOPOLOGYCONTAINER_H
-#define SOFA_COMPONENT_TOPOLOGY_MANIFOLDTETRAHEDRONSETTOPOLOGYCONTAINER_H
-#include <ManifoldTopologies/config.h>
+#ifndef SOFA_MANIFOLD_TOPOLOGY_TETRAHEDRONSETTOPOLOGYCONTAINER_H
+#define SOFA_MANIFOLD_TOPOLOGY_TETRAHEDRONSETTOPOLOGYCONTAINER_H
 
 #include <ManifoldTopologies/config.h>
-
 #include <SofaBaseTopology/TetrahedronSetTopologyContainer.h>
 
 namespace sofa
@@ -71,15 +66,15 @@ public:
 
     ManifoldTetrahedronSetTopologyContainer();
 
-    virtual ~ManifoldTetrahedronSetTopologyContainer() {}
+    ~ManifoldTetrahedronSetTopologyContainer() override {}
 
-    virtual void init();
-    virtual void reinit();
+    void init() override;
+    void reinit() override;
 
 
     /// Procedural creation methods
     /// @{
-    virtual void clear();
+    void clear() override;
     /// @}
 
 
@@ -87,7 +82,7 @@ public:
      *
      * TODO: like in ManifoldTriangles, test the topology
      */
-    virtual bool checkTopology() const;
+    bool checkTopology() const override;
     /** \brief Returns the Tetrahedron array.
      *
      */
@@ -122,29 +117,29 @@ protected:
      * This function is only called if the TetrahedraAroundVertex array is required.
      * m_tetrahedraAroundVertex[i] contains the indices of all tetrahedra adjacent to the ith vertex
      */
-    virtual void createTetrahedraAroundVertexArray();
+    void createTetrahedraAroundVertexArray() override;
 
     /** \brief Creates the Tetrahedron Edge Shell Array
      *
      * This function is only called if the TetrahedronEdheShell array is required.
      * m_tetrahedraAroundEdge[i] contains the indices of all tetrahedra adjacent to the ith edge
      */
-    virtual void createTetrahedraAroundEdgeArray();
+    void createTetrahedraAroundEdgeArray() override;
 
     /** \brief Creates the Tetrahedron Triangle Shell Array
      *
      * This function is only called if the TetrahedraAroundTriangle array is required.
      * m_tetrahedraAroundTriangle[i] contains the indices of all tetrahedra adjacent to the ith edge
      */
-    virtual void createTetrahedraAroundTriangleArray();
+    void createTetrahedraAroundTriangleArray() override;
 
 
 
 protected:
 
-    Data<bool> debugViewIndices;
-    Data<bool> debugViewIndicesTetra;
-    Data<bool> shellDisplay;
+    Data<bool> debugViewIndices; ///< Debug : view triangles indices
+    Data<bool> debugViewIndicesTetra; ///< Debug : view tetra indices
+    Data<bool> shellDisplay; ///< Debug : view shells tetra
 
 
 };
@@ -155,4 +150,4 @@ protected:
 
 } // namespace sofa
 
-#endif
+#endif // SOFA_MANIFOLD_TOPOLOGY_TETRAHEDRONSETTOPOLOGYCONTAINER_H

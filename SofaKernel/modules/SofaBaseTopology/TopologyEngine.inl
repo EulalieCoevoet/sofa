@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -29,7 +26,7 @@
 
 #include <SofaBaseTopology/TetrahedronSetTopologyContainer.h>
 #include <SofaBaseTopology/HexahedronSetTopologyContainer.h>
-
+#include <sofa/helper/AdvancedTimer.h>
 
 namespace sofa
 {
@@ -43,18 +40,18 @@ TopologyEngineImpl< VecT>::TopologyEngineImpl(t_topologicalData *_topologicalDat
         sofa::core::topology::BaseMeshTopology *_topology,
         sofa::core::topology::TopologyHandler *_topoHandler) :
     m_topologicalData(_topologicalData),
-    m_topology(NULL),
+    m_topology(nullptr),
     m_topoHandler(_topoHandler),
     m_pointsLinked(false), m_edgesLinked(false), m_trianglesLinked(false),
     m_quadsLinked(false), m_tetrahedraLinked(false), m_hexahedraLinked(false)
 {
     m_topology =  dynamic_cast<sofa::core::topology::TopologyContainer*>(_topology);
 
-    if (m_topology == NULL)
-        serr <<"Error: Topology is not dynamic" << sendl;
+    if (m_topology == nullptr)
+        msg_error() << "Topology is not dynamic";
 
-    if (m_topoHandler == NULL)
-        serr <<"Error: Topology Handler not available" << sendl;
+    if (m_topoHandler == nullptr)
+        msg_error() << "Topology Handler not available";
 }
 
 template <typename VecT>
@@ -85,14 +82,12 @@ void TopologyEngineImpl< VecT>::reinit()
 
 
 template <typename VecT>
-void TopologyEngineImpl< VecT>::update()
+void TopologyEngineImpl< VecT>::doUpdate()
 {
-#ifndef NDEBUG // too much warnings
-    sout << "TopologyEngine::update" << sendl;
-    sout<< "Number of topological changes: " << m_changeList.getValue().size() << sendl;
-#endif
-    this->cleanDirty();
+    std::string msg = this->name.getValue() + " - doUpdate: Nbr changes: " + std::to_string(m_changeList.getValue().size());
+    sofa::helper::AdvancedTimer::stepBegin(msg.c_str());
     this->ApplyTopologyChanges();
+    sofa::helper::AdvancedTimer::stepEnd(msg.c_str());
 }
 
 
@@ -101,11 +96,9 @@ void TopologyEngineImpl< VecT>::registerTopology(sofa::core::topology::BaseMeshT
 {
     m_topology =  dynamic_cast<sofa::core::topology::TopologyContainer*>(_topology);
 
-    if (m_topology == NULL)
+    if (m_topology == nullptr)
     {
-#ifndef NDEBUG // too much warnings
-        serr <<"Error: Topology is not dynamic" << sendl;
-#endif
+        msg_error() <<"Topology: " << _topology->getName() << " is not dynamic, topology engine on Data '" << m_data_name << "' won't be registered.";
         return;
     }
     else
@@ -116,11 +109,9 @@ void TopologyEngineImpl< VecT>::registerTopology(sofa::core::topology::BaseMeshT
 template <typename VecT>
 void TopologyEngineImpl< VecT>::registerTopology()
 {
-    if (m_topology == NULL)
+    if (m_topology == nullptr)
     {
-#ifndef NDEBUG // too much warnings
-        serr <<"Error: Topology is not dynamic" << sendl;
-#endif
+        msg_error() << "Current topology is not dynamic, topology engine on Data '" << m_data_name << "' won't be registered.";
         return;
     }
     else
@@ -150,11 +141,9 @@ void TopologyEngineImpl< VecT>::linkToPointDataArray()
 
     sofa::component::topology::PointSetTopologyContainer* _container = dynamic_cast<sofa::component::topology::PointSetTopologyContainer*>(m_topology);
 
-    if (_container == NULL)
+    if (_container == nullptr)
     {
-#ifndef NDEBUG
-        serr <<"Error: Can't dynamic cast topology as PointSetTopologyContainer" << sendl;
-#endif
+        msg_error() << "Owner topology can't be cast as PointSetTopologyContainer, Data '" << m_data_name << "' won't be linked to Point Data Array.";
         return;
     }
 
@@ -171,11 +160,9 @@ void TopologyEngineImpl< VecT>::linkToEdgeDataArray()
 
     sofa::component::topology::EdgeSetTopologyContainer* _container = dynamic_cast<sofa::component::topology::EdgeSetTopologyContainer*>(m_topology);
 
-    if (_container == NULL)
+    if (_container == nullptr)
     {
-#ifndef NDEBUG
-        serr <<"Error: Can't dynamic cast topology as EdgeSetTopologyContainer" << sendl;
-#endif
+        msg_error() << "Owner topology can't be cast as EdgeSetTopologyContainer, Data '" << m_data_name << "' won't be linked to Edge Data Array.";
         return;
     }
 
@@ -192,11 +179,9 @@ void TopologyEngineImpl< VecT>::linkToTriangleDataArray()
 
     sofa::component::topology::TriangleSetTopologyContainer* _container = dynamic_cast<sofa::component::topology::TriangleSetTopologyContainer*>(m_topology);
 
-    if (_container == NULL)
+    if (_container == nullptr)
     {
-#ifndef NDEBUG
-        serr <<"Error: Can't dynamic cast topology as TriangleSetTopologyContainer" << sendl;
-#endif
+        msg_error() << "Owner topology can't be cast as TriangleSetTopologyContainer, Data '" << m_data_name << "' won't be linked to Triangle Data Array.";
         return;
     }
 
@@ -213,11 +198,9 @@ void TopologyEngineImpl< VecT>::linkToQuadDataArray()
 
     sofa::component::topology::QuadSetTopologyContainer* _container = dynamic_cast<sofa::component::topology::QuadSetTopologyContainer*>(m_topology);
 
-    if (_container == NULL)
+    if (_container == nullptr)
     {
-#ifndef NDEBUG
-        serr <<"Error: Can't dynamic cast topology as QuadSetTopologyContainer" << sendl;
-#endif
+        msg_error() << "Owner topology can't be cast as QuadSetTopologyContainer, Data '" << m_data_name << "' won't be linked to Quad Data Array.";
         return;
     }
 
@@ -234,11 +217,9 @@ void TopologyEngineImpl< VecT>::linkToTetrahedronDataArray()
 
     sofa::component::topology::TetrahedronSetTopologyContainer* _container = dynamic_cast<sofa::component::topology::TetrahedronSetTopologyContainer*>(m_topology);
 
-    if (_container == NULL)
+    if (_container == nullptr)
     {
-#ifndef NDEBUG
-        serr <<"Error: Can't dynamic cast topology as TetrahedronSetTopologyContainer" << sendl;
-#endif
+        msg_error() << "Owner topology can't be cast as TetrahedronSetTopologyContainer, Data '" << m_data_name << "' won't be linked to Tetrahedron Data Array.";
         return;
     }
 
@@ -255,11 +236,9 @@ void TopologyEngineImpl< VecT>::linkToHexahedronDataArray()
 
     sofa::component::topology::HexahedronSetTopologyContainer* _container = dynamic_cast<sofa::component::topology::HexahedronSetTopologyContainer*>(m_topology);
 
-    if (_container == NULL)
+    if (_container == nullptr)
     {
-#ifndef NDEBUG
-        serr <<"Error: Can't dynamic cast topology as HexahedronSetTopologyContainer" << sendl;
-#endif
+        msg_error() << "Owner topology can't be cast as HexahedronSetTopologyContainer, Data '" << m_data_name << "' won't be linked to Hexahedron Data Array.";
         return;
     }
 

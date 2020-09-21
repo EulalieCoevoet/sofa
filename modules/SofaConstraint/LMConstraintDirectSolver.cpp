@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -198,13 +195,10 @@ bool LMConstraintDirectSolver::solveSystem(const core::ConstraintParams* cParams
         Lambda.noalias() = solverSVD.matrixV()*invSingularValues.asDiagonal()*solverSVD.matrixU().transpose()*c;
     }
 
-    if (this->f_printLog.getValue())
-    {
-        sout << "W" <<  printDimension(W) <<  "  Lambda" << printDimension(Lambda) << "  c" << printDimension(c) << sendl;
-        sout << "\nW     ===============================================\n" << W
-                <<  "\nLambda===============================================\n" << Lambda
-                <<  "\nc     ===============================================\n" << c << sendl;
-    }
+    msg_info() << "W" <<  printDimension(W) <<  "  Lambda" << printDimension(Lambda) << "  c" << printDimension(c) << msgendl
+                << "W     ===============================================\n" << W << msgendl
+                << "Lambda===============================================\n" << Lambda << msgendl
+                << "c     ===============================================\n" << c ;
 
 #ifdef SOFA_DUMP_VISITOR_INFO
     sofa::simulation::Visitor::printCloseNode("DirectSolveSystem");
@@ -237,13 +231,10 @@ void LMConstraintDirectSolver::analyseConstraints(const helper::vector< sofa::co
                 {
                 case VANISHING:
                 {
-                    //                    serr <<"Constraint " << idxEquation << " VANISHING" << sendl;
-                    //0 equation
                     break;
                 }
                 case STICKING:
                 {
-                    //                    serr << "Constraint " <<idxEquation << " STICKING" << sendl;
                     const unsigned int i=rowsL.size();
                     rowsL.push_back(linearsolver::LLineManipulator().addCombination(idxEquation  ));
                     rowsL.push_back(linearsolver::LLineManipulator().addCombination(idxEquation+1));
@@ -261,7 +252,6 @@ void LMConstraintDirectSolver::analyseConstraints(const helper::vector< sofa::co
                 }
                 case SLIDING:
                 {
-                    //                    serr << "Constraint " <<idxEquation << " SLIDING" << sendl;
                     rowsL.push_back(linearsolver::LLineManipulator().addCombination(idxEquation  ));
                     rowsL.push_back(linearsolver::LLineManipulator().addCombination(idxEquation+1));
                     rowsL.push_back(linearsolver::LLineManipulator().addCombination(idxEquation+2));
@@ -318,15 +308,11 @@ void LMConstraintDirectSolver::buildLeftRectangularMatrix(const DofToMatrix& inv
         SparseMatrixEigen invMass_LT=invMass*LT.transpose();
 
         invMass_Ltrans.insert(std::make_pair(dofs, invMass_LT));
-        //SparseColMajorMatrixEigen temp=L*invMass_LT;
         LeftMatrix += L*invMass_LT;
     }
 }
 int LMConstraintDirectSolverClass = core::RegisterObject("A Direct Constraint Solver working specifically with LMConstraint based components")
         .add< LMConstraintDirectSolver >();
-
-SOFA_DECL_CLASS(LMConstraintDirectSolver);
-
 
 } // namespace constraintset
 

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -63,14 +60,14 @@ public:
 
     typedef defaulttype::Mat<sizeT,sizeT,Real> affine;
 
-    Data<unsigned int> f_nbInputs;
+    Data<unsigned int> f_nbInputs; ///< Number of input vectors
     helper::vectorData<VecCoord> vf_inputs;
     helper::vectorData<VecCoord> vf_outputs;
 
-    virtual std::string getTemplateName() const    { return templateName(this);    }
+    virtual std::string getTemplateName() const override { return templateName(this);    }
     static std::string templateName(const GroupwiseRegistrationEngine<T>* = NULL) { return T::Name();   }
 
-    virtual void init()
+    void init() override
     {
         addInput(&f_nbInputs);
         vf_inputs.resize(f_nbInputs.getValue());
@@ -78,7 +75,7 @@ public:
         setDirtyValue();
     }
 
-    virtual void reinit()
+    void reinit() override
     {
         vf_inputs.resize(f_nbInputs.getValue());
         vf_outputs.resize(f_nbInputs.getValue());
@@ -97,15 +94,12 @@ protected:
     }
 
 
-    virtual ~GroupwiseRegistrationEngine()
+    ~GroupwiseRegistrationEngine() override
     {
     }
 
-    virtual void update()
+    void doUpdate() override
     {
-        updateAllInputsIfDirty();
-        cleanDirty();
-
         const unsigned int M = vf_inputs.size();
         if(!M) return;
 
@@ -158,7 +152,7 @@ protected:
 public:
 
     /// Parse the given description to assign values to this object's fields and potentially other parameters
-    void parse ( sofa::core::objectmodel::BaseObjectDescription* arg )
+    void parse ( sofa::core::objectmodel::BaseObjectDescription* arg ) override
     {
         vf_inputs.parseSizeData(arg, f_nbInputs);
         vf_outputs.parseSizeData(arg, f_nbInputs);
@@ -166,7 +160,7 @@ public:
     }
 
     /// Assign the field values stored in the given map of name -> value pairs
-    void parseFields ( const std::map<std::string,std::string*>& str )
+    void parseFields ( const std::map<std::string,std::string*>& str ) override
     {
         vf_inputs.parseFieldsSizeData(str, f_nbInputs);
         vf_outputs.parseFieldsSizeData(str, f_nbInputs);

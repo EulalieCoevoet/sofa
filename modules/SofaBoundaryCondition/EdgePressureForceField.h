@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -55,6 +52,7 @@ public:
     typedef Data<VecCoord>                  DataVecCoord;
     typedef Data<VecDeriv>                  DataVecDeriv;
     typedef sofa::defaulttype::Vec3d        Vec3d;
+
 protected:
 
     class EdgePressureInformation
@@ -67,7 +65,6 @@ protected:
         EdgePressureInformation(const EdgePressureInformation &e)
             : length(e.length),force(e.force)
         { }
-
 
         /// Output stream
         inline friend std::ostream& operator<< ( std::ostream& os, const EdgePressureInformation& /*ei*/ )
@@ -82,65 +79,42 @@ protected:
         }
     };
 
-    sofa::component::topology::EdgeSparseData<sofa::helper::vector< EdgePressureInformation> > edgePressureMap;
+    sofa::component::topology::EdgeSparseData<sofa::helper::vector< EdgePressureInformation> > edgePressureMap; ///< map between edge indices and their pressure
 
-    sofa::core::topology::BaseMeshTopology* _topology;
     sofa::component::topology::TriangleSetTopologyContainer* _completeTopology;
     sofa::component::topology::EdgeSetGeometryAlgorithms<DataTypes>* edgeGeo;
 
-    Data<Deriv> pressure;
-    Data<helper::vector<unsigned int> > edgeIndices;
-    Data<helper::vector<sofa::core::topology::Edge> > edges;
-    Data<Deriv> normal; // the normal used to define the edge subjected to the pressure force
-    Data<Real> dmin; // coordinates min of the plane for the vertex selection
-    Data<Real> dmax;// coordinates max of the plane for the vertex selection
-    Data< SReal > arrowSizeCoef; // for drawing. The sign changes the direction, 0 doesn't draw arrow
-    Data< helper::vector<Real> > p_intensity; // pressure intensity on edge normal
-    Data<Coord> p_binormal; // binormal of the 2D plane
-    Data<bool> p_showForces;
+    Data<Deriv> pressure; ///< Pressure force per unit area
+    Data<helper::vector<unsigned int> > edgeIndices; ///< Indices of edges separated with commas where a pressure is applied
+    Data<helper::vector<sofa::core::topology::Edge> > edges; ///< List of edges where a pressure is applied
+    Data<Deriv> normal; ///< the normal used to define the edge subjected to the pressure force
+    Data<Real> dmin; ///< coordinates min of the plane for the vertex selection
+    Data<Real> dmax;///< coordinates max of the plane for the vertex selection
+    Data< SReal > arrowSizeCoef; ///< for drawing. The sign changes the direction, 0 doesn't draw arrow
+    Data< helper::vector<Real> > p_intensity; ///< pressure intensity on edge normal
+    Data<Coord> p_binormal; ///< binormal of the 2D plane
+    Data<bool> p_showForces; ///< draw arrows of edge pressures
 
+    /// Link to be set to the topology container in the component graph.
+    SingleLink<EdgePressureForceField<DataTypes>, sofa::core::topology::BaseMeshTopology, BaseLink::FLAG_STOREPATH | BaseLink::FLAG_STRONGLINK> l_topology;
 
-
-    EdgePressureForceField()
-        : edgePressureMap(initData(&edgePressureMap, "edgePressureMap", "map between edge indices and their pressure"))
-        ,pressure(initData(&pressure, "pressure", "Pressure force per unit area"))
-        , edgeIndices(initData(&edgeIndices,"edgeIndices", "Indices of edges separated with commas where a pressure is applied"))
-        , edges(initData(&edges, "edges", "List of edges where a pressure is applied"))
-        , normal(initData(&normal,"normal", "Normal direction for the plane selection of edges"))
-        , dmin(initData(&dmin,(Real)0.0, "dmin", "Minimum distance from the origin along the normal direction"))
-        , dmax(initData(&dmax,(Real)0.0, "dmax", "Maximum distance from the origin along the normal direction"))
-        , arrowSizeCoef(initData(&arrowSizeCoef,(SReal)0.0, "arrowSizeCoef", "Size of the drawn arrows (0->no arrows, sign->direction of drawing"))
-        , p_intensity(initData(&p_intensity,"p_intensity", "pressure intensity on edge normal"))
-        , p_binormal(initData(&p_binormal,"binormal", "Binormal of the 2D plane"))
-        , p_showForces(initData(&p_showForces, (bool)false, "showForces", "draw arrows of edge pressures"))
-    {
-        _completeTopology = NULL;
-    }
+    EdgePressureForceField();
 
     virtual ~EdgePressureForceField();
+
+    /// Pointer to the current topology
+    sofa::core::topology::BaseMeshTopology* m_topology;
 public:
-    virtual void init();
+    void init() override;
 
-    virtual void addForce(const sofa::core::MechanicalParams* /*mparams*/, DataVecDeriv &  dataF, const DataVecCoord &  dataX , const DataVecDeriv & dataV ) ;
-    virtual void addDForce(const core::MechanicalParams* mparams, DataVecDeriv& /* d_df */, const DataVecDeriv& /* d_dx */)
-    {
-        //TODO: remove this line (avoid warning message) ...
-        mparams->setKFactorUsed(true);
-    }
+    void addForce(const sofa::core::MechanicalParams* /*mparams*/, DataVecDeriv &  dataF, const DataVecCoord &  dataX , const DataVecDeriv & dataV ) override;
+    void addDForce(const core::MechanicalParams* mparams, DataVecDeriv& /* d_df */, const DataVecDeriv& /* d_dx */) override;
 
-    virtual SReal getPotentialEnergy(const core::MechanicalParams* /*mparams*/, const DataVecCoord&  /* x */) const
-    {
-        serr << "Get potentialEnergy not implemented" << sendl;
-        return 0.0;
-    }
+    SReal getPotentialEnergy(const core::MechanicalParams* /*mparams*/, const DataVecCoord&  /* x */) const override;
 
+    void draw(const core::visual::VisualParams* vparams) override;
 
-    void draw(const core::visual::VisualParams* vparams);
-
-    void setDminAndDmax(const SReal _dmin, const SReal _dmax)
-    {
-        dmin.setValue((Real)_dmin); dmax.setValue((Real)_dmax);
-    }
+    void setDminAndDmax(const SReal _dmin, const SReal _dmax);
     void setNormal(const Coord n) { normal.setValue(n);}
     void setPressure(Deriv _pressure) { this->pressure = _pressure; updateEdgeInformation(); }
 
@@ -151,26 +125,15 @@ protected :
     void selectEdgesFromEdgeList();
     void updateEdgeInformation();
     void initEdgeInformation();
-    bool isPointInPlane(Coord p)
-    {
-        Real d=dot(p,normal.getValue());
-        if ((d>dmin.getValue())&& (d<dmax.getValue()))
-            return true;
-        else
-            return false;
-    }
+    bool isPointInPlane(Coord p);
 };
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_FORCEFIELD_EDGEPRESSUREFORCEFIELD_CPP)
 
-#ifndef SOFA_FLOAT
-extern template class SOFA_BOUNDARY_CONDITION_API EdgePressureForceField<sofa::defaulttype::Vec3dTypes>;
-#endif
-#ifndef SOFA_DOUBLE
-extern template class SOFA_BOUNDARY_CONDITION_API EdgePressureForceField<sofa::defaulttype::Vec3fTypes>;
-#endif
+#if  !defined(SOFA_COMPONENT_FORCEFIELD_EDGEPRESSUREFORCEFIELD_CPP)
+extern template class SOFA_BOUNDARY_CONDITION_API EdgePressureForceField<sofa::defaulttype::Vec3Types>;
 
-#endif //defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_FORCEFIELD_EDGEPRESSUREFORCEFIELD_CPP)
+
+#endif // !defined(SOFA_COMPONENT_FORCEFIELD_EDGEPRESSUREFORCEFIELD_CPP)
 
 } // namespace forcefield
 

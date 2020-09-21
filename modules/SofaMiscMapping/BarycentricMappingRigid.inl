@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -39,13 +36,34 @@ namespace component
 namespace mapping
 {
 
+template <class In, class Out>
+BarycentricMapperTetrahedronSetTopologyRigid<In,Out>::BarycentricMapperTetrahedronSetTopologyRigid(topology::TetrahedronSetTopologyContainer* fromTopology, topology::PointSetTopologyContainer* _toTopology)
+    : TopologyBarycentricMapper<In,Out>(fromTopology, _toTopology),
+      map(initData(&map,"map", "mapper data")),
+      mapOrient(initData(&mapOrient,"mapOrient", "mapper data for mapped frames")),
+      _fromContainer(fromTopology),
+      _fromGeomAlgo(nullptr),
+      matrixJ(nullptr),
+      updateJ(true)
+{
+}
 
 template <class In, class Out>
 void BarycentricMapperTetrahedronSetTopologyRigid<In,Out>::clear ( int reserve )
 {
+
     helper::vector<MappingData>& vectorData = *(map.beginEdit());
-    vectorData.clear(); if ( reserve>0 ) vectorData.reserve ( reserve );
+    vectorData.clear();
+    if ( reserve>0 )
+        vectorData.reserve ( reserve );
     map.endEdit();
+
+    helper::vector<MappingOrientData>& vectorOrientData = *(mapOrient.beginEdit());
+    vectorOrientData.clear();
+    if ( reserve>0 )
+        vectorOrientData.reserve ( reserve );
+
+    mapOrient.endEdit();
 }
 
 template <class In, class Out>
@@ -95,7 +113,7 @@ void BarycentricMapperTetrahedronSetTopologyRigid<In,Out>::init(const typename O
     _fromContainer->getContext()->get ( _fromGeomAlgo );
 
     int outside = 0;
-    const sofa::helper::vector<core::topology::BaseMeshTopology::Tetrahedron>& tetrahedra = this->fromTopology->getTetrahedra();
+    const sofa::helper::vector<core::topology::BaseMeshTopology::Tetrahedron>& tetrahedra = this->m_fromTopology->getTetrahedra();
 
     sofa::helper::vector<sofa::defaulttype::Matrix3> bases;
     sofa::helper::vector<sofa::defaulttype::Vector3> centers;
@@ -167,7 +185,7 @@ void BarycentricMapperTetrahedronSetTopologyRigid<In,Out>::apply( typename Out::
 {
     actualTetraPosition=in;
     //get number of point being mapped
-    const sofa::helper::vector<core::topology::BaseMeshTopology::Tetrahedron>& tetrahedra = this->fromTopology->getTetrahedra();
+    const sofa::helper::vector<core::topology::BaseMeshTopology::Tetrahedron>& tetrahedra = this->m_fromTopology->getTetrahedra();
     const sofa::helper::vector<MappingData >& map = this->map.getValue();
     const sofa::helper::vector<MappingOrientData >& mapOrient = this->mapOrient.getValue();
 
@@ -230,7 +248,7 @@ void BarycentricMapperTetrahedronSetTopologyRigid<In,Out>::applyJ( typename Out:
 {
     out.resize( map.getValue().size() );
 
-    const sofa::helper::vector<core::topology::BaseMeshTopology::Tetrahedron>& tetrahedra = this->fromTopology->getTetrahedra();
+    const sofa::helper::vector<core::topology::BaseMeshTopology::Tetrahedron>& tetrahedra = this->m_fromTopology->getTetrahedra();
     const sofa::helper::vector<MappingData >& map = this->map.getValue();
     // TODO: use mapOrient
     //const sofa::helper::vector<MappingOrientData >& mapOrient = this->mapOrient.getValue();
@@ -264,7 +282,7 @@ void BarycentricMapperTetrahedronSetTopologyRigid<In,Out>::applyJ( typename Out:
 template<class In, class Out>
 void BarycentricMapperTetrahedronSetTopologyRigid<In,Out>::applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in )
 {
-    const sofa::helper::vector<core::topology::BaseMeshTopology::Tetrahedron>& tetrahedra = this->fromTopology->getTetrahedra();
+    const sofa::helper::vector<core::topology::BaseMeshTopology::Tetrahedron>& tetrahedra = this->m_fromTopology->getTetrahedra();
     const sofa::helper::vector<MappingData >& map = this->map.getValue();
     typename core::behavior::MechanicalState<Out>* mechanicalObject;
     this->getContext()->get(mechanicalObject);
@@ -317,32 +335,30 @@ void BarycentricMapperTetrahedronSetTopologyRigid<In,Out>::applyJT( typename In:
 
 template<class In, class Out>
 const sofa::defaulttype::BaseMatrix* BarycentricMapperTetrahedronSetTopologyRigid<In,Out>::getJ(int outSize, int inSize)
-{    
-    //if (matrixJ && !updateJ && matrixJ->rowBSize() == (unsigned)outSize && matrixJ->colBSize() == (unsigned)inSize)
-    //    return matrixJ;
+{
     if (outSize > 0 && map.getValue().size() == 0)
     {
-        std::cout << "Maps not created yet" << std::endl;
-        return NULL; // error: maps not yet created ?
+        msg_error() << "Maps not created yet" ;
+        return nullptr; // error: maps not yet created ?
     }
     if (!matrixJ)
-    {        
+    {
         matrixJ = new MatrixType;
     }
 
     if (matrixJ->rowBSize() != (MatrixTypeIndex)outSize || matrixJ->colBSize() != (MatrixTypeIndex)inSize)
     {
-        //std::cout << "Resizing to " << outSize*NOut  << " X " << inSize*NIn << std::endl;
         matrixJ->resize(outSize*NOut, inSize*NIn);
     }
     else
         matrixJ->clear();
 
-    const sofa::helper::vector<core::topology::BaseMeshTopology::Tetrahedron>& tetrahedra = this->fromTopology->getTetrahedra();
+    const sofa::helper::vector<core::topology::BaseMeshTopology::Tetrahedron>& tetrahedra = this->m_fromTopology->getTetrahedra();
     const sofa::helper::vector<MappingData >& map = this->map.getValue();
+
+    // TODO(dmarchal 2017-05-03) who do it & when it will be done. Otherwise I will delete that one day.
     // TODO: use mapOrient
     //const sofa::helper::vector<MappingOrientData >& mapOrient = this->mapOrient.getValue();
-
 
     for (unsigned int beamNode = 0; beamNode < map.size(); beamNode++)
     {
@@ -373,7 +389,7 @@ const sofa::defaulttype::BaseMatrix* BarycentricMapperTetrahedronSetTopologyRigi
             matrixJ->add(beamNode*6+4, 3*tetra[vert]+0, +v[2]);
             matrixJ->add(beamNode*6+4, 3*tetra[vert]+2, -v[0]);
             matrixJ->add(beamNode*6+5, 3*tetra[vert]+0, -v[1]);
-            matrixJ->add(beamNode*6+5, 3*tetra[vert]+1, +v[0]);            
+            matrixJ->add(beamNode*6+5, 3*tetra[vert]+1, +v[0]);
         }
     }
 
@@ -388,8 +404,9 @@ template <class In, class Out>
 void BarycentricMapperTetrahedronSetTopologyRigid<In,Out>::applyJT ( typename In::MatrixDeriv& out, const typename Out::MatrixDeriv& in )
 {
     typename Out::MatrixDeriv::RowConstIterator rowItEnd = in.end();
-    const sofa::helper::vector<core::topology::BaseMeshTopology::Tetrahedron>& tetrahedra = this->fromTopology->getTetrahedra();
+    const sofa::helper::vector<core::topology::BaseMeshTopology::Tetrahedron>& tetrahedra = this->m_fromTopology->getTetrahedra();
     const sofa::helper::vector<MappingData >& map = this->map.getValue();
+    // TODO(dmarchal 2017-05-03) who do it & when it will be done. Otherwise I will delete that one day.
     // TODO: use mapOrient
     //const sofa::helper::vector<MappingOrientData >& mapOrient = this->mapOrient.getValue();
 
@@ -425,9 +442,9 @@ void BarycentricMapperTetrahedronSetTopologyRigid<In,Out>::applyJT ( typename In
 template <class In, class Out>
 void BarycentricMapperTetrahedronSetTopologyRigid<In,Out>::draw  (const core::visual::VisualParams* vparams,const typename Out::VecCoord& out, const typename In::VecCoord& in )
 {
-#ifndef SOFA_NO_OPENGL
-    const sofa::helper::vector<core::topology::BaseMeshTopology::Tetrahedron>& tetrahedra = this->fromTopology->getTetrahedra();
+    const sofa::helper::vector<core::topology::BaseMeshTopology::Tetrahedron>& tetrahedra = this->m_fromTopology->getTetrahedra();
     const sofa::helper::vector<MappingData >& map = this->map.getValue();
+    // TODO(dmarchal 2017-05-03) who do it & when it will be done. Otherwise I will delete that one day.
     // TODO: use mapOrient
     //const sofa::helper::vector<MappingOrientData >& mapOrient = this->mapOrient.getValue();
 
@@ -457,7 +474,10 @@ void BarycentricMapperTetrahedronSetTopologyRigid<In,Out>::draw  (const core::vi
         }
     }
     vparams->drawTool()->drawLines ( points, 1, sofa::defaulttype::Vec<4,float> ( 0,1,0,1 ) );
-    //std::cout << "Drawing" << std::endl;
+
+    points.clear();
+    std::vector< sofa::defaulttype::Vector3 > tetraPoints;
+    std::vector< sofa::defaulttype::Vector3 > tetraLines;
 
     for ( unsigned int i=0; i<map.size(); i++ )
     {
@@ -482,39 +502,25 @@ void BarycentricMapperTetrahedronSetTopologyRigid<In,Out>::draw  (const core::vi
         //for (unsigned int ti = 0; ti<4; ti++)
         //    out[tetra[ti]] -= cross(actualTetraPosition[tetra[ti]],torque);
         //}
+        for (size_t i = 0; i < actualPos.size(); i++)
+            points.push_back(sofa::defaulttype::Vector3(actualPos[i][0],actualPos[i][1],actualPos[i][2]));
 
-        for (size_t i = 0; i < actualPos.size(); i++) {
-            glPointSize(10);
-            glColor3d(1.0,0,0.0);
-            glBegin(GL_POINTS);
-            helper::gl::glVertexT(actualPos[i]);
-            //std::cout << "DRW " << actualPos[i] << std::endl;
-            glEnd();
+        for (unsigned int ti = 0; ti<4; ti++)
+        {
+            const typename In::Coord& tp0 = actualTetraPosition[tetra[ti]];
+            typename In::Coord tp1 = actualTetraPosition[tetra[ti]]+actualOut[tetra[ti]];
 
+            tetraPoints.push_back(sofa::defaulttype::Vector3(tp0[0],tp0[1],tp0[2]));
+
+            tetraLines.push_back(sofa::defaulttype::Vector3(tp0[0],tp0[1],tp0[2]));
+            tetraLines.push_back(sofa::defaulttype::Vector3(tp1[0],tp1[1],tp1[2]));
         }
 
+        vparams->drawTool()->drawPoints ( points, 10, sofa::defaulttype::Vec<4,float> ( 1,0,0,1 ) );
+        vparams->drawTool()->drawPoints ( tetraPoints, 10, sofa::defaulttype::Vec<4,float> ( 1,0,1,1 ) );
+        vparams->drawTool()->drawLines ( tetraLines, 3.0, sofa::defaulttype::Vec<4,float> ( 1,0,1,1 ) );
 
-        for (unsigned int ti = 0; ti<4; ti++) {
-            glPointSize(10);
-            glColor3d(1.0,0,1.0);
-            glBegin(GL_POINTS);
-            helper::gl::glVertexT(actualTetraPosition[tetra[ti]]);
-            glEnd();
-
-
-            if (tetra[ti] < actualOut.size()) {
-                //std::cout << "Drawing the linear force in " << tetra[ti] << ": " << actualOut[tetra[ti]] << std::endl;
-                glLineWidth(3.0);
-                glBegin(GL_LINES);
-                helper::gl::glVertexT(actualTetraPosition[tetra[ti]]);
-                helper::gl::glVertexT(actualTetraPosition[tetra[ti]]+actualOut[tetra[ti]]);
-                glEnd();
-            }
-
-        }
-        glEnd();
     }
-#endif /* SOFA_NO_OPENGL */
 }
 
 } // namespace mapping

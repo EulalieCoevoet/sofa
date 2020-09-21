@@ -1,30 +1,26 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #ifndef SOFA_COMPONENT_COLLISION_MESHDISCRETEINTERSECTION_INL
 #define SOFA_COMPONENT_COLLISION_MESHDISCRETEINTERSECTION_INL
-#include <sofa/helper/system/config.h>
 #include <SofaGeneralMeshCollision/MeshDiscreteIntersection.h>
 #include <sofa/core/visual/VisualParams.h>
 #include <sofa/core/ObjectFactory.h>
@@ -145,53 +141,12 @@ int MeshDiscreteIntersection::computeIntersection( TSphere<T>& sph, Triangle& tr
         detection->point[1] = projPoint;
         detection->point[0] = sph.getContactPointByNormal( detection->normal );
         detection->value = -distance;
-        //detection->elem.first = triangle;
-        //detection->elem.second = sph;
         detection->elem.first = sph;
         detection->elem.second = triangle;
         detection->id = sph.getIndex();
         return 1;
     }
 #undef SAMESIDE
-
-    //// The projected sphere center is not in the triangle. Verify if
-    //// the edges are colliding the sphere (check if they are secant to the sphere)
-    // RayModel edges;
-    ////Edge 0
-    // Vector3 dir = p1 - p0;
-    // double length = dir.norm();
-    // edges.addRay(p0,dir,length);
-    ////Edge1
-    // dir = p1 - p2;
-    // length = dir.norm();
-    // edges.addRay(p1,dir,length);
-    // //Edge2
-    // dir = p2 - p0;
-    // length = dir.norm();
-    // edges.addRay(p2,dir,length);
-    //
-    // detection = distCorrectionSingleSphereRay( sph,edges.getRay(0));
-    //if ( detection != NULL )
-    //{
-    //	detection->elem.first = triangle;
-    //	detection->elem.second = sph;
-    //	return detection;
-    //}
-
-    //detection = distCorrectionSingleSphereRay( sph,edges.getRay(1));
-    //if ( detection != NULL )
-    //{
-    //	detection->elem.first = triangle;
-    //	detection->elem.second = sph;
-    //	return detection;
-    //}
-    // detection = distCorrectionSingleSphereRay( sph,edges.getRay(2));
-    //	if ( detection != NULL )
-    //{
-    //	detection->elem.first = triangle;
-    //	detection->elem.second = sph;
-    //	return detection;
-    //}
 
     return 0; // No intersection: passed all tests for intersections !
 }

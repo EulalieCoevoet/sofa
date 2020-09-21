@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -52,7 +49,7 @@ protected:
     ConstraintAttachBodyButtonSetting() {}
 public:
 //        Data<SReal> snapDistance;
-    std::string getOperationType() {return  "ConstraintAttachBody";}
+    std::string getOperationType() override {return  "ConstraintAttachBody";}
 };
 
 struct BodyPicked;
@@ -97,11 +94,6 @@ protected:
     SReal showFactorSize;
 
     virtual bool start_partial(const BodyPicked& picked);
-    /*
-    initialise MouseForceField according to template.
-    StiffSpringForceField for Vec3
-    JointSpringForceField for Rigid3
-    */
 
     MouseContactMapper  *mapper;
     constraintset::BilateralInteractionConstraint<defaulttype::Vec3Types>::SPtr m_constraint;
@@ -111,31 +103,9 @@ protected:
     sofa::core::behavior::MechanicalState<DataTypes> *mstate1, *mstate2;
 };
 
-/*#ifndef SOFA_FLOAT
-      template<>
-      bool ConstraintAttachBodyPerformer<defaulttype::Rigid3dTypes>::start_partial(const BodyPicked& picked);
-#endif
-
-#ifndef SOFA_DOUBLE
-      template<>
-      bool ConstraintAttachBodyPerformer<defaulttype::Rigid3fTypes>::start_partial(const BodyPicked& picked);
-#endif*/
-
-
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_COLLISION_CONSTRAINTATTACHBODYPERFORMER_CPP)
-// #ifndef SOFA_DOUBLE
-// extern template class SOFA_CONSTRAINT_API ConstraintAttachBodyPerformer<defaulttype::Vec3fTypes>;
-// extern template class SOFA_CONSTRAINT_API ConstraintAttachBodyPerformer<defaulttype::Rigid3fTypes>;
-// #endif
-// #ifndef SOFA_FLOAT
-// extern template class SOFA_CONSTRAINT_API ConstraintAttachBodyPerformer<defaulttype::Vec3dTypes>;
-// extern template class SOFA_CONSTRAINT_API ConstraintAttachBodyPerformer<defaulttype::Rigid3dTypes>;
-// #endif
-
+#if  !defined(SOFA_COMPONENT_COLLISION_CONSTRAINTATTACHBODYPERFORMER_CPP)
 extern template class SOFA_CONSTRAINT_API ConstraintAttachBodyPerformer<defaulttype::Vec3Types>;
 #endif
-
-
 
 }
 }

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -91,7 +88,7 @@ void ConstraintAttachBodyPerformer<DataTypes>::draw(const core::visual::VisualPa
 template <class DataTypes>
 ConstraintAttachBodyPerformer<DataTypes>::ConstraintAttachBodyPerformer(BaseMouseInteractor *i):
     TInteractionPerformer<DataTypes>(i),
-    mapper(NULL)
+    mapper(nullptr)
 {
     flags.setShowVisualModels(false);
     flags.setShowInteractionForceFields(true);
@@ -110,7 +107,7 @@ void ConstraintAttachBodyPerformer<DataTypes>::clear()
     if (mapper)
     {
         mapper->cleanup();
-        delete mapper; mapper=NULL;
+        delete mapper; mapper=nullptr;
     }
 
     this->interactor->setDistanceFromMouse(0);
@@ -127,14 +124,14 @@ ConstraintAttachBodyPerformer<DataTypes>::~ConstraintAttachBodyPerformer()
 template <class DataTypes>
 bool ConstraintAttachBodyPerformer<DataTypes>::start_partial(const BodyPicked& picked)
 {
-    core::behavior::MechanicalState<DataTypes>* mstateCollision=NULL;
+    core::behavior::MechanicalState<DataTypes>* mstateCollision=nullptr;
     int index;
     if (picked.body)
     {
         mapper = MouseContactMapper::Create(picked.body);
         if (!mapper)
         {
-            this->interactor->serr << "Problem with Mouse Mapper creation : " << this->interactor->sendl;
+            msg_error(this->interactor) << "Problem with Mouse Mapper creation.";
             return false;
         }
         std::string name = "contactMouse";
@@ -145,11 +142,7 @@ bool ConstraintAttachBodyPerformer<DataTypes>::start_partial(const BodyPicked& p
         const int idx=picked.indexCollisionElement;
         typename DataTypes::Real r=0.0;
 
-        index = mapper->addPointB(pointPicked, idx, r
-#ifdef DETECTIONOUTPUT_BARYCENTRICINFO
-                , picked.baryCoords
-#endif
-                                 );
+        index = mapper->addPointB(pointPicked, idx, r);
         mapper->update();
 
         if (mstateCollision->getContext() != picked.body->getContext())
@@ -174,16 +167,13 @@ bool ConstraintAttachBodyPerformer<DataTypes>::start_partial(const BodyPicked& p
         index = picked.indexCollisionElement;
         if (!mstateCollision)
         {
-            this->interactor->serr << "incompatible MState during Mouse Interaction " << this->interactor->sendl;
+            msg_error(this->interactor) << "incompatible MState during Mouse Interaction.";
             return false;
         }
     }
 
     mstate1 = dynamic_cast<MouseContainer*>(this->interactor->getMouseContainer());
     mstate2 = mstateCollision;
-
-//    helper::ReadAccessor<Data <VecCoord> > x1 = *mstate1->read(core::VecCoordId::position());
-//    helper::ReadAccessor<Data <VecCoord> > x2 = *mstate2->read(core::VecCoordId::position());
 
     defaulttype::Vec3d point1;
     defaulttype::Vec3d point2;

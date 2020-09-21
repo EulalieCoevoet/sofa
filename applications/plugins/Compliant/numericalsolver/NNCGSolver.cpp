@@ -8,7 +8,6 @@ namespace sofa {
 namespace component {
 namespace linearsolver {
 
-SOFA_DECL_CLASS(NNCGSolver)
 int NNCGSolverClass = core::RegisterObject("Nonsmooth Nonlinear Conjugate Gradient Solver").add< NNCGSolver >();
 
 
@@ -18,9 +17,10 @@ NNCGSolver::NNCGSolver()
 
 // TODO copypasta 
 void NNCGSolver::solve_impl(vec& res,
-							   const system_type& sys,
-							   const vec& rhs,
-							   bool correct) const {
+                            const system_type& sys,
+                            const vec& rhs,
+                            bool correct,
+                            real /*damping*/ ) const {
 
 	scoped::timer timer("system solve");
 

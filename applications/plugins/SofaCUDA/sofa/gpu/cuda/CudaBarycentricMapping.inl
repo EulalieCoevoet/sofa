@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -28,6 +25,17 @@
 #include "CudaBarycentricMapping.h"
 #include <sofa/core/Mapping.inl>
 #include <SofaBaseMechanics/BarycentricMapping.inl>
+#include <SofaBaseMechanics/BarycentricMappers/TopologyBarycentricMapper.inl>
+#include <SofaBaseMechanics/BarycentricMappers/BarycentricMapper.inl>
+#include <SofaBaseMechanics/BarycentricMappers/BarycentricMapperTopologyContainer.inl>
+#include <SofaBaseMechanics/BarycentricMappers/BarycentricMapperRegularGridTopology.inl>
+#include <SofaBaseMechanics/BarycentricMappers/BarycentricMapperSparseGridTopology.inl>
+#include <SofaBaseMechanics/BarycentricMappers/BarycentricMapperMeshTopology.inl>
+#include <SofaBaseMechanics/BarycentricMappers/BarycentricMapperHexahedronSetTopology.inl>
+#include <SofaBaseMechanics/BarycentricMappers/BarycentricMapperQuadSetTopology.inl>
+#include <SofaBaseMechanics/BarycentricMappers/BarycentricMapperTriangleSetTopology.inl>
+#include <SofaBaseMechanics/BarycentricMappers/BarycentricMapperEdgeSetTopology.inl>
+#include <SofaBaseMechanics/BarycentricMappers/BarycentricMapperTetrahedronSetTopology.inl>
 
 namespace sofa
 {
@@ -114,11 +122,8 @@ int BarycentricMapperRegularGridTopology<gpu::cuda::CudaVectorTypes<VecIn,VecIn,
     map.resize(map.size()+1);
     CubeData& data = map[map.size()-1];
     //data.in_index = cubeIndex;
-#ifdef SOFA_NEW_HEXA
     data.in_index = topology->getHexaCopy(cubeIndex)[0];
-#else
-    data.in_index = topology->getCubeCopy(cubeIndex)[0];
-#endif
+
     data.baryCoords[0] = baryCoords[0];
     data.baryCoords[1] = baryCoords[1];
     data.baryCoords[2] = baryCoords[2];
@@ -447,7 +452,7 @@ int BarycentricMapperMeshTopology<gpu::cuda::CudaVectorTypes<VecIn,VecIn,float>,
 {
     unsigned int i0 = size;
     resizeMap(i0+1,8);
-#ifdef SOFA_NEW_HEXA
+
     core::topology::BaseMeshTopology::Hexa e = topology->getHexahedron(cubeIndex);
     setMap(i0,0,e[0],(Real)((1-baryCoords[0])*(1-baryCoords[1])*(1-baryCoords[2])));
     setMap(i0,1,e[1],(Real)((  baryCoords[0])*(1-baryCoords[1])*(1-baryCoords[2])));
@@ -457,17 +462,7 @@ int BarycentricMapperMeshTopology<gpu::cuda::CudaVectorTypes<VecIn,VecIn,float>,
     setMap(i0,5,e[5],(Real)((  baryCoords[0])*(1-baryCoords[1])*(  baryCoords[2])));
     setMap(i0,6,e[7],(Real)((1-baryCoords[0])*(  baryCoords[1])*(  baryCoords[2])));
     setMap(i0,7,e[6],(Real)((  baryCoords[0])*(  baryCoords[1])*(  baryCoords[2])));
-#else
-    core::topology::BaseMeshTopology::Cube e = topology->getCube(cubeIndex);
-    setMap(i0,0,e[0],(Real)((1-baryCoords[0])*(1-baryCoords[1])*(1-baryCoords[2])));
-    setMap(i0,1,e[1],(Real)((  baryCoords[0])*(1-baryCoords[1])*(1-baryCoords[2])));
-    setMap(i0,2,e[2],(Real)((1-baryCoords[0])*(  baryCoords[1])*(1-baryCoords[2])));
-    setMap(i0,3,e[3],(Real)((  baryCoords[0])*(  baryCoords[1])*(1-baryCoords[2])));
-    setMap(i0,4,e[4],(Real)((1-baryCoords[0])*(1-baryCoords[1])*(  baryCoords[2])));
-    setMap(i0,5,e[5],(Real)((  baryCoords[0])*(1-baryCoords[1])*(  baryCoords[2])));
-    setMap(i0,6,e[6],(Real)((1-baryCoords[0])*(  baryCoords[1])*(  baryCoords[2])));
-    setMap(i0,7,e[7],(Real)((  baryCoords[0])*(  baryCoords[1])*(  baryCoords[2])));
-#endif
+
     return i0;
 }
 
@@ -531,11 +526,8 @@ void BarycentricMapperMeshTopology<gpu::cuda::CudaVectorTypes<VecIn,VecIn,float>
     int outside = 0;
 
     const topology::MeshTopology::SeqTetrahedra& tetras = topology->getTetrahedra();
-#ifdef SOFA_NEW_HEXA
     const topology::MeshTopology::SeqHexahedra& cubes = topology->getHexahedra();
-#else
-    const topology::MeshTopology::SeqCubes& cubes = topology->getCubes();
-#endif
+
     const topology::MeshTopology::SeqTriangles& triangles = topology->getTriangles();
     const topology::MeshTopology::SeqQuads& quads = topology->getQuads();
     sofa::helper::vector<defaulttype::Matrix3> bases;
@@ -617,11 +609,7 @@ void BarycentricMapperMeshTopology<gpu::cuda::CudaVectorTypes<VecIn,VecIn,float>
         {
             defaulttype::Mat3x3d m,mt;
             m[0] = in[cubes[c][1]]-in[cubes[c][0]];
-#ifdef SOFA_NEW_HEXA
             m[1] = in[cubes[c][3]]-in[cubes[c][0]];
-#else
-            m[1] = in[cubes[c][2]]-in[cubes[c][0]];
-#endif
             m[2] = in[cubes[c][4]]-in[cubes[c][0]];
             mt.transpose(m);
             bases[c0+c].invert(mt);

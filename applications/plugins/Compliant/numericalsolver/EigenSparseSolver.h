@@ -32,22 +32,22 @@ class EigenSparseSolver : public KKTSolver {
 
     SOFA_ABSTRACT_CLASS(SOFA_TEMPLATE2(EigenSparseSolver,LinearSolver,symmetric), KKTSolver);
 
-    virtual void solve(vec& x,
+    void solve(vec& x,
                        const AssembledSystem& system,
-                       const vec& rhs) const;
+                       const vec& rhs) const override;
 
     // performs factorization
-    virtual void factor(const AssembledSystem& system);
+    void factor(const AssembledSystem& system) override;
 
-    virtual void init();
-    virtual void reinit();
+    void init() override;
+    void reinit() override;
 
     EigenSparseSolver();
-    ~EigenSparseSolver();
+    ~EigenSparseSolver() override;
 
 
     Data<bool> d_schur;
-    Data<SReal> d_regularization;
+    Data<SReal> d_regularization; ///< Optional diagonal Tikhonov regularization on constraints
     /// if the sparsity pattern remains similar from one step to another,
     /// the factorization can be faster
     Data<bool> d_trackSparsityPattern;
@@ -77,6 +77,12 @@ public:
     SOFA_CLASS(LDLTSolver,SOFA_TEMPLATE2(EigenSparseSolver,LDLTSparseLinearSolver,true));
 };
 
+typedef Eigen::SimplicialLLT< AssembledSystem::cmat > LLTSparseLinearSolver;
+class SOFA_Compliant_API LLTSolver : public EigenSparseSolver< LLTSparseLinearSolver, true >
+{
+public:
+    SOFA_CLASS(LLTSolver,SOFA_TEMPLATE2(EigenSparseSolver,LLTSparseLinearSolver,true));
+};
 
 typedef Eigen::SparseLU< AssembledSystem::cmat > LUSparseLinearSolver;
 class SOFA_Compliant_API LUSolver : public EigenSparseSolver< LUSparseLinearSolver >
@@ -99,13 +105,13 @@ public:
 
     SOFA_ABSTRACT_CLASS(SOFA_TEMPLATE2(EigenSparseIterativeSolver,LinearSolver,symmetric),SOFA_TEMPLATE2(EigenSparseSolver,LinearSolver,symmetric));
 
-    Data<unsigned> d_iterations;
-    Data<SReal> d_tolerance;
+    Data<unsigned> d_iterations; ///< max iterations
+    Data<SReal> d_tolerance; ///< tolerance
 
     EigenSparseIterativeSolver();
 
-    virtual void init();
-    virtual void reinit();
+    virtual void init() override;
+    virtual void reinit() override;
 
 };
 

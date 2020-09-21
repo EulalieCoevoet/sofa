@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -13,11 +13,8 @@
 * more details.                                                               *
 *                                                                             *
 * You should have received a copy of the GNU General Public License along     *
-* with this program; if not, write to the Free Software Foundation, Inc., 51  *
-* Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.                   *
+* with this program. If not, see <http://www.gnu.org/licenses/>.              *
 *******************************************************************************
-*                            SOFA :: Applications                             *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -33,17 +30,10 @@
 //Including Simulation
 #include <SofaSimulationGraph/DAGSimulation.h>
 
-// #include <SofaMiscFem/TetrahedralTensorMassForceField.h>
-// #include <SofaSimpleFem/TetrahedralCorotationalFEMForceField.h>
 #include <SofaBaseTopology/TopologySparseData.inl>
 #include <SofaBoundaryCondition/TrianglePressureForceField.h>
 #include <SofaBoundaryCondition/AffineMovementConstraint.h>
-// #include <SofaBaseLinearSolver/CGLinearSolver.h>
-// #include <SofaEngine/PairBoxRoi.h>
-// #include <SofaEngine/GenerateCylinder.h>
-// #include <SofaImplicitOdeSolver/EulerImplicitSolver.h>
-// #include <SofaImplicitOdeSolver/StaticSolver.h>
-// #include <SofaBoundaryCondition/ProjectToLineConstraint.h>
+#include <SofaBaseMechanics/MechanicalObject.h>
 
 namespace sofa {
 
@@ -51,23 +41,23 @@ namespace sofa {
 template<class T>
 struct PatchTestStruct
 {
-   simulation::Node::SPtr SquareNode;
-   typename component::projectiveconstraintset::AffineMovementConstraint<T>::SPtr affineConstraint;
-   typename component::container::MechanicalObject<T>::SPtr dofs;
+    simulation::Node::SPtr SquareNode;
+    typename component::projectiveconstraintset::AffineMovementConstraint<T>::SPtr affineConstraint;
+    typename component::container::MechanicalObject<T>::SPtr dofs;
 };
 
 /// Structure which contains the nodes and the pointers useful for the patch test
 template<class T>
 struct CylinderTractionStruct
 {
-   simulation::Node::SPtr root;
-   typename component::container::MechanicalObject<T>::SPtr dofs;
-   typename component::forcefield::TrianglePressureForceField<T>::SPtr forceField;
+    simulation::Node::SPtr root;
+    typename component::container::MechanicalObject<T>::SPtr dofs;
+    typename component::forcefield::TrianglePressureForceField<T>::SPtr forceField;
 };
 
 
 template< class DataTypes>
-struct SOFA_TestPlugin_API Elasticity_test: public Sofa_test<typename DataTypes::Real>
+struct SOFA_SOFATEST_API Elasticity_test: public Sofa_test<typename DataTypes::Real>
 {
     typedef component::container::MechanicalObject<DataTypes> DOFs;
     typedef typename DOFs::Real  Real;
@@ -124,17 +114,6 @@ simulation::Node::SPtr createMassSpringSystem(
         VecDeriv vFixedPoint,
         VecCoord xMass,
         VecDeriv vMass);
-
-/// Create sun-planet system
-simulation::Node::SPtr createSunPlanetSystem(
-        simulation::Node::SPtr root,
-        double mSun,
-        double mPlanet,
-        double g,
-        Coord xSun,
-        Deriv vSun,
-        Coord xPlanet,
-        Deriv vPlanet);
 
 };
 

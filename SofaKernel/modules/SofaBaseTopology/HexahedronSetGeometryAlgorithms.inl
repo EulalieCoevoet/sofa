@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -651,7 +648,7 @@ int HexahedronSetGeometryAlgorithms< DataTypes >::findNearestElement(const Coord
     int index=-1;
     distance = 1e10;
 
-    for(int c=0; c<this->m_topology->getNbHexahedra(); ++c)
+    for(size_t c=0; c<this->m_topology->getNbHexahedra(); ++c)
     {
         const Real d = computeElementDistanceMeasure(c, pos);
 
@@ -674,7 +671,7 @@ void HexahedronSetGeometryAlgorithms< DataTypes >::findNearestElements(const Vec
         helper::vector<defaulttype::Vector3>& baryC,
         helper::vector<Real>& dist) const
 {
-    for(unsigned int i=0; i<pos.size(); ++i)
+    for(size_t i=0; i<pos.size(); ++i)
     {
         elem[i] = findNearestElement(pos[i], baryC[i], dist[i]);
     }
@@ -686,7 +683,7 @@ int HexahedronSetGeometryAlgorithms< DataTypes >::findNearestElementInRestPos(co
     int index=-1;
     distance = 1e10;
 
-    for(int c=0; c<this->m_topology->getNbHexahedra(); ++c)
+    for(size_t c=0; c<this->m_topology->getNbHexahedra(); ++c)
     {
         const Real d = computeElementRestDistanceMeasure(c, pos);
 
@@ -706,7 +703,7 @@ int HexahedronSetGeometryAlgorithms< DataTypes >::findNearestElementInRestPos(co
 template< class DataTypes>
 void HexahedronSetGeometryAlgorithms< DataTypes >::findNearestElementsInRestPos( const VecCoord& pos, helper::vector<int>& elem, helper::vector<defaulttype::Vector3>& baryC, helper::vector<Real>& dist) const
 {
-    for(unsigned int i=0; i<pos.size(); ++i)
+    for(size_t i=0; i<pos.size(); ++i)
     {
         elem[i] = findNearestElementInRestPos(pos[i], baryC[i], dist[i]);
     }
@@ -783,7 +780,7 @@ void HexahedronSetGeometryAlgorithms<DataTypes>::computeHexahedronVolume( BasicA
 {
     //const sofa::helper::vector<Hexahedron> &ta=this->m_topology->getHexahedra();
     //const typename DataTypes::VecCoord& p =(this->object->read(core::ConstVecCoordId::position())->getValue());
-    for(int i=0; i<this->m_topology->getNbHexahedra(); ++i)
+    for(size_t i=0; i<this->m_topology->getNbHexahedra(); ++i)
     {
         //const Hexahedron &t=this->m_topology->getHexahedron(i); //ta[i];
         ai[i]=(Real)(0.0); /// @todo : implementation of computeHexahedronVolume
@@ -820,7 +817,7 @@ void HexahedronSetGeometryAlgorithms<DataTypes>::writeMSHfile(const char *filena
 
     myfile << hea.size() <<"\n";
 
-    for(unsigned int i=0; i<hea.size(); ++i)
+    for(size_t i=0; i<hea.size(); ++i)
     {
         myfile << i+1 << " 5 1 1 8 " << hea[i][4]+1 << " " << hea[i][5]+1 << " "
                 << hea[i][1]+1 << " " << hea[i][0]+1 << " "
@@ -839,14 +836,9 @@ void HexahedronSetGeometryAlgorithms<DataTypes>::draw(const core::visual::Visual
     QuadSetGeometryAlgorithms<DataTypes>::draw(vparams);
 
     // Draw Hexa indices
-    if (d_showHexaIndices.getValue())
+    if (d_showHexaIndices.getValue() && this->m_topology->getNbHexahedra() != 0)
     {
-        sofa::defaulttype::Mat<4,4, GLfloat> modelviewM;
-
         const VecCoord& coords =(this->object->read(core::ConstVecCoordId::position())->getValue());
-        const sofa::defaulttype::Vec3f& color = d_drawColorHexahedra.getValue();
-        sofa::defaulttype::Vec4f color4(color[0], color[1], color[2], 1.0);
-
         float scale = this->getIndicesScale();
 
         //for hexa:
@@ -854,8 +846,8 @@ void HexahedronSetGeometryAlgorithms<DataTypes>::draw(const core::visual::Visual
 
         const sofa::helper::vector<Hexahedron> &hexaArray = this->m_topology->getHexahedra();
 
-        helper::vector<defaulttype::Vector3> positions;
-        for (unsigned int i =0; i<hexaArray.size(); i++)
+        std::vector<defaulttype::Vector3> positions;
+        for (size_t i =0; i<hexaArray.size(); i++)
         {
 
             Hexahedron the_hexa = hexaArray[i];
@@ -871,26 +863,22 @@ void HexahedronSetGeometryAlgorithms<DataTypes>::draw(const core::visual::Visual
             positions.push_back(center);
         }
 
-        vparams->drawTool()->draw3DText_Indices(positions, scale, color4);
+        vparams->drawTool()->draw3DText_Indices(positions, scale, d_drawColorHexahedra.getValue());
     }
 
 
     //Draw hexahedra
-    if (d_drawHexahedra.getValue())
+    if (d_drawHexahedra.getValue() && this->m_topology->getNbHexahedra() != 0)
     {
         if (vparams->displayFlags().getShowWireFrame())
             vparams->drawTool()->setPolygonMode(0, true);
 
         const sofa::helper::vector<Hexahedron> &hexaArray = this->m_topology->getHexahedra();
 
-        const sofa::defaulttype::Vec3f& color = d_drawColorHexahedra.getValue();
-        sofa::defaulttype::Vec4f color4(color[0], color[1], color[2], 1.0f);
-
         const VecCoord& coords =(this->object->read(core::ConstVecCoordId::position())->getValue());
-
         sofa::helper::vector <sofa::defaulttype::Vector3> hexaCoords;
 
-        for (unsigned int i = 0; i<hexaArray.size(); i++)
+        for (size_t i = 0; i<hexaArray.size(); i++)
         {
             const Hexahedron& H = hexaArray[i];
 
@@ -905,13 +893,12 @@ void HexahedronSetGeometryAlgorithms<DataTypes>::draw(const core::visual::Visual
         const float& scale = d_drawScaleHexahedra.getValue();
 
         if(scale >= 1.0 && scale < 0.001)
-            vparams->drawTool()->drawHexahedra(hexaCoords, color4);
+            vparams->drawTool()->drawHexahedra(hexaCoords, d_drawColorHexahedra.getValue());
         else
-            vparams->drawTool()->drawScaledHexahedra(hexaCoords, color4, scale);
+            vparams->drawTool()->drawScaledHexahedra(hexaCoords, d_drawColorHexahedra.getValue(), scale);
 
         if (vparams->displayFlags().getShowWireFrame())
             vparams->drawTool()->setPolygonMode(0, false);
-           
     }
 }
 

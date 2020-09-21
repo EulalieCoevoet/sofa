@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -48,15 +45,14 @@ void ARTrackController<DataTypes>::init()
 }
 
 
-#ifndef SOFA_FLOAT
 template <>
-void ARTrackController<Vec1dTypes>::init()
+void ARTrackController<Vec1Types>::init()
 {
     getContext()->get<sofa::component::container::Articulation>(&articulations);
 }
 
 template <>
-void ARTrackController<Vec3dTypes>::onARTrackEvent(core::objectmodel::ARTrackEvent *aev)
+void ARTrackController<Vec3Types>::onARTrackEvent(core::objectmodel::ARTrackEvent *aev)
 {
     if(mstate)
     {
@@ -73,7 +69,7 @@ void ARTrackController<Vec3dTypes>::onARTrackEvent(core::objectmodel::ARTrackEve
         }
     }
 }
-#endif
+
 
 template <>
 void ARTrackController<RigidTypes>::onARTrackEvent(core::objectmodel::ARTrackEvent *aev)
@@ -102,9 +98,8 @@ void ARTrackController<RigidTypes>::onARTrackEvent(core::objectmodel::ARTrackEve
     }
 }
 
-#ifndef SOFA_FLOAT
 template <>
-void ARTrackController<Vec1dTypes>::onARTrackEvent(core::objectmodel::ARTrackEvent *aev)
+void ARTrackController<Vec1Types>::onARTrackEvent(core::objectmodel::ARTrackEvent *aev)
 {
     std::cout<<"AR track event detected"<<std::endl;
     if(mstate)
@@ -153,7 +148,7 @@ void ARTrackController<Vec1dTypes>::onARTrackEvent(core::objectmodel::ARTrackEve
         }
     }
 }
-#endif
+
 
 template <class DataTypes>
 void ARTrackController<DataTypes>::onARTrackEvent(core::objectmodel::ARTrackEvent* /*aev*/)
@@ -165,9 +160,8 @@ void ARTrackController<DataTypes>::onMouseEvent(core::objectmodel::MouseEvent * 
 {
 }
 
-#ifndef SOFA_FLOAT
 template <>
-void ARTrackController<Vec1dTypes>::onMouseEvent(core::objectmodel::MouseEvent * mev)
+void ARTrackController<Vec1Types>::onMouseEvent(core::objectmodel::MouseEvent * mev)
 {
     std::cout<<" onMouseEvent on Vec1Types called "<<std::endl;
     switch (mev->getState())
@@ -217,7 +211,7 @@ void ARTrackController<Vec1dTypes>::onMouseEvent(core::objectmodel::MouseEvent *
         wheel=false;
     }
 }
-#endif
+
 
 template <>
 void ARTrackController<RigidTypes>::onMouseEvent(core::objectmodel::MouseEvent *mev)

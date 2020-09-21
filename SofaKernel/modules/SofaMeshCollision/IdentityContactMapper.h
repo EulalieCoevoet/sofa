@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -26,7 +23,6 @@
 #define SOFA_COMPONENT_COLLISION_IDENTITYCONTACTMAPPER_H
 #include "config.h"
 
-#include <sofa/helper/system/config.h>
 #include <sofa/helper/Factory.h>
 #include <SofaBaseMechanics/BarycentricMapping.h>
 #include <SofaBaseMechanics/IdentityMapping.h>
@@ -38,10 +34,8 @@
 #include <SofaBaseCollision/BaseContactMapper.h>
 #include <SofaBaseCollision/SphereModel.h>
 #include <SofaMeshCollision/TriangleModel.h>
-//#include <SofaMiscCollision/TetrahedronModel.h>
 #include <SofaMeshCollision/LineModel.h>
 #include <SofaMeshCollision/PointModel.h>
-//#include <SofaVolumetricData/DistanceGridCollisionModel.h>
 #include <SofaBaseMechanics/IdentityMapping.h>
 #include <iostream>
 
@@ -72,7 +66,7 @@ public:
     typename MMapping::SPtr mapping;
 
     IdentityContactMapper()
-        : model(NULL), mapping(NULL)
+        : model(nullptr), mapping(nullptr)
     {
     }
 
@@ -96,7 +90,7 @@ public:
 
     void update()
     {
-        if (mapping!=NULL)
+        if (mapping!=nullptr)
         {
             mapping->apply(core::MechanicalParams::defaultInstance(), core::VecCoordId::position(), core::ConstVecCoordId::position());
             mapping->applyJ(core::MechanicalParams::defaultInstance(), core::VecDerivId::velocity(), core::ConstVecDerivId::velocity());
@@ -105,15 +99,17 @@ public:
 
     void updateXfree()
     {
-        if (mapping!=NULL)
+        if (mapping!=nullptr)
         {
             mapping->apply(core::MechanicalParams::defaultInstance(), core::VecCoordId::freePosition(), core::ConstVecCoordId::freePosition());
+            mapping->applyJ(core::MechanicalParams::defaultInstance(), core::VecDerivId::freeVelocity(), core::ConstVecDerivId::freeVelocity());
+
         }
     }
-
+    
     void updateX0()
     {
-        if(mapping!=NULL)
+        if(mapping!=nullptr)
         {
              mapping->apply(core::MechanicalParams::defaultInstance(), core::VecCoordId::restPosition(), core::ConstVecCoordId::restPosition());
         }
@@ -135,7 +131,7 @@ public:
     MCollisionModel* model;
 
     IdentityContactMapper()
-        : model(NULL)
+        : model(nullptr)
     {
     }
 
@@ -150,7 +146,7 @@ public:
 
     MMechanicalState* createMapping(const char* /*name*/="contactPoints")
     {
-        if (model==NULL) return NULL;
+        if (model==nullptr) return nullptr;
         return model->getMechanicalState();
     }
 
@@ -179,14 +175,14 @@ public:
 
 /// Mapper for PointModel
 template<class DataTypes>
-class ContactMapper<PointModel, DataTypes> : public IdentityContactMapper<PointModel, DataTypes>
+class ContactMapper<PointCollisionModel<sofa::defaulttype::Vec3Types>, DataTypes> : public IdentityContactMapper<PointCollisionModel<sofa::defaulttype::Vec3Types>, DataTypes>
 {
 public:
 };
 
 /// Mapper for SphereModel
 template<class DataTypes>
-class ContactMapper<SphereModel, DataTypes> : public IdentityContactMapper<SphereModel, DataTypes>
+class ContactMapper<SphereCollisionModel<sofa::defaulttype::Vec3Types>, DataTypes> : public IdentityContactMapper<SphereCollisionModel<sofa::defaulttype::Vec3Types>, DataTypes>
 {
 public:
     typedef typename DataTypes::Real Real;
@@ -199,9 +195,9 @@ public:
     }
 };
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_COLLISION_IDENTITYCONTACTMAPPER_CPP)
-extern template class SOFA_MESH_COLLISION_API ContactMapper<SphereModel, sofa::defaulttype::Vec3Types>;
-extern template class SOFA_MESH_COLLISION_API ContactMapper<PointModel, sofa::defaulttype::Vec3Types>;
+#if  !defined(SOFA_COMPONENT_COLLISION_IDENTITYCONTACTMAPPER_CPP)
+extern template class SOFA_MESH_COLLISION_API ContactMapper<SphereCollisionModel<sofa::defaulttype::Vec3Types>, sofa::defaulttype::Vec3Types>;
+extern template class SOFA_MESH_COLLISION_API ContactMapper<PointCollisionModel<sofa::defaulttype::Vec3Types>, sofa::defaulttype::Vec3Types>;
 #endif
 
 } // namespace collision

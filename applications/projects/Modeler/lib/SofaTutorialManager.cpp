@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -13,11 +13,8 @@
 * more details.                                                               *
 *                                                                             *
 * You should have received a copy of the GNU General Public License along     *
-* with this program; if not, write to the Free Software Foundation, Inc., 51  *
-* Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.                   *
+* with this program. If not, see <http://www.gnu.org/licenses/>.              *
 *******************************************************************************
-*                            SOFA :: Applications                             *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -45,7 +42,7 @@ namespace qt
 {
 
 SofaTutorialManager::SofaTutorialManager(QWidget* parent, const char* name)
-    :QMainWindow(parent), tutorialList(0)
+    :QMainWindow(parent), tutorialList(nullptr)
 {
     this->setObjectName(name);
 
@@ -151,8 +148,11 @@ void SofaTutorialManager::openTutorial(const std::string& filename)
 
     //Set the Graph
     xml::BaseElement* newXML = xml::loadFromFile ( filename.c_str() );
-    if (newXML == NULL) return;
-    if (!newXML->init()) std::cerr<< "Objects initialization failed.\n";
+    if (newXML == nullptr) return;
+
+    msg_info_when(!newXML->init(), "SofaTutorialManager")
+            << "Objects initialization failed.";
+
     Node *root = down_cast<Node>( newXML->getObject()->toBaseNode() );
     graph->setRoot(root, false);
     graph->setFilename(filename);

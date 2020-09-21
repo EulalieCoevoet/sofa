@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -58,7 +55,7 @@ class EndPoint;
   */
 class SOFA_GENERAL_MESH_COLLISION_API DSAPBox{
 public:
-    DSAPBox(Cube c,EndPoint * mi = 0x0,EndPoint * ma = 0x0) : cube(c),min(mi),max(ma){}
+    DSAPBox(Cube c,EndPoint * mi = nullptr,EndPoint * ma = nullptr) : cube(c),min(mi),max(ma){}
 
     void update(int axis,double alarmDist);
 
@@ -72,11 +69,7 @@ public:
 
     double squaredDistance(const DSAPBox & other,int axis)const;
 
-
-    inline void show()const{
-        std::cout<<"MIN "<<cube.minVect()<<std::endl;
-        std::cout<<"MAX "<<cube.maxVect()<<std::endl;
-    }
+    void show() const;
 
     Cube cube;
     EndPoint * min;
@@ -88,15 +81,14 @@ public:
   *it sorts all the primitives along an axis (not checking the moving ones) and computes overlaping pairs without
   *saving it. But the memory used to save these primitives is created just once, the first time we add CollisionModels.
   */
-template <template<class T,class Allocator> class List,template <class T> class Allocator = std::allocator>
-class TDirectSAP :
+class SOFA_GENERAL_MESH_COLLISION_API DirectSAP :
     public core::collision::BroadPhaseDetection,
     public core::collision::NarrowPhaseDetection
 {
 public:
-    SOFA_CLASS2(SOFA_TEMPLATE2(TDirectSAP,List,Allocator), core::collision::BroadPhaseDetection, core::collision::NarrowPhaseDetection);
+    SOFA_CLASS2(DirectSAP, core::collision::BroadPhaseDetection, core::collision::NarrowPhaseDetection);
 
-    typedef List<EndPoint*,Allocator<EndPoint*> > EndPointList;
+    typedef std::vector<EndPoint*> EndPointList;
 
     typedef DSAPBox SAPBox;
 
@@ -119,11 +111,11 @@ private:
       */
     void update();
 
-    Data<bool> bDraw;
+    Data<bool> bDraw; ///< enable/disable display of results
 
-    Data< helper::fixed_array<defaulttype::Vector3,2> > box;
+    Data< helper::fixed_array<defaulttype::Vector3,2> > box; ///< if not empty, objects that do not intersect this bounding-box will be ignored
 
-    CubeModel::SPtr boxModel;
+    CubeCollisionModel::SPtr boxModel;
 
     std::vector<DSAPBox> _boxes;//boxes
     EndPointList _end_points;//end points of _boxes
@@ -136,41 +128,35 @@ private:
     double _alarmDist_d2;
     double _sq_alarmDist;
 protected:
-    TDirectSAP();
+    DirectSAP();
 
-    ~TDirectSAP();
+    ~DirectSAP() override;
 
     std::vector<EndPoint*> _to_del;//EndPoint arrays to delete when deleting DirectSAP
 public:
     void setDraw(bool val) { bDraw.setValue(val); }
 
-    void init();
-    void reinit();
+    void init() override;
+    void reinit() override;
 
-    void addCollisionModel (core::CollisionModel *cm);
+    void addCollisionModel (core::CollisionModel *cm) override;
 
     /**
       *Unuseful methods because all is done in addCollisionModel
       */
-    void addCollisionPair (const std::pair<core::CollisionModel*, core::CollisionModel*>& ){}
-    void addCollisionPairs (const helper::vector<std::pair<core::CollisionModel*, core::CollisionModel*> >&){}
+    void addCollisionPair (const std::pair<core::CollisionModel*, core::CollisionModel*>& ) override {}
+    void addCollisionPairs (const helper::vector<std::pair<core::CollisionModel*, core::CollisionModel*> >&) override {}
 
-    virtual void endBroadPhase();
-    virtual void beginNarrowPhase();
+    void endBroadPhase() override;
+    void beginNarrowPhase() override;
 
 
     /* for debugging */
-    inline void draw(const core::visual::VisualParams*){}
+    void draw(const core::visual::VisualParams*) override {}
 
-    inline virtual bool needsDeepBoundingTree()const{return false;}
+    inline bool needsDeepBoundingTree()const override {return false;}
 };
 
-typedef TDirectSAP<std::vector,std::allocator> DirectSAP;
-
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_COLLISION_DIRECTSAP_CPP)
-extern template class SOFA_GENERAL_MESH_COLLISION_API TDirectSAP<helper::vector,helper::CPUMemoryManager>;
-extern template class SOFA_GENERAL_MESH_COLLISION_API TDirectSAP<std::vector,std::allocator>;
-#endif
 
 } // namespace collision
 

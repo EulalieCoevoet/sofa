@@ -1,11 +1,11 @@
-#ifndef PROJECTIONMAPPING_H
-#define PROJECTIONMAPPING_H
+#ifndef SOFA_COMPONENT_COMPLIANCE_PROJECTIONMAPPING_H
+#define SOFA_COMPONENT_COMPLIANCE_PROJECTIONMAPPING_H
 
 #include "AssembledMapping.h"
 #include <Compliant/config.h>
 
 #include "../utils/map.h"
-#include "../utils/pair.h"
+#include <sofa/helper/pair.h>
 
 namespace sofa {
 
@@ -32,7 +32,7 @@ public:
 	typedef typename TIn::Real in_real;
 	typedef typename TOut::Real out_real;
 
-	typedef defaulttype::SerializablePair<unsigned, typename TIn::Coord> set_type;
+    typedef std::pair<unsigned, typename TIn::Coord> set_type;
     Data< helper::vector< set_type > > set;
 	
     Data< helper::vector<SReal> > offset;
@@ -50,7 +50,7 @@ public:
 	}
 	
 
-    virtual void init()
+    virtual void init() override
     {
         this->getToModel()->resize( set.getValue().size() );
         AssembledMapping<TIn, TOut>::init();
@@ -59,7 +59,7 @@ public:
 
 protected:
 	
-	virtual void assemble( const typename self::in_pos_type& in) {
+    virtual void assemble( const typename self::in_pos_type& in) override {
 		
         const helper::vector<set_type>& s = set.getValue();
 		
@@ -76,9 +76,9 @@ protected:
 			J.startVec( row );
 			
 			for( unsigned j = 0, m = self::Nin; j < m; ++j) {
-				unsigned col = self::Nin * s[i].pair.first + j;
+                unsigned col = self::Nin * s[i].first + j;
 
-				J.insertBack(row, col) = s[i].pair.second[j];
+                J.insertBack(row, col) = s[i].second[j];
 			}
 	
 		}
@@ -88,7 +88,7 @@ protected:
 	}
 	
 	virtual void apply(typename self::out_pos_type& out, 
-					   const typename self::in_pos_type& in ) {
+                       const typename self::in_pos_type& in ) override {
         const helper::vector<set_type>& s = set.getValue();
         const helper::vector<SReal>& off = offset.getValue();
 		
@@ -98,12 +98,12 @@ protected:
 			
 			SReal delta = off.empty() ? 0 : off[ std::min<int>(off.size() - 1, i) ];
 			
-            utils::map(out[i])(0) = utils::map(in[s[i].pair.first]).dot( utils::map(s[i].pair.second ) ) - delta;
+            utils::map(out[i])(0) = utils::map(in[s[i].first]).dot( utils::map(s[i].second ) ) - delta;
 		}
 		
 	}
 
-    virtual void updateForceMask()
+    virtual void updateForceMask() override
     {
         const helper::vector<set_type>& s = set.getValue();
 
@@ -111,12 +111,17 @@ protected:
         {
             if( this->maskTo->getEntry(i) )
             {
-                this->maskFrom->insertEntry(s[i].first());
+                this->maskFrom->insertEntry(s[i].first);
             }
         }
     }
 	
 };
+
+#if !defined(SOFA_COMPONENT_COMPLIANCE_PROJECTIONMAPPING_CPP)
+extern template class SOFA_Compliant_API ProjectionMapping<  sofa::defaulttype::Vec6Types, sofa::defaulttype::Vec1Types >;
+#endif
+
 
 }
 }

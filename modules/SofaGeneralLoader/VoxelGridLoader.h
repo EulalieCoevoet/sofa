@@ -1,35 +1,29 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #ifndef SOFA_COMPONENT_LOADER_VOXELGRIDLOADER
 #define SOFA_COMPONENT_LOADER_VOXELGRIDLOADER
-#include "config.h"
+#include <SofaGeneralLoader/config.h>
 
 #include <sofa/core/loader/VoxelLoader.h>
-#include <sofa/defaulttype/Vec.h>
-#include <sofa/core/objectmodel/DataFileName.h>
-#include <sofa/helper/fixed_array.h>
 
 namespace sofa
 {
@@ -52,19 +46,19 @@ public:
     typedef helper::fixed_array<unsigned int,8> Hexahedron;
 protected:
     VoxelGridLoader();
-    virtual ~VoxelGridLoader();
+    ~VoxelGridLoader() override;
 public:
-    virtual void init();
+    void init() override;
 
-    virtual void reinit();
+    void reinit() override;
 
     virtual void clear();
 
-    virtual bool load();
-    virtual bool canLoad();
+    bool load() override;
+    bool canLoad() override;
 
     void setVoxelSize ( const defaulttype::Vector3 vSize );
-    defaulttype::Vector3 getVoxelSize () const;
+    defaulttype::Vector3 getVoxelSize () const override;
 
     void addBackgroundValue ( const int value );
     int getBackgroundValue( const unsigned int idx = 0) const;
@@ -74,29 +68,29 @@ public:
 
     void getResolution ( Vec3i& res ) const;
 
-    int getDataSize() const;
+    int getDataSize() const override;
 
-    unsigned char * getData();
-    unsigned char * getSegmentID();
+    unsigned char * getData() override;
+    unsigned char * getSegmentID() override;
 
-    helper::vector<unsigned int> getHexaIndicesInGrid() const;
+    helper::vector<unsigned int> getHexaIndicesInGrid() const override;
 
-    Vec6i getROI() const;
+    Vec6i getROI() const override;
 
     // fill the texture by 'image' only where there is the 'segmentation' of 'activeValue' and give the 3D texture sizes
-    void createSegmentation3DTexture( unsigned char **textureData, int& width, int& height, int& depth);
+    void createSegmentation3DTexture( unsigned char **textureData, int& width, int& height, int& depth) override;
 
-    Data< defaulttype::Vector3 > voxelSize;
-    Data< Vec3i > dataResolution;
-    Data< Vec6i > roi;
-    Data< int > headerSize;
-    Data< int > segmentationHeaderSize;
-    Data< helper::vector<unsigned int> > idxInRegularGrid;
+    Data< defaulttype::Vector3 > voxelSize; ///< Dimension of one voxel
+    Data< Vec3i > dataResolution; ///< Resolution of the voxel file
+    Data< Vec6i > roi; ///< Region of interest (xmin, ymin, zmin, xmax, ymax, zmax)
+    Data< int > headerSize; ///< Header size in bytes
+    Data< int > segmentationHeaderSize; ///< Header size in bytes
+    Data< helper::vector<unsigned int> > idxInRegularGrid; ///< indices of the hexa in the grid.
 
-    Data< helper::vector<int> > backgroundValue;
-    Data< helper::vector<int> > activeValue;
+    Data< helper::vector<int> > backgroundValue; ///< Background values (to be ignored)
+    Data< helper::vector<int> > activeValue; ///< Active data values
 
-    Data<bool> generateHexa;
+    Data<bool> generateHexa; ///< Interpret voxel as either hexa or points
 
 private:
     void setResolution ( const Vec3i res );

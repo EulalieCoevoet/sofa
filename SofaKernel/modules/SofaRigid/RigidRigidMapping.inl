@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -31,13 +28,11 @@
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
 
-#include <sofa/helper/gl/Axis.h>
-#include <sofa/helper/gl/template.h>
-#include <sofa/helper/io/MassSpringLoader.h>
+#include <sofa/helper/io/XspLoader.h>
 #include <sofa/helper/io/SphereLoader.h>
 #include <sofa/helper/io/Mesh.h>
 
-#include <string.h>
+#include <cstring>
 #include <iostream>
 
 namespace sofa
@@ -50,23 +45,46 @@ namespace mapping
 {
 
 template <class TIn, class TOut>
-class RigidRigidMapping<TIn, TOut>::Loader : public helper::io::MassSpringLoader, public helper::io::SphereLoader
+RigidRigidMapping<TIn,TOut>::RigidRigidMapping()
+    : Inherit(),
+      points(initData(&points, "initialPoints", "Initial position of the points")),
+      repartition(initData(&repartition,"repartition","number of child frames per parent frame. \n"
+                           "If empty, all the children are attached to the parent with index \n"
+                           "given in the \"index\" attribute. If one value, each parent frame drives \n"
+                           "the given number of children frames. Otherwise, the values are the number \n"
+                           "of child frames driven by each parent frame. ")),
+      index(initData(&index,(unsigned)0,"index","input frame index")),
+      fileRigidRigidMapping(initData(&fileRigidRigidMapping,"filename","Xsp file where to load rigidrigid mapping description")),
+      axisLength(initData( &axisLength, 0.7, "axisLength", "axis length for display")),
+      indexFromEnd( initData ( &indexFromEnd,false,"indexFromEnd","input DOF index starts from the end of input DOFs vector") ),
+      globalToLocalCoords ( initData ( &globalToLocalCoords,"globalToLocalCoords","are the output DOFs initially expressed in global coordinates" ) )
+{
+    this->addAlias(&fileRigidRigidMapping,"fileRigidRigidMapping");
+}
+
+
+template <class TIn, class TOut>
+class RigidRigidMapping<TIn, TOut>::Loader :
+        public helper::io::XspLoaderDataHook,
+        public helper::io::SphereLoaderDataHook
 {
 public:
     RigidRigidMapping<TIn, TOut>* dest;
     Loader(RigidRigidMapping<TIn, TOut>* dest) : dest(dest) {}
-    virtual void addMass(SReal px, SReal py, SReal pz, SReal, SReal, SReal, SReal, SReal, bool, bool)
+
+    void addMass(SReal px, SReal py, SReal pz, SReal, SReal, SReal, SReal, SReal, bool, bool) override
     {
         OutCoord c;
         Out::set(c,px,py,pz);
-        dest->points.beginEdit()->push_back(c); //Coord((Real)px,(Real)py,(Real)pz));
+        dest->points.beginEdit()->push_back(c);
         dest->points.endEdit();
     }
-    virtual void addSphere(SReal px, SReal py, SReal pz, SReal)
+
+    void addSphere(SReal px, SReal py, SReal pz, SReal) override
     {
         OutCoord c;
         Out::set(c,px,py,pz);
-        dest->points.beginEdit()->push_back(c); //Coord((Real)px,(Real)py,(Real)pz));
+        dest->points.beginEdit()->push_back(c);
         dest->points.endEdit();
     }
 };
@@ -80,18 +98,18 @@ void RigidRigidMapping<TIn, TOut>::load(const char *filename)
     if (strlen(filename)>4 && !strcmp(filename+strlen(filename)-4,".xs3"))
     {
         Loader loader(this);
-        loader.helper::io::MassSpringLoader::load(filename);
+        sofa::helper::io::XspLoader::Load(filename, loader);
     }
     else if (strlen(filename)>4 && !strcmp(filename+strlen(filename)-4,".sph"))
     {
         Loader loader(this);
-        loader.helper::io::SphereLoader::load(filename);
+        sofa::helper::io::SphereLoader::Load(filename, loader);
     }
     else if (strlen(filename)>0)
     {
         // Default to mesh loader
         helper::io::Mesh* mesh = helper::io::Mesh::Create(filename);
-        if (mesh!=NULL)
+        if (mesh!=nullptr)
         {
             pts.resize(mesh->getVertices().size());
             for (unsigned int i=0; i<mesh->getVertices().size(); i++)
@@ -112,7 +130,7 @@ void RigidRigidMapping<TIn, TOut>::init()
     if (!fileRigidRigidMapping.getValue().empty())
         this->load(fileRigidRigidMapping.getFullPath().c_str());
 
-    if (this->points.getValue().empty() && this->toModel!=NULL)
+    if (this->points.getValue().empty() && this->toModel!=nullptr)
     {
         const OutVecCoord& x =this->toModel->read(core::ConstVecCoordId::position())->getValue();
         OutVecCoord& pts = *points.beginEdit();
@@ -164,20 +182,6 @@ void RigidRigidMapping<TIn, TOut>::clear()
     this->points.endEdit();
 }
 
-/*
-template <class TIn, class TOut>
-void RigidRigidMapping<TIn, TOut>::disable()
-{
-if (!this->points.getValue().empty() && this->toModel!=NULL)
-{
-VecCoord& x =this->toModel->read(core::ConstVecCoordId::position())->getValue();
-x.resize(points.getValue().size());
-for (unsigned int i=0;i<points.getValue().size();i++)
-x[i] = points.getValue()[i];
-}
-}
-*/
-
 template <class TIn, class TOut>
 void RigidRigidMapping<TIn, TOut>::setRepartition(unsigned int value)
 {
@@ -193,7 +197,6 @@ void RigidRigidMapping<TIn, TOut>::setRepartition(sofa::helper::vector<unsigned 
     helper::vector<unsigned int>& rep = *this->repartition.beginEdit();
     rep.clear();
     rep.reserve(values.size());
-    //repartition.setValue(values);
     sofa::helper::vector<unsigned int>::iterator it = values.begin();
     while (it != values.end())
     {
@@ -257,7 +260,7 @@ void RigidRigidMapping<TIn, TOut>::apply(const core::MechanicalParams * /*mparam
     default: //n values are specified : heterogen repartition.getValue() mapping on the input dofs
         if (repartition.getValue().size() != in.size())
         {
-            serr<<"Error : mapping dofs repartition.getValue() is not correct"<<sendl;
+            msg_error()<<"Mapping dofs repartition is not correct: repartition.getValue().size() = " << repartition.getValue().size() << " while in.size() = " << in.size();
             return;
         }
         cptOut=0;
@@ -339,7 +342,7 @@ void RigidRigidMapping<TIn, TOut>::applyJ(const core::MechanicalParams * /*mpara
     default:
         if (repartition.getValue().size() != parentVelocities.size())
         {
-            serr<<"Error : mapping dofs repartition.getValue() is not correct"<<sendl;
+            msg_error()<<"Mapping dofs repartition is not correct: repartition.getValue().size() = " << repartition.getValue().size() << " while parentVelocities.size() = " << parentVelocities.size();
             return;
         }
         cptchildVelocities=0;
@@ -397,20 +400,6 @@ void RigidRigidMapping<TIn, TOut>::applyJT(const core::MechanicalParams * /*mpar
         getVCenter(parentForces[parentIndex]) += v;
         getVOrientation(parentForces[parentIndex]) += omega;
         mask.insertEntry(parentIndex);
-
-        //			if (!indexFromEnd.getValue())
-        //			{
-        //                            getVCenter(parentForces[index.getValue()]) += v;
-        //                            getVOrientation(parentForces[index.getValue()]) += omega;
-        //                            maskFrom->insertEntry(index.getValue());
-        //			}
-        //			else
-        //			{
-        //                            getVCenter(parentForces[parentForces.size() - 1 - index.getValue()]) += v;
-        //                            getVOrientation(parentForces[parentForces.size() - 1 - index.getValue()]) += omega;
-        //                            maskFrom->insertEntry(parentForces.size() - 1 - index.getValue());
-        //			}
-
         break;
     case 1 :
         childrenPerParent = repartition.getValue()[0];
@@ -434,7 +423,7 @@ void RigidRigidMapping<TIn, TOut>::applyJT(const core::MechanicalParams * /*mpar
     default :
         if (repartition.getValue().size() != parentForces.size())
         {
-            serr<<"Error : mapping dofs repartition.getValue() is not correct"<<sendl;
+            msg_error() <<"Mapping dofs repartition is not correct: repartition.getValue().size() = " << repartition.getValue().size() << " while parentForces.size() = " << parentForces.size();
             return;
         }
         for(parentIndex=0; parentIndex<parentForces.size(); parentIndex++)
@@ -503,7 +492,7 @@ void RigidRigidMapping<TIn, TOut>::applyDJT(const core::MechanicalParams* mparam
     default :
         if (repartition.getValue().size() != parentForces.size())
         {
-            serr<<"Error : mapping dofs repartition.getValue() is not correct"<<sendl;
+            msg_error() <<"Mapping dofs repartition is not correct: repartition.getValue().size() = " << repartition.getValue().size() << " while parentForces.size() = " << parentForces.size();
             return;
         }
         for(parentIndex=0; parentIndex<parentForces.size(); parentIndex++)
@@ -734,7 +723,7 @@ void RigidRigidMapping<TIn, TOut>::computeAccFromMapping(const core::MechanicalP
     default:
         if (repartition.getValue().size() != v_in.size())
         {
-            serr<<"Error : mapping dofs repartition.getValue() is not correct"<<sendl;
+            msg_error() <<"Mapping dofs repartition is not correct: repartition.getValue().size() = " << repartition.getValue().size() << " while v_in.size() = " << v_in.size();
             dAcc_out.endEdit();
             return;
         }
@@ -758,15 +747,14 @@ void RigidRigidMapping<TIn, TOut>::computeAccFromMapping(const core::MechanicalP
 template <class TIn, class TOut>
 void RigidRigidMapping<TIn, TOut>::draw(const core::visual::VisualParams* vparams)
 {
-#ifndef SOFA_NO_OPENGL
 	if (!getShow(this,vparams)) return;
+
     const typename Out::VecCoord& x =this->toModel->read(core::ConstVecCoordId::position())->getValue();
+    const defaulttype::Vector3& sizes = defaulttype::Vector3(axisLength.getValue(), axisLength.getValue(), axisLength.getValue());
     for (unsigned int i=0; i<x.size(); i++)
     {
-        helper::gl::Axis::draw(x[i].getCenter(), x[i].getOrientation(), axisLength.getValue());
+        vparams->drawTool()->drawFrame(x[i].getCenter(), x[i].getOrientation(), sizes);
     }
-    glEnd();
-#endif /* SOFA_NO_OPENGL */
 }
 
 } // namespace mapping

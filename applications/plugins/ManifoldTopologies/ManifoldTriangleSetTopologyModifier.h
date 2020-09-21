@@ -1,33 +1,28 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_COMPONENT_TOPOLOGY_MANIFOLDTRIANGLESETTOPOLOGYMODIFIER_H
-#define SOFA_COMPONENT_TOPOLOGY_MANIFOLDTRIANGLESETTOPOLOGYMODIFIER_H
-#include <ManifoldTopologies/config.h>
+#ifndef SOFA_MANIFOLD_TOPOLOGY_TRIANGLESETTOPOLOGYMODIFIER_H
+#define SOFA_MANIFOLD_TOPOLOGY_TRIANGLESETTOPOLOGYMODIFIER_H
 
 #include <ManifoldTopologies/config.h>
-
 #include <SofaBaseTopology/TriangleSetTopologyModifier.h>
 
 namespace sofa
@@ -54,18 +49,13 @@ class SOFA_MANIFOLD_TOPOLOGIES_API ManifoldTriangleSetTopologyModifier : public 
 public:
     SOFA_CLASS(ManifoldTriangleSetTopologyModifier,TriangleSetTopologyModifier);
 
-    ManifoldTriangleSetTopologyModifier()
-        : TriangleSetTopologyModifier()
-        , m_triSwap(initData(&m_triSwap,  "swap 2 triangles by their index", "Debug : Test swap function (only while animate)."))
-        , m_swapMesh(initData (&m_swapMesh, false, "Mesh Optimization", "If true, optimize the mesh only by swapping edges"))
-    {
-    }
+    ManifoldTriangleSetTopologyModifier();        
 
-    virtual ~ManifoldTriangleSetTopologyModifier() {}
+    ~ManifoldTriangleSetTopologyModifier() override {}
 
-    virtual void init();
+    void init() override;
 
-    virtual void reinit();
+    void reinit() override;
 
     virtual void Debug(); // TO BE REMOVED WHEN CLASS IS SURE.
 
@@ -88,12 +78,12 @@ public:
      * @param baryCoefs - their barycoefs related to these ancestors.
      * @param trianglesIndex2remove - List of triangle indices to remove.
      */
-    virtual void addRemoveTriangles (const unsigned int nTri2Add,
+    virtual void addRemoveTriangles (const size_t nTri2Add,
             const sofa::helper::vector< Triangle >& triangles2Add,
             const sofa::helper::vector< unsigned int >& trianglesIndex2Add,
             const sofa::helper::vector< sofa::helper::vector< unsigned int > > & ancestors,
             const sofa::helper::vector< sofa::helper::vector< double > >& baryCoefs,
-            sofa::helper::vector< unsigned int >& trianglesIndex2remove);
+            sofa::helper::vector< unsigned int >& trianglesIndex2remove) override;
 
 
     /** \brief: Reorder the vertex in the array of a given edge. In order to be in the oriented in the right direction
@@ -123,8 +113,8 @@ public:
 
 protected:
 
-    Data< sofa::helper::vector< unsigned int> > m_triSwap;
-    Data< bool > m_swapMesh;
+    Data< sofa::helper::vector< unsigned int> > m_triSwap; ///< Debug : Test swap function (only while animate).
+    Data< bool > m_swapMesh; ///< If true, optimize the mesh only by swapping edges
 
     /**\brief Preconditions to fulfill before removing triangles. In this class topology should stay manifold.
     * This function call private functions to test the topology:
@@ -132,7 +122,7 @@ protected:
     * @see createRemovingEdgesFutureModifications()
     * @see testRemovingModifications().
     */
-    virtual bool removeTrianglesPreconditions(const sofa::helper::vector< unsigned int >& items);
+    virtual bool removeTrianglesPreconditions(const sofa::helper::vector< unsigned int >& items) override;
 
     /**\brief Postprocessing to apply to the triangle topology. In this class topology should stay manifold.
     * These functions reorder the triangles around each vertex where triangles have been deleted.
@@ -142,20 +132,20 @@ protected:
     * @see updateRemovingModifications()
     * @see reorderEdgeForRemoving()
     */
-    virtual void removeTrianglesPostProcessing(const sofa::helper::vector< unsigned int >& edgeToBeRemoved, const sofa::helper::vector< unsigned int >& vertexToBeRemoved );
+    virtual void removeTrianglesPostProcessing(const sofa::helper::vector< unsigned int >& edgeToBeRemoved, const sofa::helper::vector< unsigned int >& vertexToBeRemoved ) override;
 
 
     /**\brief Preconditions to fulfill before adding triangles. In this class topology should stay manifold.
      * Test if triangles could be added and stock the informations of where triangles are added in the map:
      * @see m_modificationsEdge
      */
-    virtual bool addTrianglesPreconditions (const sofa::helper::vector <Triangle>& triangles);
+    virtual bool addTrianglesPreconditions (const sofa::helper::vector <Triangle>& triangles) override;
 
 
     /**\brief Postprocessing to apply to the triangle topology. In this class topology should stay manifold.
      * Using the map @see m_modificationsEdge, reorder the different shells.
      */
-    virtual void addTrianglesPostProcessing(const sofa::helper::vector <Triangle>& triangles);
+    virtual void addTrianglesPostProcessing(const sofa::helper::vector <Triangle>& triangles) override;
 
 
 private:
@@ -247,4 +237,4 @@ private:
 
 } // namespace sofa
 
-#endif
+#endif // SOFA_MANIFOLD_TOPOLOGY_TRIANGLESETTOPOLOGYMODIFIER_H

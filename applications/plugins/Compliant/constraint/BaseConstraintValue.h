@@ -36,12 +36,12 @@ class SOFA_Compliant_API BaseConstraintValue : public core::objectmodel::BaseObj
     SOFA_ABSTRACT_CLASS(BaseConstraintValue, core::objectmodel::BaseObject);
 
 
-    BaseConstraintValue( mstate_type* mstate = 0 ) 
+    BaseConstraintValue( mstate_type* mstate = nullptr ) 
 		: mstate(mstate) { 
 		
 	}
 
-    void init()
+    void init() override
     {
         if( !mstate )
         {
@@ -69,7 +69,7 @@ class SOFA_Compliant_API BaseConstraintValue : public core::objectmodel::BaseObj
     /// but in some case (eg Restitution), they must be deactivated
     /// @param n nb constraint blocks
     /// @param dim nb lines per constraint
-    virtual void filterConstraints( helper::vector<bool>* /*activateMask*/, const core::MultiVecCoordId& /*posId*/, unsigned /*n*/, unsigned /*dim*/ ) { /*all constraints are active by default*/ }
+    virtual void filterConstraints( helper::vector<bool>*& /*activateMask*/, const core::MultiVecCoordId& /*posId*/, unsigned /*n*/, unsigned /*dim*/ ) { /*all constraints are active by default*/ }
 
     /// clear an eventual violated mask
     virtual void clear() {}

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -65,7 +62,7 @@ private:
 protected:
     THMPGSpatialHashing();
 
-    virtual ~THMPGSpatialHashing(){}
+    ~THMPGSpatialHashing() override{}
 
     virtual bool keepCollisionBetween(core::CollisionModel *cm1, core::CollisionModel *cm2);
 
@@ -73,7 +70,7 @@ protected:
 
     //boost::unordered_map<std::pair<core::CollisionModel*,core::CollisionModel*>,CollidingPair> _qsdf;
 
-    sofa::helper::vector<sofa::component::collision::CubeModel*> cubeModels;//AABBs containing the final collision model
+    sofa::helper::vector<sofa::component::collision::CubeCollisionModel*> cubeModels;//AABBs containing the final collision model
     THMPGHashTable _grid;
     SReal _timeStamp;
     SReal _cell_size;
@@ -85,7 +82,7 @@ protected:
     std::vector<core::CollisionModel*> _collisionModels;
     boost::unordered::unordered_map<sofa::core::CollisionModel*,THMPGHashTable> _hash_tables;
 public:
-    inline virtual void beginBroadPhase()
+    inline void beginBroadPhase() override
     {
         core::collision::BroadPhaseDetection::beginBroadPhase();
         _timeStamp += this->getContext()->getDt();
@@ -93,25 +90,25 @@ public:
     }
 
 
-    void init();
-    void reinit();
+    void init() override;
+    void reinit() override;
 
-    void addCollisionModel (core::CollisionModel *cm);
+    void addCollisionModel (core::CollisionModel *cm) override;
 
-    virtual void endBroadPhase();
+    void endBroadPhase() override;
 
     /**
       *Unuseful methods because all is done in addCollisionModel
       */
-    void addCollisionPair (const std::pair<core::CollisionModel*, core::CollisionModel*>& );
+    void addCollisionPair (const std::pair<core::CollisionModel*, core::CollisionModel*>& ) override;
 
-    virtual void beginNarrowPhase();
+    void beginNarrowPhase() override;
 
 
     /* for debugging */
-    inline void draw(const core::visual::VisualParams*){}
+    inline void draw(const core::visual::VisualParams*) override{}
 
-    inline virtual bool needsDeepBoundingTree()const{return false;}
+    inline bool needsDeepBoundingTree()const override{return false;}
 };
 
 } // namespace collision

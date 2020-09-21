@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -30,7 +27,7 @@
 #include <sofa/core/behavior/MechanicalState.h>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/DataTypeInfo.h>
-
+#include <sofa/core/objectmodel/Tag.h>
 #include <sofa/simulation/Node.h>
 #include <sofa/simulation/Simulation.h>
 
@@ -43,12 +40,52 @@ namespace component
 namespace topology
 {
 
+using sofa::core::objectmodel::ComponentState;
+
+template <class DataTypes>
+ PointSetGeometryAlgorithms< DataTypes >::PointSetGeometryAlgorithms()        
+    : GeometryAlgorithms()
+    , d_showIndicesScale (core::objectmodel::Base::initData(&d_showIndicesScale, (float) 0.02, "showIndicesScale", "Debug : scale for view topology indices"))
+    , d_showPointIndices (core::objectmodel::Base::initData(&d_showPointIndices, (bool) false, "showPointIndices", "Debug : view Point indices"))
+    , d_tagMechanics( initData(&d_tagMechanics,std::string(),"tagMechanics","Tag of the Mechanical Object"))
+    , l_topology(initLink("topology", "link to the topology container"))
+{
+}
+
 template <class DataTypes>
 void PointSetGeometryAlgorithms< DataTypes >::init()
 {
-    object = this->getContext()->core::objectmodel::BaseContext::template get< core::behavior::MechanicalState< DataTypes > >();
+    this->m_componentstate = ComponentState::Invalid;
+    if ( this->d_tagMechanics.getValue().size()>0) {
+        sofa::core::objectmodel::Tag mechanicalTag(this->d_tagMechanics.getValue());
+        object = this->getContext()->core::objectmodel::BaseContext::template get< core::behavior::MechanicalState< DataTypes > >(mechanicalTag,sofa::core::objectmodel::BaseContext::SearchUp);
+    } else {
+        object = this->getContext()->core::objectmodel::BaseContext::template get< core::behavior::MechanicalState< DataTypes > >();
+    }
     core::topology::GeometryAlgorithms::init();
-    this->m_topology = this->getContext()->getMeshTopology();
+
+    if (l_topology.empty())
+    {
+        msg_info() << "link to Topology container should be set to ensure right behavior. First Topology found in current context will be used.";
+        l_topology.set(this->getContext()->getMeshTopologyLink());
+    }
+
+    this->m_topology = l_topology.get();
+    msg_info() << "Topology path used: '" << l_topology.getLinkedPath() << "'";
+
+    if (!m_topology)
+    {
+        msg_error() << "No topology component found at path: " << l_topology.getLinkedPath() << ", nor in current context: " << this->getContext()->name << ". TriangleCollisionModel<sofa::defaulttype::Vec3Types> requires a Triangular Topology";
+        sofa::core::objectmodel::BaseObject::d_componentstate.setValue(sofa::core::objectmodel::ComponentState::Invalid);
+        return;
+    }
+
+    if(this->object ==nullptr)
+    {
+        msg_error() << "Unable to get a valid mechanical object from the context";
+        return;
+    }
+    this->m_componentstate = ComponentState::Valid;
 }
 
 template <class DataTypes>
@@ -60,7 +97,11 @@ template <class DataTypes>
 float PointSetGeometryAlgorithms< DataTypes >::getIndicesScale() const
 {
     const sofa::defaulttype::BoundingBox& bbox = this->getContext()->f_bbox.getValue();
-    return (float)((bbox.maxBBox() - bbox.minBBox()).norm() * showIndicesScale.getValue());
+    float bbDiff = (bbox.maxBBox() - bbox.minBBox()).norm();
+    if (std::isinf(bbDiff))
+        return d_showIndicesScale.getValue();
+    else
+        return bbDiff * d_showIndicesScale.getValue();
 }
 
 
@@ -219,7 +260,7 @@ void PointSetGeometryAlgorithms<DataTypes>::initPointsAdded(const helper::vector
 
 
 template<class DataTypes>
-void PointSetGeometryAlgorithms<DataTypes>::initPointAdded(unsigned int index, const core::topology::PointAncestorElem &ancestorElem
+void PointSetGeometryAlgorithms<DataTypes>::initPointAdded(PointID index, const core::topology::PointAncestorElem &ancestorElem
     , const helper::vector< VecCoord* >& coordVecs, const helper::vector< VecDeriv* >& /*derivVecs*/)
 
 {
@@ -236,9 +277,8 @@ void PointSetGeometryAlgorithms<DataTypes>::initPointAdded(unsigned int index, c
 template<class DataTypes>
 void PointSetGeometryAlgorithms<DataTypes>::draw(const core::visual::VisualParams* vparams)
 {
-    if (showPointIndices.getValue())
+    if (d_showPointIndices.getValue())
     {
-        sofa::defaulttype::Mat<4,4, GLfloat> modelviewM;
         sofa::defaulttype::Vec<3, SReal> sceneMinBBox, sceneMaxBBox;
         const VecCoord& coords =(this->object->read(core::ConstVecCoordId::position())->getValue());
 
@@ -249,7 +289,7 @@ void PointSetGeometryAlgorithms<DataTypes>::draw(const core::visual::VisualParam
 
         float scale = getIndicesScale();
 
-        helper::vector<defaulttype::Vector3> positions;
+        std::vector<defaulttype::Vector3> positions;
         for (unsigned int i =0; i<coords.size(); i++)
         {
             defaulttype::Vector3 center; center = DataTypes::getCPos(coords[i]);

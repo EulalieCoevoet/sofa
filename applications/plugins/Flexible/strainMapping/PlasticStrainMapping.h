@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -64,15 +61,15 @@ public:
 
     /// @name  Plasticity parameters such as "Interactive Virtual Materials", Muller & Gross, GI 2004
     //@{
-    Data<helper::vector<Real> > _max;
-    Data<helper::vector<Real> > _yield;
+    Data<helper::vector<Real> > _max; ///< Plastic Max Threshold (2-norm of the strain)
+    Data<helper::vector<Real> > _yield; ///< Plastic Yield Threshold (2-norm of the strain)
     helper::vector<Real> _squaredYield;
     Data<helper::vector<Real> > _creep; ///< this parameter is different from the article, here it includes the multiplication by dt
     //@}
 
 
 
-    virtual void reinit()
+    virtual void reinit() override
     {
         _squaredYield.resize(_yield.getValue().size());
         for(size_t i=0;i<_yield.getValue().size();i++) _squaredYield[i] = _yield.getValue()[i] * _yield.getValue()[i];
@@ -80,7 +77,7 @@ public:
         Inherit::reinit();
     }
 
-    virtual void reset()
+    virtual void reset() override
     {
         //serr<<"PlasticStrainMapping::reset"<<sendl;
         Inherit::reset();
@@ -109,7 +106,7 @@ protected:
 
     virtual ~PlasticStrainMapping() { }
 
-    virtual void apply( const core::MechanicalParams * /*mparams*/ , Data<typename Inherit::OutVecCoord>& dOut, const Data<typename Inherit::InVecCoord>& dIn )
+    virtual void apply( const core::MechanicalParams * /*mparams*/ , Data<typename Inherit::OutVecCoord>& dOut, const Data<typename Inherit::InVecCoord>& dIn ) override
     {
         helper::ReadAccessor<Data<typename Inherit::InVecCoord> > inpos (*this->fromModel->read(core::ConstVecCoordId::position()));
         helper::ReadAccessor<Data<typename Inherit::OutVecCoord> > outpos (*this->toModel->read(core::ConstVecCoordId::position()));

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -61,11 +58,11 @@ public:
 protected:
     ArticulatedHierarchyContainer();
 
-    ~ArticulatedHierarchyContainer() {}
+    ~ArticulatedHierarchyContainer() override {}
 public:
 
 
-    void init();
+    void init() override;
 
     void setFilename(std::string f) {filename.setValue(f);}
 
@@ -117,32 +114,32 @@ public:
     */
 protected:
     ArticulationCenter();
-    ~ArticulationCenter() {}
+    ~ArticulationCenter() override {}
 public:
     /**
     *	All DOF's can be identified, in an univocal way, by an index
     *	this variable will store the index of the parentDOF of the articulation center
     */
-    Data<int> parentIndex;
+    Data<int> parentIndex; ///< Parent of the center articulation
     /**
     *	All DOF's can be identified, in an univocal way, by an index
     *	this variable will store the index of the childDOF of the articulation center
     */
-    Data<int> childIndex;
+    Data<int> childIndex; ///< Child of the center articulation
     /**
     *	Global position for the articulation center. It's not necessary to provide it at initialization.
     *	This will be computed in mapping using the global position of the parent DOF and the local position
     *	of the center articulation
     */
-    Data<defaulttype::Vector3> globalPosition;
+    Data<defaulttype::Vector3> globalPosition; ///< Global position of the articulation center
     /**
     *	It stores the local position of the center articulation in relation to the global position of the parentDOF
     */
-    Data<defaulttype::Vector3> posOnParent;
+    Data<defaulttype::Vector3> posOnParent; ///< Parent position of the articulation center
     /**
     *	It stores the local position of the center articulation in relation to the global position of the childDOF
     */
-    Data<defaulttype::Vector3> posOnChild;
+    Data<defaulttype::Vector3> posOnChild; ///< Child position of the articulation center
     /**
     *	It tells if the articulations of the articulation center are processed one by one or globally:
     *   0 - (default         ) articulation are treated one by one, the axis of the second articulation is updated by the potential rotation of the first articulation
@@ -150,7 +147,7 @@ public:
     *   1 - (Attach on Parent) the axis of the articulations are linked to the parent - rotations are treated by successive increases -
     *   2 - (Attach on Child ) the axis of the articulations are linked to the child (estimate position from the previous time step) - rotations are treated by successive increases -
     */
-    Data<int> articulationProcess;
+    Data<int> articulationProcess; ///<  0 - (default) hierarchy between articulations (euler angles)  1- ( on Parent) no hierarchy - axis are attached to the parent  2- (attached on Child) no hierarchy - axis are attached to the child
 
     /**
     *   for ARBORIS Mapping
@@ -228,26 +225,26 @@ public:
     */
 protected:
     Articulation();
-    ~Articulation() {}
+    ~Articulation() override {}
 public:
     /**
     *	this variable defines the motion axis
     */
-    Data<defaulttype::Vector3> axis;
+    Data<defaulttype::Vector3> axis; ///< Set the rotation axis for the articulation
     /**
     *	If true, this variable sets a rotation motion
     *	otherwise it does nothing
     */
-    Data<bool> rotation;
+    Data<bool> rotation; ///< Rotation
     /**
     *	If true, this variable sets a translation motion
     *	otherwise it does nothing
     */
-    Data<bool> translation;
+    Data<bool> translation; ///< Translation
     /**
     *	This is global index to number the articulations
     */
-    Data<int> articulationIndex;
+    Data<int> articulationIndex; ///< Articulation index
 
     std::vector<double> motion;
 

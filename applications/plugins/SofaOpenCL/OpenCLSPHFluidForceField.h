@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -86,15 +83,15 @@ public:
 
     void fillParams(Main* m, int kernelType, double kFactor=1.0, double bFactor=1.0)
     {
-        Real h = m->particleRadius.getValue();
+        Real h = m->d_particleRadius.getValue();
         params.h = h;
         params.h2 = h*h;
-        params.stiffness = (Real)(kFactor*m->pressureStiffness.getValue());
-        params.mass = m->particleMass.getValue();
+        params.stiffness = (Real)(kFactor*m->d_pressureStiffness.getValue());
+        params.mass = m->d_particleMass.getValue();
         params.mass2 = params.mass*params.mass;
-        params.density0 = m->density0.getValue();
-        params.viscosity = (Real)(bFactor*m->viscosity.getValue());
-        params.surfaceTension = (Real)(kFactor*m->surfaceTension.getValue());
+        params.density0 = m->d_density0.getValue();
+        params.viscosity = (Real)(bFactor*m->d_viscosity.getValue());
+        params.surfaceTension = (Real)(kFactor*m->d_surfaceTension.getValue());
 
         if (kernelType == 1)
         {

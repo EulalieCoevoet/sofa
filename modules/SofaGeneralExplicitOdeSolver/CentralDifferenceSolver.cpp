@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -28,7 +25,7 @@
 #include <sofa/simulation/MechanicalOperations.h>
 #include <sofa/simulation/VectorOperations.h>
 #include <sofa/core/ObjectFactory.h>
-#include <math.h>
+#include <cmath>
 #include <iostream>
 #include <sofa/helper/system/thread/CTime.h>
 
@@ -46,7 +43,8 @@ using namespace sofa::defaulttype;
 using namespace core::behavior;
 
 CentralDifferenceSolver::CentralDifferenceSolver()
-    : f_rayleighMass( initData(&f_rayleighMass,(SReal)0.1,"rayleighMass","Rayleigh damping coefficient related to mass"))
+    : f_rayleighMass( initData(&f_rayleighMass,(SReal)0.0,"rayleighMass","Rayleigh damping coefficient related to mass"))
+    , d_threadSafeVisitor(initData(&d_threadSafeVisitor, false, "threadSafeVisitor", "If true, do not use realloc and free visitors in fwdInteractionForceField."))
 {
 }
 
@@ -94,7 +92,7 @@ void CentralDifferenceSolver::solve(const core::ExecParams* params, SReal dt, so
     MultiVecDeriv vel(&vop, core::VecDerivId::velocity() );
     MultiVecCoord pos2(&vop, xResult /*core::VecCoordId::position()*/ );
     MultiVecDeriv vel2(&vop, vResult /*core::VecDerivId::velocity()*/ );
-    MultiVecDeriv dx (&vop, core::VecDerivId::dx() ); dx.realloc( &vop, true, true );
+    MultiVecDeriv dx(&vop, core::VecDerivId::dx()); dx.realloc(&vop, !d_threadSafeVisitor.getValue(), true);
     MultiVecDeriv f  (&vop, core::VecDerivId::force() );
 
     const SReal r = f_rayleighMass.getValue();
@@ -167,8 +165,6 @@ void CentralDifferenceSolver::solve(const core::ExecParams* params, SReal dt, so
     }
 
 }
-
-SOFA_DECL_CLASS(CentralDifferenceSolver)
 
 int CentralDifferenceSolverClass = core::RegisterObject("Explicit time integrator using central difference (also known as Verlet of Leap-frop)")
         .add< CentralDifferenceSolver >()

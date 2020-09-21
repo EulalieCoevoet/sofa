@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -73,14 +70,11 @@ public:
     typedef sofa::helper::system::thread::ctime_t ctime_t;
     typedef sofa::helper::system::thread::CTime CTime;
 
-    Data< bool > accumulate;
+    Data< bool > accumulate; ///< accumulate ?
     Data< ImageTypes > inputImage;
     Data< TransformType > inputTransform;
     Data< ImageTypes > outputImage;
     Data< TransformType > outputTransform;
-
-    virtual std::string getTemplateName() const    { return templateName(this);    }
-    static std::string templateName(const ImageAccumulator<ImageTypes>* = NULL) { return ImageTypes::Name(); }
 
     ImageAccumulator()    :   Inherited()
         , accumulate(initData(&accumulate,false,"accumulate","accumulate ?"))
@@ -98,9 +92,9 @@ public:
         f_listening.setValue(true);
     }
 
-    virtual ~ImageAccumulator() {}
+    ~ImageAccumulator() override {}
 
-    virtual void init()
+    void init() override
     {
         addInput(&inputImage);
         addInput(&inputTransform);
@@ -109,14 +103,14 @@ public:
         setDirtyValue();
     }
 
-    virtual void reinit() { update(); }
+    void reinit() override { update(); }
 
 protected:
     double SimuTime;
     ctime_t t0,t;
     int count;
 
-    virtual void update()
+    void doUpdate() override
     {
         if(SimuTime==this->getContext()->getTime()) return; // check if simutime has changed
         SimuTime=this->getContext()->getTime();
@@ -127,8 +121,6 @@ protected:
         if(in->isEmpty()) return;
         raTransform inT(this->inputTransform);
 
-        cleanDirty();
-
         waImage out(this->outputImage);
         waTransform outT(this->outputTransform);
 
@@ -138,7 +130,7 @@ protected:
         out->getCImgList().push_back(in->getCImg(0));
     }
 
-    void handleEvent(sofa::core::objectmodel::Event *event)
+    void handleEvent(sofa::core::objectmodel::Event *event) override
     {
         if ( /*simulation::AnimateEndEvent* ev =*/ simulation::AnimateEndEvent::checkEventType(event)) update();
     }

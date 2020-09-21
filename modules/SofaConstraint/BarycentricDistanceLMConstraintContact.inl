@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -41,7 +38,7 @@ namespace collision
 
 template < class TCollisionModel1, class TCollisionModel2, class ResponseDataTypes >
 BarycentricDistanceLMConstraintContact<TCollisionModel1,TCollisionModel2,ResponseDataTypes>::BarycentricDistanceLMConstraintContact(CollisionModel1* model1, CollisionModel2* model2, Intersection* intersectionMethod)
-    : model1(model1), model2(model2), intersectionMethod(intersectionMethod), ff(NULL), parent(NULL)
+    : model1(model1), model2(model2), intersectionMethod(intersectionMethod), ff(nullptr), parent(nullptr)
 {
     mapper1.setCollisionModel(model1);
     mapper2.setCollisionModel(model2);
@@ -59,11 +56,11 @@ BarycentricDistanceLMConstraintContact<TCollisionModel1,TCollisionModel2,Respons
 template < class TCollisionModel1, class TCollisionModel2, class ResponseDataTypes >
 void BarycentricDistanceLMConstraintContact<TCollisionModel1,TCollisionModel2,ResponseDataTypes>::cleanup()
 {
-    if (ff!=NULL)
+    if (ff!=nullptr)
     {
         ff->cleanup();
-        if (parent!=NULL) parent->removeObject(ff);
-        parent = NULL;
+        if (parent!=nullptr) parent->removeObject(ff);
+        parent = nullptr;
         ff.reset();
         mapper1.cleanup();
         mapper2.cleanup();
@@ -74,20 +71,15 @@ template < class TCollisionModel1, class TCollisionModel2, class ResponseDataTyp
 void BarycentricDistanceLMConstraintContact<TCollisionModel1,TCollisionModel2,ResponseDataTypes>::setDetectionOutputs(OutputVector* o)
 {
     TOutputVector& outputs = *static_cast<TOutputVector*>(o);
-    const bool printLog = this->f_printLog.getValue();
-    if (ff==NULL)
+    if (ff==nullptr)
     {
 
-        MechanicalState1* mstate1 = mapper1.createMapping(GenerateStirngID::generate().c_str());
-        MechanicalState2* mstate2 = mapper2.createMapping(GenerateStirngID::generate().c_str());
+        MechanicalState1* mstate1 = mapper1.createMapping(GenerateStringID::generate().c_str());
+        MechanicalState2* mstate2 = mapper2.createMapping(GenerateStringID::generate().c_str());
         ff = sofa::core::objectmodel::New<ResponseType>(mstate1,mstate2);
         ff->setName( getName() );
         setInteractionTags(mstate1, mstate2);
         ff->init();
-#ifdef SOFA_SMP
-        ff->setPartition(mstate1->getPartition());
-#endif
-
     }
 
     int insize = outputs.size();
@@ -128,7 +120,7 @@ void BarycentricDistanceLMConstraintContact<TCollisionModel1,TCollisionModel2,Re
             if (!index)
             {
                 ++nbnew;
-                if (printLog) std::cerr << "BarycentricDistanceLMConstraintContact: New contact "<<o->id<<std::endl;
+                msg_info() << " new contact "<<o->id ;
             }
         }
         index = -1-i; // save this index as a negative value in contactIndex map.
@@ -153,7 +145,7 @@ void BarycentricDistanceLMConstraintContact<TCollisionModel1,TCollisionModel2,Re
         int& index = it->second;
         if (index >= 0)
         {
-            if (printLog) std::cerr << "BarycentricDistanceLMConstraintContact: Removed contact "<<it->first<<std::endl;
+            msg_info() << " removed contact "<<it->first;
             ContactIndexMap::iterator oldit = it;
             ++it;
             contactIndex.erase(oldit);
@@ -164,12 +156,11 @@ void BarycentricDistanceLMConstraintContact<TCollisionModel1,TCollisionModel2,Re
             ++it;
         }
     }
-    if (printLog) std::cerr << "BarycentricDistanceLMConstraintContact: "<<insize<<" input contacts, "<<size<<" contacts used for response ("<<nbnew<<" new)."<<std::endl;
+    msg_info() << " "<<insize<<" input contacts, "<<size<<" contacts used for response ("<<nbnew<<" new)." ;
 
     ff->clear();
     mapper1.resize(size);
     mapper2.resize(size);
-//    const double d0 = intersectionMethod->getContactDistance() + model1->getProximity() + model2->getProximity(); // - 0.001;
     for (int i=0; i<insize; i++)
     {
         int index = oldIndex[i];
@@ -182,17 +173,9 @@ void BarycentricDistanceLMConstraintContact<TCollisionModel1,TCollisionModel2,Re
         typename DataTypes1::Real r1 = 0.0;
         typename DataTypes2::Real r2 = 0.0;
         // Create mapping for first point
-        index1 = mapper1.addPointB(o->point[0], index1, r1
-#ifdef DETECTIONOUTPUT_BARYCENTRICINFO
-                , o->baryCoords[0]
-#endif
-                                  );
+        index1 = mapper1.addPointB(o->point[0], index1, r1);
         // Create mapping for second point
-        index2 = mapper2.addPointB(o->point[1], index2, r2
-#ifdef DETECTIONOUTPUT_BARYCENTRICINFO
-                , o->baryCoords[1]
-#endif
-                                  );
+        index2 = mapper2.addPointB(o->point[1], index2, r2);
 
         ff->addContact(index1,index2);
         ff->contactFriction.setValue( elem1.getCollisionModel()->getContactFriction(0) * elem2.getCollisionModel()->getContactFriction(0) );
@@ -206,17 +189,17 @@ void BarycentricDistanceLMConstraintContact<TCollisionModel1,TCollisionModel2,Re
 template < class TCollisionModel1, class TCollisionModel2, class ResponseDataTypes >
 void BarycentricDistanceLMConstraintContact<TCollisionModel1,TCollisionModel2,ResponseDataTypes>::createResponse(core::objectmodel::BaseContext* group)
 {
-    if (ff!=NULL)
+    if (ff!=nullptr)
     {
-        if (parent!=NULL)
+        if (parent!=nullptr)
         {
             parent->removeObject(this);
             parent->removeObject(ff);
         }
         parent = group;
-        if (parent!=NULL)
+        if (parent!=nullptr)
         {
-            //std::cerr << "Attaching contact response to "<<parent->getName()<<std::endl;
+            //msg_error() << "Attaching contact response to "<<parent->getName() ;
             parent->addObject(this);
             parent->addObject(ff);
         }
@@ -226,23 +209,20 @@ void BarycentricDistanceLMConstraintContact<TCollisionModel1,TCollisionModel2,Re
 template < class TCollisionModel1, class TCollisionModel2, class ResponseDataTypes >
 void BarycentricDistanceLMConstraintContact<TCollisionModel1,TCollisionModel2,ResponseDataTypes>::removeResponse()
 {
-    if (ff!=NULL)
+    if (ff!=nullptr)
     {
-        if (parent!=NULL)
+        if (parent!=nullptr)
         {
-            //std::cerr << "Removing contact response from "<<parent->getName()<<std::endl;
             parent->removeObject(this);
             parent->removeObject(ff);
         }
-        parent = NULL;
+        parent = nullptr;
     }
 }
 
 template < class TCollisionModel1, class TCollisionModel2, class ResponseDataTypes >
 void BarycentricDistanceLMConstraintContact<TCollisionModel1,TCollisionModel2,ResponseDataTypes>::draw(const core::visual::VisualParams* )
 {
-    //	if (ff!=NULL)
-    //		ff->draw(vparams);
 }
 
 template < class TCollisionModel1, class TCollisionModel2, class ResponseDataTypes >

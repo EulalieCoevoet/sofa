@@ -1,38 +1,33 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include <SofaGeneralVisual/RecordedCamera.h>
 #include <sofa/core/visual/VisualParams.h>
+#include <sofa/defaulttype/RGBAColor.h>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/simulation/AnimateBeginEvent.h>
 #include <sofa/simulation/AnimateEndEvent.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 
-#include <math.h>
-#include <iostream>
-using std::cerr;
-using std::endl;
+#include <cmath>
 
 namespace sofa
 {
@@ -43,9 +38,7 @@ namespace component
 namespace visualmodel
 {
 
-SOFA_DECL_CLASS(RecordedCamera)
-
-int RecordedCameraClass = core::RegisterObject("Camera moving along a predetermined path (currently only a rotation)")
+int RecordedCameraClass = core::RegisterObject("A camera that is moving along a predetermined path.")
         .add< RecordedCamera >()
         ;
 
@@ -73,7 +66,6 @@ RecordedCamera::RecordedCamera()
     , m_translationOrientations(initData(&m_translationOrientations, "cameraOrientations", "Intermediate camera's orientations"))
     , m_nextStep(0.0)
     , m_angleStep(0.0)
-    //, m_initAngle(0.0)
     ,firstIterationforRotation(true)
     ,firstIterationforTranslation(true)
     ,firstIterationforNavigation(true)
@@ -148,7 +140,7 @@ void RecordedCamera::moveCamera_navigation()
             Vec3 _pos = m_translationPositions.getValue()[currentIndexPoint];
             Vec3 cameraFocal = m_translationPositions.getValue()[currentIndexPoint + 1] - _pos;
 
-            // Set camera's position: linear interpolation 
+            // Set camera's position: linear interpolation
             p_position.setValue( m_translationPositions.getValue()[currentIndexPoint] + cameraFocal * ratio);
 
             // Set camera's orientation: slerp quaternion interpolation
@@ -189,8 +181,6 @@ void RecordedCamera::moveCamera_rotation()
     Vec3 _pos = m_rotationCenter.getValue();
     helper::Quater<double> q(m_rotationAxis.getValue(), m_angleStep);
     _pos += q.rotate(m_rotationStartPoint.getValue() - m_rotationCenter.getValue());
-    //_pos[2] += m_radius * cos((m_angleStep - m_initAngle));
-    //_pos[0] += m_radius * sin((m_angleStep - m_initAngle));
     p_position.setValue(_pos);
 
     // dV to compute circle tangente
@@ -199,17 +189,6 @@ void RecordedCamera::moveCamera_rotation()
         _poskk = -cross(_pos-p_lookAt.getValue(),m_cameraUp.getValue());
     else
         _poskk = -cross(_pos-m_rotationCenter.getValue(),m_rotationAxis.getValue());
-    //_poskk[2] += m_radius * cos((m_angleStep - m_initAngle+0.00001));
-    //_poskk[0] += m_radius * sin((m_angleStep - m_initAngle+0.00001));
-
-#ifdef my_debug
-    std::cout << "totalTime: " << totalTime << std::endl;
-    std::cout << "m_angleStep: " << m_angleStep << std::endl;
-    std::cout << "_pos: " << _pos << std::endl;
-    std::cout << "p_lookAt: " << p_lookAt.getValue() << std::endl;
-#endif
-
-    //Quat orientation  = getOrientationFromLookAt(_pos, p_lookAt.getValue());
 
     // Compute orientation
     Vec3 zAxis = -(p_lookAt.getValue() - _pos);
@@ -219,23 +198,10 @@ void RecordedCamera::moveCamera_rotation()
     yAxis.normalize();
     zAxis.normalize();
 
-#ifdef my_debug
-    std::cout << "xAxis: " << xAxis << std::endl;
-    std::cout << "yAxis: " << yAxis << std::endl;
-    std::cout << "zAxis: " << zAxis << std::endl;
-#endif
-
     Quat orientation  = Quat::createQuaterFromFrame(xAxis, yAxis, zAxis);
     orientation.normalize();
 
     p_orientation.setValue(orientation);
-
-#ifdef my_debug
-    //Quat orientation  = getOrientationFromLookAt(m_rotationStartPoint.getValue(), m_rotationCenter.getValue());
-    //std::cout << "orientation: " << orientation << std::endl;
-    Vec3 lookat = getLookAtFromOrientation(_pos, p_distance.getValue(), orientation);
-    std::cout << "lookat: " << lookat << std::endl;
-#endif
 
     return;
 }
@@ -275,17 +241,11 @@ void RecordedCamera::moveCamera_translation()
             // Set camera's orientation
             Vec3 zAxis = - (p_lookAt.getValue() - _pos);
             Vec3 xAxis = m_cameraUp.getValue().cross(zAxis);
-            Vec3 yAxis = zAxis.cross(xAxis);    
+            Vec3 yAxis = zAxis.cross(xAxis);
             xAxis.normalize();
             yAxis.normalize();
             zAxis.normalize();
-           
-#ifdef my_debug
-    std::cout << "xAxis: " << xAxis << std::endl;
-    std::cout << "yAxis: " << yAxis << std::endl;
-    std::cout << "zAxis: " << zAxis << std::endl;
-#endif
-         
+
             m_cameraUp.setValue(yAxis);
             Quat orientation  = Quat::createQuaterFromFrame(xAxis, yAxis, zAxis);
             orientation.normalize();
@@ -313,14 +273,13 @@ void RecordedCamera::handleEvent(sofa::core::objectmodel::Event *event)
         if (simuTime < m_nextStep)
             return;
 
-        //std::cout << "rock & roll !" << std::endl;
         m_nextStep += simuDT;
 
         // init when start animation
        if(firstIterationforRotation & m_rotationMode.getValue())
             this->configureRotation();
 
-        if(m_rotationMode.getValue())  
+        if(m_rotationMode.getValue())
             this->moveCamera_rotation();
 
         if (firstIterationforTranslation & m_translationMode.getValue())
@@ -333,12 +292,12 @@ void RecordedCamera::handleEvent(sofa::core::objectmodel::Event *event)
             this->configureNavigation();
 
         if(m_navigationMode.getValue())
-            this->moveCamera_navigation();	
+            this->moveCamera_navigation();
     }
     else if (sofa::core::objectmodel::KeypressedEvent::checkEventType(event))
     {
         sofa::core::objectmodel::KeypressedEvent* ke = static_cast<sofa::core::objectmodel::KeypressedEvent*>(event);
-        cerr<<"RecordedCamera::handleEvent gets character " << ke->getKey() << endl;
+        msg_info() <<" handleEvent gets character '" << ke->getKey() <<"'. ";
     }
 
 }
@@ -358,17 +317,6 @@ void RecordedCamera::configureRotation()
         _poskk = -cross(_pos-p_lookAt.getValue(),m_cameraUp.getValue());
     else
         _poskk = -cross(_pos-m_rotationCenter.getValue(),m_rotationAxis.getValue());
-    //_poskk[2] += m_radius * cos((m_angleStep - m_initAngle+0.00001));
-    //_poskk[0] += m_radius * sin((m_angleStep - m_initAngle+0.00001));
-
-#ifdef my_debug
-    std::cout << "totalTime: " << totalTime << std::endl;
-    std::cout << "m_angleStep: " << m_angleStep << std::endl;
-    std::cout << "_pos: " << _pos << std::endl;
-    std::cout << "p_lookAt: " << p_lookAt.getValue() << std::endl;
-#endif
-
-    //Quat orientation  = getOrientationFromLookAt(_pos, p_lookAt.getValue());
 
     // Compute orientation
     Vec3 zAxis = -(p_lookAt.getValue() - _pos);
@@ -378,35 +326,10 @@ void RecordedCamera::configureRotation()
     yAxis.normalize();
     zAxis.normalize();
 
-#ifdef my_debug
-    std::cout << "xAxis: " << xAxis << std::endl;
-    std::cout << "yAxis: " << yAxis << std::endl;
-    std::cout << "zAxis: " << zAxis << std::endl;
-#endif
-
     Quat orientation  = Quat::createQuaterFromFrame(xAxis, yAxis, zAxis);
     orientation.normalize();
 
     p_orientation.setValue(orientation);
-
-    // Compute rotation settings: radius and init angle
-    /*
-        m_radius = (m_rotationCenter.getValue() - m_rotationStartPoint.getValue()).norm();
-
-        Vec3 _pos = p_position.getValue();
-        if (_pos[0]>=0)
-            m_initAngle = asin(_pos[2]/m_radius);
-        else
-            m_initAngle = M_PI - asin(_pos[2]/m_radius);
-    */
-#ifdef my_debug
-    std::cout << "m_rotationStartPoint: " << m_rotationStartPoint << std::endl;
-    std::cout << "m_rotationCenter: " << m_rotationCenter << std::endl;
-    std::cout << "m_rotationSpeed: " << m_rotationSpeed << std::endl;
-    //std::cout << "init p_lookAt: " << p_lookAt << std::endl;
-    //std::cout << "m_initAngle: " << m_initAngle << std::endl;
-#endif
-
     firstIterationforRotation = false;
 
     return;
@@ -458,7 +381,7 @@ void RecordedCamera::initializeViewUp()
     {
         Vec3 zAxis = m_translationPositions.getValue()[1] -  m_translationPositions.getValue()[0];
         zAxis.normalize();
-        Vec3 xRef(1,0,0); 
+        Vec3 xRef(1,0,0);
         // Initialize the view-up vector with the reference vector the "most perpendicular" to zAxis.
          m_cameraUp.setValue(xRef);
         double normCrossProduct = cross(zAxis,xRef).norm();
@@ -575,8 +498,8 @@ void RecordedCamera::moveCamera_mouse(int x, int y)
             float y1 = (heightViewport- 2.0f *heightViewport / 2.0f) /heightViewport;
             float x2 = (2.0f * (x + (-lastMousePosX + widthViewport / 2.0f)) - widthViewport) / widthViewport;
             float y2 = (heightViewport- 2.0f * (y + (-lastMousePosY +heightViewport / 2.0f))) /heightViewport;
-            //std::cout << x1 << " " << y1 << " " << x2 << " " << y2 << std::endl;
             currentTrackball.ComputeQuaternion(x1, y1, x2, y2);
+
             //fetch rotation
             newQuat = currentTrackball.GetQuaternion();
             Vec3 pivot;
@@ -590,11 +513,6 @@ void RecordedCamera::moveCamera_mouse(int x, int y)
                 pivot = sceneCenter;
                 break;
             }
-            //pivot = p_lookAt.getValue();
-            //pivot = (Vec3(x,y, p_distance.getValue()));
-            //std::cout << "Pivot : " <<  pivot << std::endl;
-            //rotateCameraAroundPoint(newQuat, pivot);
-
 
             BaseCamera::rotateWorldAroundPoint(newQuat, pivot, this->getOrientation());
         }
@@ -633,19 +551,6 @@ void RecordedCamera::moveCamera_mouse(int x, int y)
 void RecordedCamera::drawRotation()
 {
     Vec3 _pos = m_rotationStartPoint.getValue();
-    //Vec3 _center = m_rotationCenter.getValue();
-
-    //double _initAngle = 0.0;
-
-    // Compute rotation settings: radius and init angle
-    /*
-        m_radius = (_center - _pos).norm();
-
-        if (_pos[0]>=0)
-            _initAngle = asin(_pos[2]/m_radius);
-        else
-            _initAngle = M_PI - asin(_pos[2]/m_radius);
-    */
 
     m_rotationPoints.resize(100);
     double _angleStep = 2*M_PI/100;
@@ -653,8 +558,6 @@ void RecordedCamera::drawRotation()
     {
         // Compute cartesian coordinates from cylindrical ones
         _pos = m_rotationCenter.getValue();
-        //_pos[2] += m_radius * cos((_angleStep*i - _initAngle));
-        //_pos[0] += m_radius * sin((_angleStep*i - _initAngle));
         helper::Quater<double> q(m_rotationAxis.getValue(), _angleStep*i);
         _pos += q.rotate(m_rotationStartPoint.getValue() - m_rotationCenter.getValue());
         m_rotationPoints[i] = _pos;
@@ -663,39 +566,42 @@ void RecordedCamera::drawRotation()
     return;
 }
 
-void RecordedCamera::draw(const core::visual::VisualParams* /*vparams*/)
+void RecordedCamera::draw(const core::visual::VisualParams* vparams)
 {
-#ifndef SOFA_NO_OPENGL
+    vparams->drawTool()->saveLastState();
+
     // Draw rotation path
     if(p_drawRotation.getValue())
     {
         if (m_rotationPoints.empty())
             return;
 
-        glDisable(GL_LIGHTING);
-        glColor3f(0,1,0.5);
+        vparams->drawTool()->disableLighting();
+        sofa::defaulttype::RGBAColor color(0,1,0.5,1);
+        std::vector<sofa::defaulttype::Vector3> vertices;
 
         // Camera positions
-        glBegin(GL_LINES);
         for (unsigned int i=0; i<m_rotationPoints.size()-1; ++i)
         {
-            glVertex3f((float)m_rotationPoints[i  ][0], (float)m_rotationPoints[i  ][1], (float)m_rotationPoints[i  ][2]);
-            glVertex3f((float)m_rotationPoints[i+1][0], (float)m_rotationPoints[i+1][1], (float)m_rotationPoints[i+1][2]);
+            vertices.push_back(sofa::defaulttype::Vector3((float)m_rotationPoints[i  ][0], (float)m_rotationPoints[i  ][1], (float)m_rotationPoints[i  ][2]));
+            vertices.push_back(sofa::defaulttype::Vector3((float)m_rotationPoints[i+1][0], (float)m_rotationPoints[i+1][1], (float)m_rotationPoints[i+1][2]));
         }
-        glVertex3f((float)m_rotationPoints.back()[0], (float)m_rotationPoints.back()[1], (float)m_rotationPoints.back()[2]);
-        glVertex3f((float)m_rotationPoints[0    ][0], (float)m_rotationPoints[0    ][1], (float)m_rotationPoints[0    ][2]);
-        glEnd();
+        vertices.push_back(sofa::defaulttype::Vector3((float)m_rotationPoints.back()[0], (float)m_rotationPoints.back()[1], (float)m_rotationPoints.back()[2]));
+        vertices.push_back(sofa::defaulttype::Vector3((float)m_rotationPoints[0    ][0], (float)m_rotationPoints[0    ][1], (float)m_rotationPoints[0    ][2]));
+
+        vparams->drawTool()->drawLines(vertices,1,color);
+        vertices.clear();
 
         Vec3 _lookAt = m_rotationLookAt.getValue();
         unsigned int dx = 4;
         std::size_t ratio = m_rotationPoints.size()/dx;
-        glBegin(GL_LINES);
+
         for (unsigned int i=0; i<dx; ++i)
         {
-            glVertex3f((float)m_rotationPoints[i*ratio][0], (float)m_rotationPoints[i*ratio][1], (float)m_rotationPoints[i*ratio][2]);
-            glVertex3f((float)_lookAt[0], (float)_lookAt[1], (float)_lookAt[2]);
+            vertices.push_back(sofa::defaulttype::Vector3((float)m_rotationPoints[i*ratio][0], (float)m_rotationPoints[i*ratio][1], (float)m_rotationPoints[i*ratio][2]));
+            vertices.push_back(sofa::defaulttype::Vector3((float)_lookAt[0], (float)_lookAt[1], (float)_lookAt[2]));
         }
-        glEnd();
+        vparams->drawTool()->drawLines(vertices,1,color);
     }
 
     // Draw translation path
@@ -704,21 +610,20 @@ void RecordedCamera::draw(const core::visual::VisualParams* /*vparams*/)
         if (m_translationPositions.getValue().size() < 2)
             return;
 
-        glDisable(GL_LIGHTING);
-        glColor3f(0,1,0.5);
+        vparams->drawTool()->disableLighting();
+        sofa::defaulttype::RGBAColor color(0,1,0.5,1);
+        std::vector<sofa::defaulttype::Vector3> vertices;
 
         // Camera positions
-        glBegin(GL_LINES);
         helper::vector <Vec3> _positions = m_translationPositions.getValue();
         for (unsigned int i=0; i < _positions.size()-1; ++i)
         {
-            glVertex3f((float)_positions[i  ][0], (float)_positions[i  ][1], (float)_positions[i  ][2]);
-            glVertex3f((float)_positions[i+1][0], (float)_positions[i+1][1], (float)_positions[i+1][2]);
+            vertices.push_back(sofa::defaulttype::Vector3((float)_positions[i  ][0], (float)_positions[i  ][1], (float)_positions[i  ][2]));
+            vertices.push_back(sofa::defaulttype::Vector3((float)_positions[i+1][0], (float)_positions[i+1][1], (float)_positions[i+1][2]));
         }
-
-        glEnd ();
+        vparams->drawTool()->drawLines(vertices,1,color);
     }
-#endif /* SOFA_NO_OPENGL */
+    vparams->drawTool()->restoreLastState();
 }
 
 } // namespace visualmodel

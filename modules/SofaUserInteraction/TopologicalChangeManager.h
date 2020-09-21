@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -33,11 +30,9 @@
 
 #include <SofaMeshCollision/TriangleModel.h>
 #include <SofaBaseCollision/SphereModel.h>
-#include <SofaUserInteraction/CuttingPoint.h>
-
 
 #include <sofa/defaulttype/Vec.h>
-#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/defaulttype/VecTypes.h>
 
 #include <SofaBaseMechanics/MechanicalObject.h>
 #include <sofa/simulation/Node.h>
@@ -142,23 +137,20 @@ private:
      *
      * @return bool - true if incision has been performed.
      */
-    bool incisionTriangleModel(TriangleModel* model1,
+    bool incisionTriangleModel(TriangleCollisionModel<sofa::defaulttype::Vec3Types>* model1,
                                unsigned int idx1,
                                const defaulttype::Vector3& firstPoint,
-                               TriangleModel *model2,
+                               TriangleCollisionModel<sofa::defaulttype::Vec3Types> *model2,
                                unsigned int idx2,
                                const defaulttype::Vector3& secondPoint,
                                int snapingValue = 0,
                                int snapingBorderValue = 0);
 
 
+    int removeItemsFromTriangleModel(sofa::component::collision::TriangleCollisionModel<sofa::defaulttype::Vec3Types>* model, const helper::vector<int>& indices) const;
+    int removeItemsFromPointModel(sofa::component::collision::PointCollisionModel<sofa::defaulttype::Vec3Types>* model, const helper::vector<int>& indices) const;
+    int removeItemsFromSphereModel(sofa::component::collision::SphereCollisionModel<sofa::defaulttype::Vec3Types>* model, const helper::vector<int>& indices) const;
 
-    int removeItemsFromTriangleModel(sofa::component::collision::TriangleModel* model, const helper::vector<int>& indices) const;
-
-#if 0
-    int removeItemsFromTetrahedronModel(sofa::component::collision::TetrahedronModel* model, const helper::vector<int>& indices) const;
-#endif
-    int removeItemsFromSphereModel(sofa::component::collision::SphereModel* model, const helper::vector<int>& indices) const;
 
 private:
     /// Global variables to register intermediate informations for point to point incision.(incision along one segment in a triangular mesh)
@@ -176,11 +168,6 @@ private:
         /// Information of first incision for successive incisions
         bool firstCut;
 
-
-#ifdef SOFA_DEV
-        CuttingPoint* cutB;
-        CuttingPoint* cutA;
-#endif
     }	incision;
 };
 

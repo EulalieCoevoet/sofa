@@ -1,34 +1,29 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #ifndef SOFA_COMPONENT_LOADER_SPHERELOADER_H
 #define SOFA_COMPONENT_LOADER_SPHERELOADER_H
-#include "config.h"
+#include <SofaGeneralLoader/config.h>
 
 #include <sofa/core/loader/BaseLoader.h>
-#include <sofa/defaulttype/VecTypes.h>
-#include <sofa/helper/vector.h>
 
 namespace sofa
 {
@@ -45,11 +40,11 @@ protected:
     SphereLoader();
 public:
     // Point coordinates in 3D in double.
-    Data< helper::vector<sofa::defaulttype::Vec<3,SReal> > > positions;
-    Data< helper::vector<SReal> > radius;
-    Data< defaulttype::Vector3 > d_scale;
-    Data< defaulttype::Vector3 > d_translation;
-    virtual bool load();
+    Data< helper::vector<sofa::defaulttype::Vec<3,SReal> > > positions; ///< Sphere centers
+    Data< helper::vector<SReal> > radius; ///< Radius of each sphere
+    Data< defaulttype::Vector3 > d_scale; ///< Scale applied to sphere positions
+    Data< defaulttype::Vector3 > d_translation; ///< Translation applied to sphere positions
+    bool load() override;
 };
 
 } //loader

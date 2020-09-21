@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -51,18 +48,16 @@ public:
 
     typedef core::collision::IntersectorFactory<LocalMinDistance> IntersectorFactory;
 
-    // Data<bool> useSphereTriangle;
-    // Data<bool> usePointPoint;
-    Data<bool> filterIntersection;
-    Data<double> angleCone;
-    Data<double> coneFactor;
-    Data<bool> useLMDFilters;
+    Data<bool> filterIntersection; ///< Activate LMD filter
+    Data<double> angleCone; ///< Filtering cone extension angle
+    Data<double> coneFactor; ///< Factor for filtering cone angle computation
+    Data<bool> useLMDFilters; ///< Use external cone computation (Work in Progress)
 
 
 protected:
     LocalMinDistance();
 public:
-    virtual void init();
+    void init() override;
 
     bool testIntersection(Cube& ,Cube&);
 
@@ -98,14 +93,13 @@ public:
     bool testValidity(Line&, const defaulttype::Vector3&);
     bool testValidity(Triangle&, const defaulttype::Vector3&);
 
-    void draw(const core::visual::VisualParams* vparams);
+    void draw(const core::visual::VisualParams* vparams) override;
 
     /// Actions to accomplish when the broadPhase is started. By default do nothing.
-    virtual void beginBroadPhase() {}
+    void beginBroadPhase() override {}
 
     int beginIntersection(sofa::core::CollisionModel* /*model1*/, sofa::core::CollisionModel* /*model2*/, OutputVector* /*contacts*/)
     {
-        //std::cout << "beginIntersection\n";
         return 0;
     }
 
@@ -122,7 +116,7 @@ namespace core
 {
 namespace collision
 {
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_COLLISION_LOCALMINDISTANCE_CPP)
+#if  !defined(SOFA_COMPONENT_COLLISION_LOCALMINDISTANCE_CPP)
 extern template class SOFA_CONSTRAINT_API IntersectorFactory<component::collision::LocalMinDistance>;
 #endif
 }

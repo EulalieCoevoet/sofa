@@ -1,39 +1,24 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-//
-// C++ Models: MechanicalStateController
-//
-// Description:
-//
-//
-// Author: Pierre-Jean Bensoussan, Digital Trainers (2008)
-//
-// Copyright: See COPYING file that comes with this distribution
-//
-//
-
 #ifndef SOFA_COMPONENT_CONTROLLER_MECHANICALSTATECONTROLLER_INL
 #define SOFA_COMPONENT_CONTROLLER_MECHANICALSTATECONTROLLER_INL
 
@@ -75,8 +60,8 @@ void MechanicalStateController<DataTypes>::init()
 {
     using core::behavior::MechanicalState;
     mState = dynamic_cast<MechanicalState<DataTypes> *> (this->getContext()->getMechanicalState());
-    if (!mState)
-        serr << "MechanicalStateController has no binding MechanicalState" << sendl;
+    
+    msg_error_when(!mState) << "MechanicalStateController has no binding MechanicalState";
     device = false;
 }
 
@@ -187,7 +172,8 @@ void MechanicalStateController<DataTypes>::applyController()
 
 
     sofa::simulation::Node *node = static_cast<sofa::simulation::Node*> (this->getContext());
-    sofa::simulation::MechanicalPropagatePositionAndVelocityVisitor mechaVisitor(core::MechanicalParams::defaultInstance()); mechaVisitor.execute(node);
+    sofa::simulation::MechanicalProjectPositionAndVelocityVisitor mechaProjectVisitor(core::MechanicalParams::defaultInstance()); mechaProjectVisitor.execute(node);
+    sofa::simulation::MechanicalPropagateOnlyPositionAndVelocityVisitor mechaVisitor(core::MechanicalParams::defaultInstance()); mechaVisitor.execute(node);
     sofa::simulation::UpdateMappingVisitor updateVisitor(core::ExecParams::defaultInstance()); updateVisitor.execute(node);
 };
 
@@ -196,10 +182,9 @@ void MechanicalStateController<DataTypes>::applyController()
 //template <class DataTypes>
 //void MechanicalStateController<DataTypes>::onHapticDeviceEvent(core::objectmodel::HapticDeviceEvent *oev)
 //{
-//	//sout << "void MechanicalStateController<DataTypes>::onHapticDeviceEvent()"<<sendl;
 //	//if (oev->getButton())
 //	//{
-//	//		sout<<" Button1 pressed"<<sendl;
+//	//		msg_info()<<" Button1 pressed";
 //
 //	//}
 //
@@ -276,27 +261,15 @@ void MechanicalStateController<DataTypes>::onMouseEvent(core::objectmodel::Mouse
 
 
 
-#ifndef SOFA_FLOAT
 template <>
-SOFA_USER_INTERACTION_API void MechanicalStateController<defaulttype::Vec1dTypes>::applyController();
+SOFA_USER_INTERACTION_API void MechanicalStateController<defaulttype::Vec1Types>::applyController();
 
 template <>
-SOFA_USER_INTERACTION_API void MechanicalStateController<defaulttype::Vec1dTypes>::onMouseEvent(core::objectmodel::MouseEvent *mev);
+SOFA_USER_INTERACTION_API void MechanicalStateController<defaulttype::Vec1Types>::onMouseEvent(core::objectmodel::MouseEvent *mev);
 
 template <>
-SOFA_USER_INTERACTION_API void MechanicalStateController<defaulttype::Rigid3dTypes>::onMouseEvent(core::objectmodel::MouseEvent *mev);
-#endif
+SOFA_USER_INTERACTION_API void MechanicalStateController<defaulttype::Rigid3Types>::onMouseEvent(core::objectmodel::MouseEvent *mev);
 
-#ifndef SOFA_DOUBLE
-template <>
-SOFA_USER_INTERACTION_API void MechanicalStateController<defaulttype::Vec1fTypes>::applyController();
-
-template <>
-SOFA_USER_INTERACTION_API void MechanicalStateController<defaulttype::Vec1fTypes>::onMouseEvent(core::objectmodel::MouseEvent *mev);
-
-template <>
-SOFA_USER_INTERACTION_API void MechanicalStateController<defaulttype::Rigid3fTypes>::onMouseEvent(core::objectmodel::MouseEvent *mev);
-#endif
 
 
 } // namespace controller

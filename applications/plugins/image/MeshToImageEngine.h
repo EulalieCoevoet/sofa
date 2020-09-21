@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -70,12 +67,12 @@ public:
 
     typedef SReal Real;
 
-    Data< helper::vector<Real> > voxelSize; // should be a Vec<3,Real>, but it is easier to be backward-compatible that way
+    Data< helper::vector<Real> > voxelSize; ///< should be a Vec<3,Real>, but it is easier to be backward-compatible that way
     typedef helper::WriteOnlyAccessor<Data< helper::vector<Real> > > waVecReal;
-    Data< defaulttype::Vec<3,unsigned> > nbVoxels;
-    Data< bool > rotateImage;
-    Data< unsigned int > padSize;
-    Data< unsigned int > subdiv;
+    Data< defaulttype::Vec<3,unsigned> > nbVoxels; ///< number of voxel (redondant with and priority over voxelSize)
+    Data< bool > rotateImage; ///< orient the image bounding box according to the mesh (OBB)
+    Data< unsigned int > padSize; ///< size of border in number of voxels
+    Data< unsigned int > subdiv; ///< number of subdivisions for face rasterization (if needed, increase to avoid holes)
 
     typedef _ImageTypes ImageTypes;
     typedef typename ImageTypes::T T;
@@ -121,17 +118,13 @@ public:
     helper::vectorData<SeqValues> vf_roiValue;   ///< values for each roi
     typedef helper::ReadAccessor<Data< VecSeqIndex > > raIndex;
 
-    Data< ValueType > backgroundValue;
+    Data< ValueType > backgroundValue; ///< pixel value at background
 
-    Data<unsigned int> f_nbMeshes;
+    Data<unsigned int> f_nbMeshes; ///< number of meshes to voxelize (Note that the last one write on the previous ones)
 
-    Data<bool> gridSnap;
+    Data<bool> gridSnap; ///< align voxel centers on voxelSize multiples for perfect image merging (nbVoxels and rotateImage should be off)
 
-    Data<bool> worldGridAligned;
-
-
-    virtual std::string getTemplateName() const    { return templateName(this);    }
-    static std::string templateName(const MeshToImageEngine<ImageTypes>* = NULL) { return ImageTypes::Name();    }
+    Data<bool> worldGridAligned; ///< perform rasterization on a world aligned grid using nbVoxels and voxelSize
 
     MeshToImageEngine()    :   Inherited()
       , voxelSize(initData(&voxelSize,helper::vector<Real>(3,(Real)1.0),"voxelSize","voxel Size (redondant with and not priority over nbVoxels)"))
@@ -173,11 +166,11 @@ public:
         this->addAlias(vf_roiValue[0], "roiValue");
     }
 
-    virtual ~MeshToImageEngine()
+    ~MeshToImageEngine() override
     {
     }
 
-    virtual void init()
+    void init() override
     {
         // backward compatibility (if InsideValue is not set: use first value)
         for( size_t meshId=0; meshId<vf_InsideValues.size() ; ++meshId )
@@ -211,7 +204,7 @@ public:
         im.fill((T)0);
     }
 
-    virtual void reinit()
+    void reinit() override
     {
         vf_positions.resize(f_nbMeshes.getValue());
         vf_edges.resize(f_nbMeshes.getValue());
@@ -225,7 +218,7 @@ public:
     }
 
     /// Parse the given description to assign values to this object's fields and potentially other parameters
-    void parse ( sofa::core::objectmodel::BaseObjectDescription* arg )
+    void parse ( sofa::core::objectmodel::BaseObjectDescription* arg ) override
     {
         vf_positions.parseSizeData(arg, f_nbMeshes);
         vf_edges.parseSizeData(arg, f_nbMeshes);
@@ -239,7 +232,7 @@ public:
     }
 
     /// Assign the field values stored in the given map of name -> value pairs
-    void parseFields ( const std::map<std::string,std::string*>& str )
+    void parseFields ( const std::map<std::string,std::string*>& str ) override
     {
         vf_positions.parseFieldsSizeData(str, f_nbMeshes);
         vf_edges.parseFieldsSizeData(str, f_nbMeshes);
@@ -254,11 +247,8 @@ public:
 
 protected:
 
-    virtual void update()
+    void doUpdate() override
     {
-        updateAllInputsIfDirty();
-        cleanDirty();
-
         // to be backward-compatible, if less than 3 values, fill with the last one
         waVecReal vs( voxelSize ); unsigned vs_lastid=vs.size()-1;
         for( unsigned i=vs.size() ; i<3 ; ++i ) vs.push_back( vs[vs_lastid] );
@@ -394,7 +384,7 @@ protected:
 
         for( size_t meshId=0 ; meshId<f_nbMeshes.getValue() ; ++meshId )        rasterizeAndFill ( meshId, im, tr );
 
-        if(this->f_printLog.getValue()) std::cout<<"MeshToImageEngine: "<<this->getName()<<": Voxelization done"<<std::endl;
+        if(this->f_printLog.getValue()) sout<<this->getName()<<": Voxelization done"<<sendl;
 
     }
 
@@ -410,7 +400,7 @@ protected:
 
         raIndex roiIndices(*this->vf_roiIndices[meshId]);
         if(roiIndices.size() && !this->vf_roiValue[meshId]->getValue().size()) serr<<"at least one roiValue for mesh "<<meshId<<" needs to be specified"<<sendl;
-        if(this->f_printLog.getValue())  for(size_t r=0;r<roiIndices.size();++r) std::cout<<"MeshToImageEngine: "<<this->getName()<<": mesh "<<meshId<<"\t ROI "<<r<<"\t number of vertices= " << roiIndices[r].size() << "\t value= "<<getROIValue(meshId,r)<<std::endl;
+        if(this->f_printLog.getValue())  for(size_t r=0;r<roiIndices.size();++r) sout<<this->getName()<<": mesh "<<meshId<<"\t ROI "<<r<<"\t number of vertices= " << roiIndices[r].size() << "\t value= "<<getROIValue(meshId,r)<<sendl;
 
         /// colors definition
         const T FillColor = (T)getValue(meshId,0);
@@ -423,7 +413,7 @@ protected:
         mask.fill(false);
 
         // draw edges
-        if(this->f_printLog.getValue() && nbedg) std::cout<<"MeshToImageEngine: "<<this->getName()<<":  Voxelizing edges (mesh "<<meshId<<")..."<<std::endl;
+        if(this->f_printLog.getValue() && nbedg) sout<<this->getName()<<":  Voxelizing edges (mesh "<<meshId<<")..."<<sendl;
 
         unsigned int subdivValue = this->subdiv.getValue();
 
@@ -459,7 +449,7 @@ protected:
         }
 
         //  draw filled faces
-        if(this->f_printLog.getValue() && nbtri) std::cout<<"MeshToImageEngine: "<<this->getName()<<":  Voxelizing triangles (mesh "<<meshId<<")..."<<std::endl;
+        if(this->f_printLog.getValue() && nbtri) sout<<this->getName()<<":  Voxelizing triangles (mesh "<<meshId<<")..."<<sendl;
 
         std::map<unsigned int,T> triToValue; // we record special roi values and rasterize them after to prevent from overwriting
 #ifdef _OPENMP
@@ -499,7 +489,7 @@ protected:
         {
             if(!isClosed(tri.ref())) sout<<"mesh["<<meshId<<"] might be open, let's try to fill it anyway"<<sendl;
             // flood fill from the exterior point (0,0,0) with the color outsideColor
-            if(this->f_printLog.getValue()) std::cout<<"MeshToImageEngine: "<<this->getName()<<":  Filling object (mesh "<<meshId<<")..."<<std::endl;
+            if(this->f_printLog.getValue()) sout<<this->getName()<<":  Filling object (mesh "<<meshId<<")..."<<sendl;
             static const bool colorTrue=true;
             mask.draw_fill(0,0,0,&colorTrue);
             cimg_foroff(mask,off) if(!mask[off]) im[off]=InsideColor;
@@ -544,7 +534,7 @@ protected:
 
 
 
-    virtual void draw(const core::visual::VisualParams* /*vparams*/)
+    void draw(const core::visual::VisualParams* /*vparams*/) override
     {
     }
 
@@ -568,9 +558,7 @@ protected:
         Coord P0(p0),P1(p1);
 
         Coord delta = P1 - P0;
-        unsigned int dmax = sofa::helper::round(
-                    cimg_library::cimg::max(cimg_library::cimg::abs(delta[0]),cimg_library::cimg::abs(delta[1]),cimg_library::cimg::abs(delta[2]), 1.)
-                );
+        unsigned int dmax = cimg_library::cimg::max(cimg_library::cimg::abs(delta[0]),cimg_library::cimg::abs(delta[1]),cimg_library::cimg::abs(delta[2]));
         dmax*=subdiv; // divide step to avoid possible holes
         Coord dP = delta/(Real)dmax;
         Coord P (P0);
@@ -593,9 +581,7 @@ protected:
         Coord P0(p0),P1(p1);
 
         Coord delta = P1 - P0;
-        unsigned int dmax = sofa::helper::round(
-                    cimg_library::cimg::max(cimg_library::cimg::abs(delta[0]),cimg_library::cimg::abs(delta[1]),cimg_library::cimg::abs(delta[2]), 1.)
-                );
+        unsigned int dmax = cimg_library::cimg::max(cimg_library::cimg::abs(delta[0]),cimg_library::cimg::abs(delta[1]),cimg_library::cimg::abs(delta[2]));
         dmax*=subdiv; // divide step to avoid possible holes
         Coord dP = delta/(Real)dmax;
         Coord P (P0);
@@ -679,8 +665,12 @@ protected:
         triangles.push_back(_Triangle(p2,p0,p1));
         std::sort(triangles.begin(), triangles.end());
 
-        _draw_triangle(im, mask, triangles[0].p0(), triangles[0].p1(), triangles[0].p2(), color0, color1, color2, subdiv);
-        _draw_triangle(im, mask, triangles[1].p0(), triangles[1].p1(), triangles[1].p2(), color0, color1, color2, subdiv);
+        std::map<Coord,Real> ptoC;
+        ptoC[p0]=color0;
+        ptoC[p1]=color1;
+        ptoC[p2]=color2;
+        _draw_triangle(im, mask, triangles[0].p0(), triangles[0].p1(), triangles[0].p2(), ptoC[triangles[0].p0()], ptoC[triangles[0].p1()], ptoC[triangles[0].p2()], subdiv);
+        _draw_triangle(im, mask, triangles[1].p0(), triangles[1].p1(), triangles[1].p2(), ptoC[triangles[1].p0()], ptoC[triangles[1].p1()], ptoC[triangles[1].p2()], subdiv);
     }
 
     template<class PixelT>
@@ -707,7 +697,7 @@ protected:
 
 
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_IMAGE_MeshToImageEngine_CPP)
+#if  !defined(SOFA_IMAGE_MeshToImageEngine_CPP)
 extern template class SOFA_IMAGE_API MeshToImageEngine<sofa::defaulttype::ImageB>;
 extern template class SOFA_IMAGE_API MeshToImageEngine<sofa::defaulttype::ImageUC>;
 extern template class SOFA_IMAGE_API MeshToImageEngine<sofa::defaulttype::ImageUS>;

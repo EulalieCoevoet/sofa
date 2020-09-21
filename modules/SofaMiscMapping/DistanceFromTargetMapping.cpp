@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -36,35 +33,20 @@ namespace component
 namespace mapping
 {
 
-SOFA_DECL_CLASS(DistanceFromTargetMapping)
-
 using namespace defaulttype;
 
 // Register in the Factory
 int DistanceFromTargetMappingClass = core::RegisterObject("Compute edge extensions")
-#ifndef SOFA_FLOAT
-        .add< DistanceFromTargetMapping< Vec3dTypes, Vec1dTypes > >()
-        .add< DistanceFromTargetMapping< Vec1dTypes, Vec1dTypes > >()
-        .add< DistanceFromTargetMapping< Rigid3dTypes, Vec1dTypes > >()
-#endif
-#ifndef SOFA_DOUBLE
-        .add< DistanceFromTargetMapping< Vec3fTypes, Vec1fTypes > >()
-        .add< DistanceFromTargetMapping< Vec1fTypes, Vec1fTypes > >()
-        .add< DistanceFromTargetMapping< Rigid3fTypes, Vec1fTypes > >()
-#endif
+        .add< DistanceFromTargetMapping< Vec3Types, Vec1Types > >()
+        .add< DistanceFromTargetMapping< Vec1Types, Vec1Types > >()
+        .add< DistanceFromTargetMapping< Rigid3Types, Vec1Types > >()
+
         ;
 
-#ifndef SOFA_FLOAT
-template class SOFA_MISC_MAPPING_API DistanceFromTargetMapping< Vec3dTypes, Vec1dTypes >;
-template class SOFA_MISC_MAPPING_API DistanceFromTargetMapping< Vec1dTypes, Vec1dTypes >;
-template class SOFA_MISC_MAPPING_API DistanceFromTargetMapping< Rigid3dTypes, Vec1dTypes >;
-#endif
+template class SOFA_MISC_MAPPING_API DistanceFromTargetMapping< Vec3Types, Vec1Types >;
+template class SOFA_MISC_MAPPING_API DistanceFromTargetMapping< Vec1Types, Vec1Types >;
+template class SOFA_MISC_MAPPING_API DistanceFromTargetMapping< Rigid3Types, Vec1Types >;
 
-#ifndef SOFA_DOUBLE
-template class SOFA_MISC_MAPPING_API DistanceFromTargetMapping< Vec3fTypes, Vec1fTypes >;
-template class SOFA_MISC_MAPPING_API DistanceFromTargetMapping< Vec1fTypes, Vec1fTypes >;
-template class SOFA_MISC_MAPPING_API DistanceFromTargetMapping< Rigid3fTypes, Vec1fTypes >;
-#endif
 
 
 

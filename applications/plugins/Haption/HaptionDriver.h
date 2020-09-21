@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -46,7 +43,6 @@
 #include <cstring>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 #include <sofa/core/objectmodel/KeyreleasedEvent.h>
-//#include <sofa/core/objectmodel/MouseEvent.h>
 #include <math.h>
 #include <SofaSimulationTree/GNode.h>
 #include "virtuoseAPI.h"
@@ -72,7 +68,7 @@ typedef struct
 {
     simulation::Node *node;
     sofa::component::visualmodel::OglModel *visu;
-    sofa::component::mapping::RigidMapping< Rigid3dTypes , ExtVec3fTypes  > *mapping;
+    sofa::component::mapping::RigidMapping< Rigid3dTypes , Vec3fTypes  > *mapping;
 } VisualComponent;
 
 typedef struct
@@ -92,13 +88,13 @@ public:
     SOFA_CLASS(HaptionDriver, Controller);
     typedef RigidTypes::VecCoord VecCoord;
 
-    Data<double> scale;
-    Data<bool> state_button;
-    Data<bool> haptionVisu;
-    Data<VecCoord> posBase;
-    Data<double> torqueScale;
-    Data<double> forceScale;
-    Data< std::string > ip_haption;
+    Data<double> scale; ///< Default scale applied to the Haption Coordinates. 
+    Data<bool> state_button; ///< state of the first button
+    Data<bool> haptionVisu; ///< Visualize the position of the interface in the virtual scene
+    Data<VecCoord> posBase; ///< Position of the interface base in the scene world coordinates
+    Data<double> torqueScale; ///< Default scale applied to the Haption torque. 
+    Data<double> forceScale; ///< Default scale applied to the Haption force. 
+    Data< std::string > ip_haption; ///< ip of the device
 
     HaptionDriver();
     virtual ~HaptionDriver();

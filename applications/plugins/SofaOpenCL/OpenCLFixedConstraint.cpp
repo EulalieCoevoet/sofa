@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -25,7 +22,7 @@
 #include "OpenCLTypes.h"
 #include "OpenCLFixedConstraint.inl"
 #include <sofa/core/ObjectFactory.h>
-#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/core/behavior/ProjectiveConstraintSet.inl>
 
@@ -47,19 +44,11 @@ namespace opencl
 {
 
 
-SOFA_DECL_CLASS(OpenCLFixedConstraint)
-
 int FixedConstraintOpenCLClass = core::RegisterObject("Supports GPU-side computations using OPENCL")
         .add< component::projectiveconstraintset::FixedConstraint<OpenCLVec3fTypes> >()
         .add< component::projectiveconstraintset::FixedConstraint<OpenCLVec3f1Types> >()
-#ifdef SOFA_DEV
-        .add< component::projectiveconstraintset::FixedConstraint<OpenCLRigid3fTypes> >()
-#endif // SOFA_DEV
         .add< component::projectiveconstraintset::FixedConstraint<OpenCLVec3dTypes> >()
         .add< component::projectiveconstraintset::FixedConstraint<OpenCLVec3d1Types> >()
-#ifdef SOFA_DEV
-        .add< component::projectiveconstraintset::FixedConstraint<OpenCLRigid3dTypes> >()
-#endif // SOFA_DEV
         ;
 
 
@@ -156,30 +145,12 @@ void FixedConstraintOpenCL3f_projectResponseContiguous(unsigned int size, _devic
     DEBUG_TEXT("~FixedConstraintOpenCL3f_projectResponseContiguous");
 }
 
-
-
 void FixedConstraintOpenCL3f1_projectResponseContiguous(unsigned int /*size*/, _device_pointer /*dx*/) {NOT_IMPLEMENTED();}
 void FixedConstraintOpenCL3f1_projectResponseIndexed(unsigned int /*size*/, const _device_pointer /*indices*/, _device_pointer /*dx*/) {NOT_IMPLEMENTED();}
-#ifdef SOFA_DEV
-void FixedConstraintOpenCLRigid3f_projectResponseContiguous(unsigned int /*size*/, _device_pointer /*dx*/) {NOT_IMPLEMENTED();}
-void FixedConstraintOpenCLRigid3f_projectResponseIndexed(unsigned int /*size*/, const _device_pointer /*indice*/, _device_pointer /*dx*/) {NOT_IMPLEMENTED();}
-#endif // SOFA_DEV
-
-
-
 void FixedConstraintOpenCL3d_projectResponseContiguous(unsigned int /*size*/, _device_pointer /*dx*/) {NOT_IMPLEMENTED();}
 void FixedConstraintOpenCL3d_projectResponseIndexed(unsigned int /*size*/, const _device_pointer /*indices*/, _device_pointer /*dx*/) {NOT_IMPLEMENTED();}
 void FixedConstraintOpenCL3d1_projectResponseContiguous(unsigned int /*size*/, _device_pointer /*dx*/) {NOT_IMPLEMENTED();}
 void FixedConstraintOpenCL3d1_projectResponseIndexed(unsigned int /*size*/, const _device_pointer /*indices*/, _device_pointer /*dx*/) {NOT_IMPLEMENTED();}
-#ifdef SOFA_DEV
-void FixedConstraintOpenCLRigid3d_projectResponseContiguous(unsigned int /*size*/, _device_pointer /*dx*/) {NOT_IMPLEMENTED();}
-void FixedConstraintOpenCLRigid3d_projectResponseIndexed(unsigned int /*size*/, const _device_pointer /*indice*/, _device_pointer /*dx*/) {NOT_IMPLEMENTED();}
-#endif // SOFA_DEV
-
-
-
-
-
 
 } // namespace opencl
 

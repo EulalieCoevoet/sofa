@@ -1,8 +1,9 @@
 #define CONTOURIMAGETOOLBOX_CPP
 
+#include "contourimagetoolbox.h"
+
 #include <sofa/core/ObjectFactory.h>
 
-#include "contourimagetoolbox.h"
 #include <image/ImageTypes.h>
 
 
@@ -14,8 +15,6 @@ namespace component
 
 namespace engine
 {
-
-SOFA_DECL_CLASS(ContourImageToolBox)
 
 int ContourImageToolBox_Class = core::RegisterObject("ContourImageToolBox")
         .add<ContourImageToolBox<ImageUC> >()

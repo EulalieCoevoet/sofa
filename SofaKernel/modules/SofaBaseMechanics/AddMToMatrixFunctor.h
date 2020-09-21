@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -45,7 +42,6 @@ class AddMToMatrixFunctor
 public:
     void operator()(defaulttype::BaseMatrix * mat, const MassType& mass, int pos, double fact)
     {
-//         cerr<<"WARNING: AddMToMatrixFunctor not implemented"<<endl;
         const double m = mass*fact;
         for (unsigned int i=0; i<Deriv::size(); ++i)
             mat->add(pos+i, pos+i, m);
@@ -66,12 +62,10 @@ class AddMToMatrixFunctor< defaulttype::Vec<N,Real>, defaulttype::Mat<N,N,Real> 
 public:
     void operator()(defaulttype::BaseMatrix * mat, const defaulttype::Mat<N,N,Real>& mass, int pos, double fact)
     {
-//         cerr<<"WARNING: AddMToMatrixFunctor not implemented"<<endl;
         for (int i=0; i<N; ++i)
             for (int j=0; j<N; ++j)
             {
                 mat->add(pos+i, pos+j, mass[i][j]*fact);
-//            cerr<<"AddMToMatrixFunctor< defaulttype::Vec<N,Real>, defaulttype::Mat<N,N,Real> >::operator(), add "<< mass[i][j]*fact << " in " << pos+i <<","<< pos+j <<endl;
             }
     }
 };
@@ -83,7 +77,6 @@ public:
     enum { N=3 };
     void operator()(defaulttype::BaseMatrix * mat, const defaulttype::RigidMass<N,Real>& mass, int pos, double fact)
     {
-//         cerr<<"WARNING: AddMToMatrixFunctor not implemented"<<endl;
         const double m = mass.mass*fact;
         for (int i=0; i<N; ++i)
             mat->add(pos+i, pos+i, m);
@@ -102,7 +95,6 @@ public:
     enum { N=2 };
     void operator()(defaulttype::BaseMatrix * mat, const defaulttype::RigidMass<N,Real>& mass, int pos, double fact)
     {
-//         cerr<<"WARNING: AddMToMatrixFunctor not implemented"<<endl;
         const double m = mass.mass*fact;
         for (int i=0; i<N; ++i)
             mat->add(pos+i, pos+i, m);

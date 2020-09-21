@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -32,8 +29,6 @@
 
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
-
-#include <sofa/helper/gl/template.h>
 
 #include <string>
 #include <iostream>
@@ -68,12 +63,14 @@ void CenterOfMassMapping<TIn, TOut>::init()
 template <class TIn, class TOut>
 void CenterOfMassMapping<TIn, TOut>::apply( const sofa::core::MechanicalParams* mparams, OutDataVecCoord& outData, const InDataVecCoord& inData)
 {
-    OutVecCoord& childPositions = *outData.beginEdit(mparams);
+    SOFA_UNUSED(mparams);
+
+    OutVecCoord& childPositions = *outData.beginEdit();
     const InVecCoord& parentPositions = inData.getValue();
 
     if(!masses || totalMass==0.0)
     {
-        serr<<"Error in CenterOfMassMapping : no mass found corresponding to the DOFs"<<sendl;
+        msg_error() << "CenterOfMassMapping : no mass found corresponding to the DOFs";
         return;
     }
 
@@ -88,19 +85,21 @@ void CenterOfMassMapping<TIn, TOut>::apply( const sofa::core::MechanicalParams* 
 
     childPositions[0] = outX / totalMass;
 
-    outData.endEdit(mparams);
+    outData.endEdit();
 }
 
 
 template <class TIn, class TOut>
 void CenterOfMassMapping<TIn, TOut>::applyJ( const sofa::core::MechanicalParams* mparams, OutDataVecDeriv& outData, const InDataVecDeriv& inData)
 {
-    OutVecDeriv& childForces = *outData.beginEdit(mparams);
+    SOFA_UNUSED(mparams);
+
+    OutVecDeriv& childForces = *outData.beginEdit();
     const InVecDeriv& parentForces = inData.getValue();
 
     if(!masses || totalMass==0.0)
     {
-        serr<<"Error in CenterOfMassMapping : no mass found corresponding to the DOFs"<<sendl;
+        msg_error() << "CenterOfMassMapping : no mass found corresponding to the DOFs";
         return;
     }
 
@@ -115,19 +114,21 @@ void CenterOfMassMapping<TIn, TOut>::applyJ( const sofa::core::MechanicalParams*
 
     childForces[0] = outF / totalMass;
 
-    outData.endEdit(mparams);
+    outData.endEdit();
 }
 
 
 template <class TIn, class TOut>
 void CenterOfMassMapping<TIn, TOut>::applyJT( const sofa::core::MechanicalParams* mparams, InDataVecDeriv& outData, const OutDataVecDeriv& inData)
 {
-    InVecDeriv& parentForces = *outData.beginEdit(mparams);
+    SOFA_UNUSED(mparams);
+
+    InVecDeriv& parentForces = *outData.beginEdit();
     const OutVecDeriv& childForces = inData.getValue();
 
     if(!masses || totalMass==0.0)
     {
-        serr<<"Error in CenterOfMassMapping : no mass found corresponding to the DOFs"<<sendl;
+        msg_error() << "CenterOfMassMapping : no mass found corresponding to the DOFs";
         return;
     }
 
@@ -137,13 +138,17 @@ void CenterOfMassMapping<TIn, TOut>::applyJT( const sofa::core::MechanicalParams
     for (unsigned int i=0 ; i<parentForces.size() ; i++)
         getVCenter(parentForces[i]) += childForces[0] * (masses->getElementMass(i) / totalMass);
 
-    outData.endEdit(mparams);
+    outData.endEdit();
 }
 
 
 template <class TIn, class TOut>
 void CenterOfMassMapping<TIn, TOut>::draw(const core::visual::VisualParams* vparams)
 {
+    if (!vparams->displayFlags().getShowMapping()) return;
+
+    vparams->drawTool()->saveLastState();
+
     const typename Out::VecCoord &X = this->toModel->read(core::ConstVecCoordId::position())->getValue();
 
     std::vector< sofa::defaulttype::Vector3 > points;
@@ -159,6 +164,8 @@ void CenterOfMassMapping<TIn, TOut>::draw(const core::visual::VisualParams* vpar
     }
 
     vparams->drawTool()->drawLines(points, 1, sofa::defaulttype::Vec<4,float>(1,1,0,1));
+
+    vparams->drawTool()->restoreLastState();
 }
 
 

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -63,11 +60,11 @@ void TopologyDataHandler <TopologyElementType, VecT>::add(const sofa::helper::ve
     unsigned int i0 = (unsigned)data.size();
     if (i0 != index[0])
     {
-        this->m_topologyData->getOwner()->serr << "TopologyDataHandler SIZE MISMATCH in Data "
+        msg_error(this->m_topologyData->getOwner()) << "TopologyDataHandler SIZE MISMATCH in Data "
             << this->m_topologyData->getName() << ": " << nbElements << " "
             << core::topology::TopologyElementInfo<TopologyElementType>::name()
             << " ADDED starting from index " << index[0]
-            << " while vector size is " << i0 << this->m_topologyData->getOwner()->sendl;
+            << " while vector size is " << i0;
         i0 = index[0];
     }
     data.resize(i0+nbElements);
@@ -81,7 +78,7 @@ void TopologyDataHandler <TopologyElementType, VecT>::add(const sofa::helper::ve
         this->applyCreateFunction(i0+i, t, elems[i],
             (ancestors.empty() || coefs.empty()) ? empty_vecint : ancestors[i],
             (ancestors.empty() || coefs.empty()) ? empty_vecdouble : coefs[i],
-            (ancestorElems.empty()             ) ? NULL : &ancestorElems[i]);
+            (ancestorElems.empty()             ) ? nullptr : &ancestorElems[i]);
     }
     m_topologyData->endEdit();
 }

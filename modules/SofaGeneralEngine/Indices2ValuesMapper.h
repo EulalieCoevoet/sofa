@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -26,9 +23,7 @@
 #define SOFA_COMPONENT_ENGINE_INDICES2VALUESMAPPER_H
 #include "config.h"
 
-#if !defined(__GNUC__) || (__GNUC__ > 3 || (_GNUC__ == 3 && __GNUC_MINOR__ > 3))
-#pragma once
-#endif
+
 
 #include <sofa/core/DataEngine.h>
 #include <SofaBaseMechanics/MechanicalObject.h>
@@ -59,42 +54,28 @@ public:
 protected:
 
     Indices2ValuesMapper();
-    ~Indices2ValuesMapper() {}
+    ~Indices2ValuesMapper() override {}
 public:
-    void init();
-    void reinit();
-    void update();
-
-    virtual std::string getTemplateName() const
-    {
-        return templateName(this);
-    }
-
-    static std::string templateName(const Indices2ValuesMapper<DataTypes>* = NULL)
-    {
-        return DataTypes::Name();
-    }
+    void init() override;
+    void reinit() override;
+    void doUpdate() override;
 
     //Input
-    Data<sofa::helper::vector<Real> > f_inputValues;
-    Data<sofa::helper::vector<Real> > f_indices;
-    Data<sofa::helper::vector<Real> > f_values;
+    Data<sofa::helper::vector<Real> > f_inputValues; ///< Already existing values (can be empty) 
+    Data<sofa::helper::vector<Real> > f_indices; ///< Indices to map value on 
+    Data<sofa::helper::vector<Real> > f_values; ///< Values to map indices on 
 
     //Output
-    Data<sofa::helper::vector<Real> > f_outputValues;
+    Data<sofa::helper::vector<Real> > f_outputValues; ///< New map between indices and values
 
     //Parameter
-    Data<Real> p_defaultValue;
+    Data<Real> p_defaultValue; ///< Default value for indices without any value
 
 };
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_ENGINE_INDICES2VALUESMAPPER_CPP)
-#ifndef SOFA_FLOAT
-extern template class SOFA_GENERAL_ENGINE_API Indices2ValuesMapper<sofa::defaulttype::Vec3dTypes>;
-#endif //SOFA_FLOAT
-#ifndef SOFA_DOUBLE
-extern template class SOFA_GENERAL_ENGINE_API Indices2ValuesMapper<sofa::defaulttype::Vec3fTypes>;
-#endif //SOFA_DOUBLE
+#if  !defined(SOFA_COMPONENT_ENGINE_INDICES2VALUESMAPPER_CPP)
+extern template class SOFA_GENERAL_ENGINE_API Indices2ValuesMapper<sofa::defaulttype::Vec3Types>;
+ 
 #endif
 
 

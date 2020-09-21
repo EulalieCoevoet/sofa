@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -52,6 +49,7 @@ void SubsetMultiMapping<TIn, TOut>::init()
 
     unsigned Nin = TIn::deriv_total_size, Nout = TOut::deriv_total_size;
 
+
     for( unsigned i=0; i<baseMatrices.size(); i++ )
         delete baseMatrices[i];
 
@@ -78,7 +76,6 @@ void SubsetMultiMapping<TIn, TOut>::init()
             jacobian->add( row, Nin*bcol +k, (SReal)1. );
         }
     }
-
     // finalize the Jacobians
     for(unsigned i=0; i<baseMatrices.size(); i++ )
         baseMatrices[i]->compress();
@@ -116,7 +113,7 @@ void SubsetMultiMapping<TIn, TOut>::addPoint( const core::BaseState* from, int i
             break;
     if(i==this->fromModels.size())
     {
-        serr<<"SubsetMultiMapping<TIn, TOut>::addPoint, parent "<<from->getName()<<" not found !"<< sendl;
+        msg_error() << "SubsetMultiMapping<TIn, TOut>::addPoint, parent " << from->getName() << " not found !";
         assert(0);
     }
 
@@ -137,41 +134,37 @@ void SubsetMultiMapping<TIn, TOut>::addPoint( int from, int index)
 template <class TIn, class TOut>
 void SubsetMultiMapping<TIn, TOut>::apply(const core::MechanicalParams* mparams, const helper::vector<OutDataVecCoord*>& dataVecOutPos, const helper::vector<const InDataVecCoord*>& dataVecInPos)
 {
-    //apply(const vecOutVecCoord& outPos, const vecConstInVecCoord& inPos)
-    //OutVecCoord& out = *outPos[0];
+    SOFA_UNUSED(mparams);
 
-    OutVecCoord& out = *(dataVecOutPos[0]->beginEdit(mparams));
+    OutVecCoord& out = *(dataVecOutPos[0]->beginEdit());
 
     for(unsigned i=0; i<out.size(); i++)
     {
-//        cerr<<"SubsetMultiMapping<TIn, TOut>::apply, i = "<< i <<", indexPair = " << indexPairs[i*2] << ", " << indexPairs[i*2+1] <<", inPos size = "<< inPos.size() <<", inPos[i] = " << (*inPos[indexPairs[i*2]]) << endl;
-//        cerr<<"SubsetMultiMapping<TIn, TOut>::apply, out = "<< out << endl;
         const InDataVecCoord* inPosPtr = dataVecInPos[indexPairs.getValue()[i*2]];
         const InVecCoord& inPos = (*inPosPtr).getValue();
 
-        //out[i] =  inPos[indexPairs.getValue()[i*2+1]];
         helper::eq( out[i], inPos[indexPairs.getValue()[i*2+1]] );
     }
 
-    dataVecOutPos[0]->endEdit(mparams);
+    dataVecOutPos[0]->endEdit();
 
 }
 
 template <class TIn, class TOut>
 void SubsetMultiMapping<TIn, TOut>::applyJ(const core::MechanicalParams* mparams, const helper::vector<OutDataVecDeriv*>& dataVecOutVel, const helper::vector<const InDataVecDeriv*>& dataVecInVel)
 {
-    OutVecDeriv& out = *(dataVecOutVel[0]->beginEdit(mparams));
+    SOFA_UNUSED(mparams);
+
+    OutVecDeriv& out = *(dataVecOutVel[0]->beginEdit());
 
     for(unsigned i=0; i<out.size(); i++)
     {
         const InDataVecDeriv* inDerivPtr = dataVecInVel[indexPairs.getValue()[i*2]];
         const InVecDeriv& inDeriv = (*inDerivPtr).getValue();
-
-//        out[i] = inDeriv[indexPairs.getValue()[i*2+1]];
         helper::eq( out[i], inDeriv[indexPairs.getValue()[i*2+1]] );
     }
 
-    dataVecOutVel[0]->endEdit(mparams);
+    dataVecOutVel[0]->endEdit();
 }
 
 template <class TIn, class TOut>
@@ -184,7 +177,7 @@ void SubsetMultiMapping<TIn, TOut>::applyJT( const core::ConstraintParams* /*cpa
 
     if (dOut.size() != this->fromModels.size())
     {
-        serr<<"problem with number of output constraint matrices"<<sendl;
+        msg_error() << "Problem with number of output constraint matrices";
         return;
     }
 
@@ -221,27 +214,23 @@ void SubsetMultiMapping<TIn, TOut>::applyJT( const core::ConstraintParams* /*cpa
 
 
     }
-
-    //    std::cout<<" dIn ="<<(*dIn[0])<<std::endl;
-    //    std::cout<<" dOut ="<<(*dOut[0])<<"  "<<(*dOut[1])<<std::endl;
 }
 
 
 template <class TIn, class TOut>
 void SubsetMultiMapping<TIn, TOut>::applyJT(const core::MechanicalParams* mparams, const helper::vector<InDataVecDeriv*>& dataVecOutForce, const helper::vector<const OutDataVecDeriv*>& dataVecInForce)
 {
+    SOFA_UNUSED(mparams);
+
     const OutDataVecDeriv* cderData = dataVecInForce[0];
     const OutVecDeriv& cder = cderData->getValue();
-    //const InVecDeriv& cder = *childDeriv[0];
 
     for(unsigned i=0; i<cder.size(); i++)
     {
-        //(*parentDeriv[indexPairs.getValue()[i*2]])[indexPairs.getValue()[i*2+1]] += cder[i];
         InDataVecDeriv* inDerivPtr = dataVecOutForce[indexPairs.getValue()[i*2]];
-        InVecDeriv& inDeriv = *(*inDerivPtr).beginEdit(mparams);
-//        inDeriv[indexPairs.getValue()[i*2+1]] += cder[i];
+        InVecDeriv& inDeriv = *(*inDerivPtr).beginEdit();
         helper::peq( inDeriv[indexPairs.getValue()[i*2+1]], cder[i] );
-        (*inDerivPtr).endEdit(mparams);
+        (*inDerivPtr).endEdit();
     }
 }
 

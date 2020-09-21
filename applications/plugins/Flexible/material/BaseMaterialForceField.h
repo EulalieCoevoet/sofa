@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -92,7 +89,7 @@ public:
     //@}
 
 
-    virtual void resize()
+    void resize() override
     {
         if(!(this->mstate)) return;
 
@@ -113,7 +110,7 @@ public:
 
     /** @name forceField functions */
     //@{
-    virtual void init()
+    void init() override
     {
         if(!(this->mstate))
         {
@@ -126,7 +123,7 @@ public:
         Inherit::init();
     }
 
-    virtual void reinit()
+    void reinit() override
     {
 
         addForce(NULL, *this->mstate->write(core::VecDerivId::force()), *this->mstate->read(core::ConstVecCoordId::position()), *this->mstate->read(core::ConstVecDerivId::velocity()));
@@ -149,7 +146,7 @@ public:
         std::cout << "Do nothing" << std::endl;
     }
 
-    virtual void addForce(const core::MechanicalParams* /*mparams*/, DataVecDeriv& _f , const DataVecCoord& _x , const DataVecDeriv& _v)
+    virtual void addForce(const core::MechanicalParams* /*mparams*/, DataVecDeriv& _f , const DataVecCoord& _x , const DataVecDeriv& _v) override
     {
         if(this->mstate->getSize()!=material.size()) resize();
 
@@ -177,7 +174,7 @@ public:
         }
     }
 
-    virtual void addDForce( const core::MechanicalParams* mparams, DataVecDeriv&  _df, const DataVecDeriv& _dx )
+    virtual void addDForce( const core::MechanicalParams* mparams, DataVecDeriv&  _df, const DataVecDeriv& _dx ) override
     {
         VecDeriv&  df = *_df.beginEdit();
         const VecDeriv&  dx = _dx.getValue();
@@ -200,7 +197,7 @@ public:
     }
 
 
-    const defaulttype::BaseMatrix* getComplianceMatrix(const core::MechanicalParams * /*mparams*/)
+    const defaulttype::BaseMatrix* getComplianceMatrix(const core::MechanicalParams * /*mparams*/) override
     {
         if( !this->assemble.getValue() || !BlockType::constantK)
         {
@@ -223,21 +220,21 @@ public:
         return &C;
     }
 
-    virtual void addKToMatrix( sofa::defaulttype::BaseMatrix * matrix, SReal kFact, unsigned int &offset )
+    virtual void addKToMatrix( sofa::defaulttype::BaseMatrix * matrix, SReal kFact, unsigned int &offset ) override
     {
         if(!this->assemble.getValue() || !BlockType::constantK) updateK();
 
         K.addToBaseMatrix( matrix, kFact, offset );
     }
 
-    virtual void addBToMatrix(sofa::defaulttype::BaseMatrix *matrix, SReal bFact, unsigned int &offset)
+    virtual void addBToMatrix(sofa::defaulttype::BaseMatrix *matrix, SReal bFact, unsigned int &offset) override
     {
         if(!this->assemble.getValue() || !BlockType::constantK) updateB();
 
         B.addToBaseMatrix( matrix, bFact, offset );
     }
 
-    void draw(const core::visual::VisualParams* /*vparams*/)
+    void draw(const core::visual::VisualParams* /*vparams*/) override
     {
     }
     //@}
@@ -245,7 +242,7 @@ public:
 
     using Inherit::getPotentialEnergy;
 
-    virtual SReal getPotentialEnergy( const core::MechanicalParams* /*mparams*/, const DataVecCoord& x ) const
+    virtual SReal getPotentialEnergy( const core::MechanicalParams* /*mparams*/, const DataVecCoord& x ) const override
     {
         SReal e = 0;
         const VecCoord& _x = x.getValue();
@@ -257,7 +254,7 @@ public:
         return e;
     }
 
-    virtual SReal getPotentialEnergy( const unsigned int index ) const
+    SReal getPotentialEnergy( const unsigned int index ) const override
     {
         if(!this->mstate) return 0;
         helper::ReadAccessor<Data< VecCoord > >  x(*this->mstate->read(core::ConstVecCoordId::position()));
@@ -267,7 +264,7 @@ public:
     }
 
 
-    Data<bool> assemble;
+    Data<bool> assemble; ///< Assemble the needed material matrices (compliance C,stiffness K,damping B)
 
 private:
     BaseMaterialForceFieldT(const BaseMaterialForceFieldT& b);
@@ -281,7 +278,7 @@ protected:
 
     }
 
-    virtual ~BaseMaterialForceFieldT()    {     }
+    ~BaseMaterialForceFieldT() override    {     }
 
     SparseMatrix material;
 

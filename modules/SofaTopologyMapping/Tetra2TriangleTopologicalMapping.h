@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -42,6 +39,7 @@ namespace component
 namespace topology
 {
 
+class TriangleSetTopologyModifier;
 
 /**
  * This class, called Tetra2TriangleTopologicalMapping, is a specific implementation of the interface TopologicalMapping where :
@@ -52,7 +50,6 @@ namespace topology
  * Tetra2TriangleTopologicalMapping class is templated by the pair (INPUT TOPOLOGY, OUTPUT TOPOLOGY)
  *
 */
-
 class SOFA_TOPOLOGY_MAPPING_API Tetra2TriangleTopologicalMapping : public sofa::core::topology::TopologicalMapping
 {
 public:
@@ -67,11 +64,11 @@ protected:
      *
      * Does nothing.
      */
-    virtual ~Tetra2TriangleTopologicalMapping();
+    ~Tetra2TriangleTopologicalMapping() override = default;
 public:
     /** \brief Initializes the target BaseTopology from the source BaseTopology.
      */
-    virtual void init();
+    void init() override;
 
 
     /** \brief Translates the TopologyChange objects from the source to the target.
@@ -80,15 +77,19 @@ public:
      * reflect the effects of the first topology changes on the second topology.
      *
      */
-    virtual void updateTopologicalMappingTopDown();
+    void updateTopologicalMappingTopDown() override;
 
-    virtual unsigned int getFromIndex(unsigned int ind);
+    unsigned int getFromIndex(unsigned int ind) override;
+
+    /// Method to check the topology mapping maps regarding the upper topology
+    bool checkTopologies() override;
+
 protected:
-    Data<bool> flipNormals;
-    Data<bool> noNewTriangles;
-    Data<bool> noInitialTriangles;
-
-    std::vector<unsigned int> addedTriangleIndex;
+    Data<bool> flipNormals; ///< Flip Normal ? (Inverse point order when creating triangle)
+    Data<bool> noNewTriangles; ///< If true no new triangles are being created
+    Data<bool> noInitialTriangles; ///< If true the list of initial triangles is initially empty. Only additional triangles will be added in the list
+    sofa::helper::vector<unsigned int> addedTriangleIndex;
+    TriangleSetTopologyModifier* m_outTopoModifier; ///< Pointer to the output topology modifier
 };
 
 } // namespace topology

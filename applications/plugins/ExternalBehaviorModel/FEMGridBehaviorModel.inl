@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -104,7 +101,7 @@ void FEMGridBehaviorModel<DataTypes>::init()
 
 
     m_internalMass = sofa::core::objectmodel::New< component::mass::UniformMass<DataTypes,Real> >();
-    m_internalMass->totalMass.setValue( _totalMass.getValue() );
+    m_internalMass->d_totalMass.setValue( _totalMass.getValue() );
 
 
     // to constrain certain internal dof to exposed sofa dofs. Here there are exactly at the same place, they could be interpolated
@@ -130,7 +127,7 @@ void FEMGridBehaviorModel<DataTypes>::init()
     m_internalNode->setGravity(this->getContext()->getGravity());
     m_internalNode->setDt(this->getContext()->getDt());
 
-    constraint->f_indices.beginEdit()->clear();
+    constraint->d_indices.beginEdit()->clear();
 
     for( unsigned x=0 ; x<2 ; ++x )
         for( unsigned y=0 ; y<2 ; ++y )
@@ -138,10 +135,10 @@ void FEMGridBehaviorModel<DataTypes>::init()
             {
                 mapExposedInternalIndices[x+y*2+z*4] = x*(_subdivisions.getValue())+y*_subdivisions.getValue()*(_subdivisions.getValue()+1)+z*_subdivisions.getValue()*(_subdivisions.getValue()+1)*(_subdivisions.getValue()+1);
 //                std::cerr<<x+y*2+z*4<<" "<<mapExposedInternalIndices[x+y*2+z*4]<<std::endl;
-                constraint->f_indices.beginEdit()->push_back(mapExposedInternalIndices[x+y*2+z*4]);
+                constraint->d_indices.beginEdit()->push_back(mapExposedInternalIndices[x+y*2+z*4]);
             }
 
-    constraint->f_indices.endEdit();
+    constraint->d_indices.endEdit();
 
 
     /////////////////////////////

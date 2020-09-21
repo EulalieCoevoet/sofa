@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -44,10 +41,10 @@ namespace topology
 /////////////////////////////   Generic Topology Data Implementation   /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** \brief A class for storing Edge related data. Automatically manages topology changes.
+/** \brief A class for storing topology related data. Automatically manages topology changes.
 *
 * This class is a wrapper of class helper::vector that is made to take care transparently of all topology changes that might
-* happen (non exhaustive list: Edges added, removed, fused, renumbered).
+* happen (non exhaustive list: elements added, removed, fused, renumbered).
 */
 
 template< class TopologyElementType, class VecT>
@@ -95,7 +92,7 @@ public:
             const sofa::helper::vector< unsigned int > &,
             const sofa::helper::vector< double > &) {t = m_defaultValue;}
 
-    /// WARNING NEEED TO UNIFY THIS
+    /// WARNING NEED TO UNIFY THIS
     /// Apply adding current elementType elements
     virtual void applyCreateFunction(unsigned int i, value_type&t , const TopologyElementType& ,
             const sofa::helper::vector< unsigned int > &ancestors,
@@ -128,7 +125,7 @@ protected:
             const sofa::helper::vector< sofa::helper::vector< double > >& coefs,
             const sofa::helper::vector< AncestorElem >& ancestorElems);
 
-    /// Remove the values corresponding to the Edges removed.
+    /// Remove the values corresponding to the elements removed.
     virtual void remove( const sofa::helper::vector<unsigned int> &index );
 
     /// Reorder the values.

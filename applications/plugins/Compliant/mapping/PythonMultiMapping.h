@@ -5,18 +5,11 @@
 #include "AssembledMultiMapping.h"
 #include "../utils/map.h"
 
+#include "../python/python.h"
+
 namespace sofa {
 namespace component {
 namespace mapping {
-
-// TODO move this elsewhere if reusable
-struct with_py_callback {
-    typedef void* (*py_callback_type)(int);
-    py_callback_type py_callback;
-    
-    with_py_callback();
-    virtual ~with_py_callback();
-};
 
 
 /** 
@@ -34,58 +27,58 @@ struct with_py_callback {
 // TODO also fill a mask Data from python to be able to setup frommasks
 
 template<class TIn, class TOut>
-class SOFA_Compliant_API PythonMultiMapping : public AssembledMultiMapping<TIn, TOut>,
-                                              public with_py_callback {
+class SOFA_Compliant_API PythonMultiMapping : public AssembledMultiMapping<TIn, TOut> {
 	typedef PythonMultiMapping self;
     
  public:
 	SOFA_CLASS(SOFA_TEMPLATE2(PythonMultiMapping,TIn,TOut), 
 			   SOFA_TEMPLATE2(AssembledMultiMapping,TIn,TOut));
-	
-    typedef helper::vector< typename TIn::Real > matrix_type;
-	typedef typename TOut::VecCoord value_type;
 
-	Data<matrix_type> matrix;
-	Data<value_type> value;
+    template<class Real>
+    struct vec {
+        std::size_t outer;
+        std::size_t inner;
 
-	Data<matrix_type> gs_matrix;
-    Data<bool> use_gs;
-	Data<typename TOut::VecDeriv> out_force;
+        Real* data;
+        
+        template<class T>
+        static vec map(const std::vector<T>& value) {
+            return {value.size(),
+                    T::total_size,
+                    // yeah i know
+                    const_cast<Real*>(&value[0][0]) };
+        }
+    };
+
+    typedef vec<typename TIn::Real> in_vec;
+    typedef vec<typename TOut::Real> out_vec;    
+    
+    typedef Eigen::SparseMatrix<typename TIn::Real, Eigen::RowMajor> in_csr_matrix;
+    typedef Eigen::SparseMatrix<typename TOut::Real, Eigen::RowMajor> out_csr_matrix;    
+    
+    Data< opaque< void(out_vec out, in_vec* in, std::size_t n) > > apply_callback; ///< apply callback
+    Data< opaque< void(out_csr_matrix** out, in_vec* in, std::size_t n) > > jacobian_callback; ///< jacobian callback
+    Data< opaque< void(in_csr_matrix* out, in_vec* in, std::size_t n, out_vec f) > > gs_callback; ///< geometric stiffness callback
+    
     
 	PythonMultiMapping();
 	
-    enum {
-        out_deriv_size = TOut::Deriv::total_size,
-        in_deriv_size = TIn::Deriv::total_size,
-
-        out_coord_size = TOut::Coord::total_size,
-        in_coord_size = TIn::Coord::total_size
-    };
-
-    enum {
-        // indicate state for python callback
-        apply_state = 0,
-        gs_state = 1
-    };
-    
- public:
-    
-    template<class T>
-    static T& set(const Data<T>& data) {
-        return const_cast<T&>(data.getValue());
-    }
     
  protected:
 
 	virtual void assemble_geometric( const helper::vector<typename self::in_pos_type>& in,
-                                     const typename self::const_out_deriv_type& out);
+                                     const typename self::const_out_deriv_type& out) override;
 	
 	
-    virtual void assemble( const helper::vector<typename self::in_pos_type>& in );
+    virtual void assemble( const helper::vector<typename self::in_pos_type>& in ) override;
     
     virtual void apply(typename self::out_pos_type& out, 
-                       const helper::vector<typename self::in_pos_type>& /*in*/ );
-	
+                       const helper::vector<typename self::in_pos_type>& /*in*/ ) override;
+
+
+  private:
+    std::vector<in_vec> at;
+    std::vector<out_csr_matrix*> js;
 };
 
 

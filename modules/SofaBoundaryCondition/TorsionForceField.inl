@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -34,7 +31,7 @@ namespace component
 
 namespace forcefield
 {
-
+using sofa::defaulttype::Rigid3Types;
 using sofa::component::linearsolver::CompressedRowSparseMatrix;
 
 template<typename DataTypes>
@@ -150,9 +147,15 @@ void TorsionForceField<DataTypes>::addKToMatrix(defaulttype::BaseMatrix* matrix,
 
 }
 
-#ifndef SOFA_DOUBLE
+template<typename DataTypes>
+SReal TorsionForceField<DataTypes>::getPotentialEnergy(const core::MechanicalParams* /*mparams*/, const DataVecCoord&  /* x */) const
+{
+    msg_warning() << "Method getPotentialEnergy not implemented yet.";
+    return 0.0;
+}
+
 template<>
-void TorsionForceField<Rigid3fTypes>::addForce(const core::MechanicalParams *, DataVecDeriv &f, const DataVecCoord &x, const DataVecDeriv &/*v*/)
+void TorsionForceField<Rigid3Types>::addForce(const core::MechanicalParams *, DataVecDeriv &f, const DataVecCoord &x, const DataVecDeriv &/*v*/)
 {
 	const VecId& indices = m_indices.getValue();
 	const VecCoord& q = x.getValue();
@@ -173,9 +176,8 @@ void TorsionForceField<Rigid3fTypes>::addForce(const core::MechanicalParams *, D
 	f.endEdit();
 }
 
-
 template<>
-void TorsionForceField<Rigid3fTypes>::addDForce(const core::MechanicalParams *mparams, DataVecDeriv &df, const DataVecDeriv &dx)
+void TorsionForceField<Rigid3Types>::addDForce(const core::MechanicalParams *mparams, DataVecDeriv &df, const DataVecDeriv &dx)
 {
 	const VecId& indices = m_indices.getValue();
 	const VecDeriv& dq = dx.getValue();
@@ -198,56 +200,7 @@ void TorsionForceField<Rigid3fTypes>::addDForce(const core::MechanicalParams *mp
 	}
 }
 
-#endif
 
-#ifndef SOFA_FLOAT
-template<>
-void TorsionForceField<Rigid3dTypes>::addForce(const core::MechanicalParams *, DataVecDeriv &f, const DataVecCoord &x, const DataVecDeriv &/*v*/)
-{
-	const VecId& indices = m_indices.getValue();
-	const VecCoord& q = x.getValue();
-	const Real& tau = m_torque.getValue();
-	const Pos& o = m_origin.getValue();
-	VecDeriv& fq = *f.beginEdit();
-
-	const std::size_t nNodes = indices.size();
-
-	for(size_t n = 0 ; n < nNodes ; ++n)
-	{
-		PointId id = indices[n];
-		const Pos t = tau*m_u;
-		fq[id].getVCenter() += t.cross(q[id].getCenter() - (o + (q[id].getCenter() * m_u)*m_u) );
-		fq[id].getVOrientation() += t;
-	}
-
-	f.endEdit();
-}
-
-template<>
-void TorsionForceField<Rigid3dTypes>::addDForce(const core::MechanicalParams *mparams, DataVecDeriv &df, const DataVecDeriv &dx)
-{
-	const VecId& indices = m_indices.getValue();
-	const VecDeriv& dq = dx.getValue();
-	const Real& tau = m_torque.getValue();
-	VecDeriv& dfq = *df.beginEdit();
-
-	const std::size_t nNodes = indices.size();
-	const Real& kfact = mparams->kFactor();
-
-	Mat3 D;
-	D(0,0) = 1 - m_u(0)*m_u(0) ;	D(0,1) = -m_u(1)*m_u(0) ;		D(0,2) = -m_u(2)*m_u(0);
-	D(1,0) = -m_u(0)*m_u(1) ;		D(1,1) = 1 - m_u(1)*m_u(1) ;	D(1,2) = -m_u(2)*m_u(1);
-	D(2,0) = -m_u(0)*m_u(2) ;		D(2,1) = -m_u(1)*m_u(2) ;		D(2,2) = 1 - m_u(3)*m_u(3);
-	D *= (tau * kfact);
-
-	for(size_t n = 0 ; n < nNodes ; ++n)
-	{
-		PointId id = indices[n];
-		dfq[id].getVCenter() += D * dq[id].getVCenter();
-	}
-}
-
-#endif
 
 
 

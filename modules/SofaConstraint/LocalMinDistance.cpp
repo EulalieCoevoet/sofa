@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -31,9 +28,18 @@
 #include <sofa/core/visual/VisualParams.h>
 
 #define DYNAMIC_CONE_ANGLE_COMPUTATION
+#define EMIT_EXTRA_DEBUG_MESSAGE false
 
 namespace sofa
 {
+
+namespace core
+{
+    namespace collision
+    {
+        template class SOFA_CONSTRAINT_API IntersectorFactory<component::collision::LocalMinDistance>;
+    }
+}
 
 namespace component
 {
@@ -47,8 +53,6 @@ using namespace sofa::defaulttype;
 
 using core::topology::BaseMeshTopology;
 
-
-SOFA_DECL_CLASS(LocalMinDistance)
 
 int LocalMinDistanceClass = core::RegisterObject("A set of methods to compute (for constraint methods) if two primitives are close enough to consider they collide")
         .add< LocalMinDistance >()
@@ -65,37 +69,31 @@ LocalMinDistance::LocalMinDistance()
 
 void LocalMinDistance::init()
 {
-    intersectors.add<CubeModel, CubeModel, LocalMinDistance>(this);
+    intersectors.add<CubeCollisionModel, CubeCollisionModel, LocalMinDistance>(this);
+    intersectors.add<SphereCollisionModel<sofa::defaulttype::Vec3Types>, SphereCollisionModel<sofa::defaulttype::Vec3Types>, LocalMinDistance>(this); // sphere-sphere is always activated
+    intersectors.add<SphereCollisionModel<sofa::defaulttype::Vec3Types>, PointCollisionModel<sofa::defaulttype::Vec3Types>, LocalMinDistance>(this); // sphere-point is always activated
 
-    //intersectors.ignore<SphereModel, PointModel>();		// SphereModel are not supported yet
-    //intersectors.ignore<LineModel, SphereModel>();
-    //intersectors.ignore<TriangleModel, SphereModel>();
+    intersectors.add<PointCollisionModel<sofa::defaulttype::Vec3Types>, PointCollisionModel<sofa::defaulttype::Vec3Types>, LocalMinDistance>(this); // point-point is always activated
+    intersectors.add<LineCollisionModel<sofa::defaulttype::Vec3Types>, LineCollisionModel<sofa::defaulttype::Vec3Types>, LocalMinDistance>(this);
+    intersectors.add<LineCollisionModel<sofa::defaulttype::Vec3Types>, PointCollisionModel<sofa::defaulttype::Vec3Types>, LocalMinDistance>(this);
+    intersectors.add<LineCollisionModel<sofa::defaulttype::Vec3Types>, SphereCollisionModel<sofa::defaulttype::Vec3Types>, LocalMinDistance>(this);
+    intersectors.add<TriangleCollisionModel<sofa::defaulttype::Vec3Types>, PointCollisionModel<sofa::defaulttype::Vec3Types>, LocalMinDistance>(this);
+    intersectors.add<TriangleCollisionModel<sofa::defaulttype::Vec3Types>, SphereCollisionModel<sofa::defaulttype::Vec3Types>, LocalMinDistance>(this);
 
-    intersectors.add<SphereModel, SphereModel, LocalMinDistance>(this); // sphere-sphere is always activated
-    intersectors.add<SphereModel, PointModel, LocalMinDistance>(this); // sphere-point is always activated
+    intersectors.ignore<TriangleCollisionModel<sofa::defaulttype::Vec3Types>, LineCollisionModel<sofa::defaulttype::Vec3Types>>();			// never the case with LMD
+    intersectors.ignore<TriangleCollisionModel<sofa::defaulttype::Vec3Types>, TriangleCollisionModel<sofa::defaulttype::Vec3Types>>();		// never the case with LMD
 
-    intersectors.add<PointModel, PointModel, LocalMinDistance>(this); // point-point is always activated
-    intersectors.add<LineModel, LineModel, LocalMinDistance>(this);
-    intersectors.add<LineModel, PointModel, LocalMinDistance>(this);
-    intersectors.add<LineModel, SphereModel, LocalMinDistance>(this);
-    intersectors.add<TriangleModel, PointModel, LocalMinDistance>(this);
-    intersectors.add<TriangleModel, SphereModel, LocalMinDistance>(this);
-
-    intersectors.ignore<TriangleModel, LineModel>();			// never the case with LMD
-    intersectors.ignore<TriangleModel, TriangleModel>();		// never the case with LMD
-
-    intersectors.ignore<RayModel, PointModel>();
-    intersectors.ignore<RayModel, LineModel>();
-    intersectors.add<RayModel, TriangleModel, LocalMinDistance>(this);
-    intersectors.add<RayModel, SphereModel, LocalMinDistance>(this);
+    intersectors.ignore<RayCollisionModel, PointCollisionModel<sofa::defaulttype::Vec3Types>>();
+    intersectors.ignore<RayCollisionModel, LineCollisionModel<sofa::defaulttype::Vec3Types>>();
+    intersectors.add<RayCollisionModel, TriangleCollisionModel<sofa::defaulttype::Vec3Types>, LocalMinDistance>(this);
+    intersectors.add<RayCollisionModel, SphereCollisionModel<sofa::defaulttype::Vec3Types>, LocalMinDistance>(this);
     IntersectorFactory::getInstance()->addIntersectors(this);
 
-	BaseProximityIntersection::init();
+    BaseProximityIntersection::init();
 }
 
 bool LocalMinDistance::testIntersection(Cube &cube1, Cube &cube2)
 {
-    //std::cout<<"testIntersection(Cube &cube1, Cube &cube2) is called"<<std::endl;
     const Vector3& minVect1 = cube1.minVect();
     const Vector3& minVect2 = cube2.minVect();
     const Vector3& maxVect1 = cube1.maxVect();
@@ -119,7 +117,7 @@ int LocalMinDistance::computeIntersection(Cube&, Cube&, OutputVector* /*contacts
 
 bool LocalMinDistance::testIntersection(Line& e1, Line& e2)
 {
-    if(!e1.activated(e2.getCollisionModel()) || !e2.activated(e1.getCollisionModel()))
+    if(!e1.isActive(e2.getCollisionModel()) || !e2.isActive(e1.getCollisionModel()))
     {
         return false;
     }
@@ -168,27 +166,8 @@ bool LocalMinDistance::testIntersection(Line& e1, Line& e2)
         }
         else
         {
-            /*
-            core::collision::ContactFiltrationAlgorithm *e1_cfa = e1.getCollisionModel()->getContactFiltrationAlgorithm();
-            if (e1_cfa != 0)
-            {
-            	if (!e1_cfa->validate(e1, PQ))
-            		return false;
-            }
-
-            core::collision::ContactFiltrationAlgorithm *e2_cfa = e2.getCollisionModel()->getContactFiltrationAlgorithm();
-            if (e2_cfa != 0)
-            {
-            	Vector3 QP = -PQ;
-            	return e2_cfa->validate(e2, QP);
-            }
-            */
-
             return true;
         }
-
-        // end filter
-
     }
     else
         return false;
@@ -197,19 +176,10 @@ bool LocalMinDistance::testIntersection(Line& e1, Line& e2)
 int LocalMinDistance::computeIntersection(Line& e1, Line& e2, OutputVector* contacts)
 {
 
-    bool debug=false;
-
-    //if(e1.i1()==35 && e1.i2()==45 || e2.i1()==35 && e2.i2()==45 )
-    //{
-    //	std::cout<<"test segment"<<e1.i1()<<" - "<<e1.i2()<<"with segment "<<e2.i1()<<" - "<<e2.i2()<<std::endl;
-    //	debug=true;
-    //}
-
-
-    if(!e1.activated(e2.getCollisionModel()) || !e2.activated(e1.getCollisionModel()))
+    if(!e1.isActive(e2.getCollisionModel()) || !e2.isActive(e1.getCollisionModel()))
     {
-        if(debug)
-            std::cout<<" not activated"<<std::endl;
+        dmsg_info_when(EMIT_EXTRA_DEBUG_MESSAGE)
+            <<" not activated" ;
         return 0;
     }
 
@@ -264,8 +234,8 @@ int LocalMinDistance::computeIntersection(Line& e1, Line& e2, OutputVector* cont
     {
         if (!testValidity(e1, PQ))
         {
-            if(debug)
-                std::cout<<" testValidity rejected for the first segment"<<std::endl;
+            dmsg_info_when(EMIT_EXTRA_DEBUG_MESSAGE)
+                 <<" testValidity rejected for the first segment" ;
             return 0;
         }
 
@@ -273,34 +243,16 @@ int LocalMinDistance::computeIntersection(Line& e1, Line& e2, OutputVector* cont
 
         if (!testValidity(e2, QP))
         {
-            if(debug)
-                std::cout<<" testValidity rejected for the second segment"<<std::endl;
+            dmsg_info_when(EMIT_EXTRA_DEBUG_MESSAGE)
+                <<" testValidity rejected for the second segment";
             return 0;
         }
     }
-    else
-    {
-        /*
-        core::collision::ContactFiltrationAlgorithm *e1_cfa = e1.getCollisionModel()->getContactFiltrationAlgorithm();
-        if (e1_cfa != 0)
-        {
-
-        core::collision::ContactFiltrationAlgorithm *e2_cfa = e2.getCollisionModel()->getContactFiltrationAlgorithm();
-        if (e2_cfa != 0)
-        {
-        	Vector3 QP = -PQ;
-        	if (!e2_cfa->validate(e2, QP))
-        		return 0;
-        }
-        */
-    }
-
-    //std::cout<<" contact line line detected with alpha ="<<alpha<<" and beta ="<<beta<<std::endl;
 
     contacts->resize(contacts->size() + 1);
     DetectionOutput *detection = &*(contacts->end() - 1);
 
-#ifdef DETECTIONOUTPUT_FREEMOTION
+#ifdef SOFA_DETECTIONOUTPUT_FREEMOTION
 
     if (e1.hasFreePosition() && e2.hasFreePosition())
     {
@@ -321,10 +273,6 @@ int LocalMinDistance::computeIntersection(Line& e1, Line& e2, OutputVector* cont
     detection->id = (e1.getCollisionModel()->getSize() > e2.getCollisionModel()->getSize()) ? e1.getIndex() : e2.getIndex();
     detection->point[0] = P;
     detection->point[1] = Q;
-#ifdef DETECTIONOUTPUT_BARYCENTRICINFO
-    detection->baryCoords[0][0] = alpha;
-    detection->baryCoords[1][0] = beta;
-#endif
     detection->normal = PQ;
     detection->value = detection->normal.norm();
     detection->normal /= detection->value;
@@ -335,7 +283,7 @@ int LocalMinDistance::computeIntersection(Line& e1, Line& e2, OutputVector* cont
 
 bool LocalMinDistance::testIntersection(Triangle& e2, Point& e1)
 {
-    if(!e1.activated(e2.getCollisionModel()))
+    if(!e1.isActive(e2.getCollisionModel()))
         return false;
 
     const double alarmDist = getAlarmDistance() + e1.getProximity() + e2.getProximity();
@@ -369,23 +317,19 @@ bool LocalMinDistance::testIntersection(Triangle& e2, Point& e1)
     double alpha = 0.5;
     double beta = 0.5;
 
-    //if (det < -0.000000000001 || det > 0.000000000001)
-    {
-        alpha = (b[0]*A[1][1] - b[1]*A[0][1])/det;
-        beta  = (b[1]*A[0][0] - b[0]*A[1][0])/det;
-        if (alpha < 0.000001 ||
+
+    alpha = (b[0]*A[1][1] - b[1]*A[0][1])/det;
+    beta  = (b[1]*A[0][0] - b[0]*A[1][0])/det;
+    if (alpha < 0.000001 ||
             beta  < 0.000001 ||
             alpha + beta  > 0.999999)
-            return false;
-    }
+        return false;
 
     const Vector3 PQ = AB * alpha + AC * beta - AP;
 
     if (PQ.norm2() < alarmDist*alarmDist)
     {
-
         //filter for LMD
-
         if (!useLMDFilters.getValue())
         {
             if (!testValidity(e1, PQ))
@@ -396,27 +340,9 @@ bool LocalMinDistance::testIntersection(Triangle& e2, Point& e1)
         }
         else
         {
-            /*
-            core::collision::ContactFiltrationAlgorithm *e1_cfa = e1.getCollisionModel()->getContactFiltrationAlgorithm();
-            if (e1_cfa != 0)
-            {
-            	if (!e1_cfa->validate(e1, PQ))
-            		return false;
-            }
-
-            core::collision::ContactFiltrationAlgorithm *e2_cfa = e2.getCollisionModel()->getContactFiltrationAlgorithm();
-            if (e2_cfa != 0)
-            {
-            	Vector3 QP = -PQ;
-            	return e2_cfa->validate(e2, QP);
-            }
-            */
-
             return true;
         }
-
         // end filter
-
     }
     else
         return false;
@@ -424,7 +350,7 @@ bool LocalMinDistance::testIntersection(Triangle& e2, Point& e1)
 
 int LocalMinDistance::computeIntersection(Triangle& e2, Point& e1, OutputVector* contacts)
 {
-    if(!e1.activated(e2.getCollisionModel()))
+    if(!e1.isActive(e2.getCollisionModel()))
         return 0;
 
     const double alarmDist = getAlarmDistance() + e1.getProximity() + e2.getProximity();
@@ -448,15 +374,14 @@ int LocalMinDistance::computeIntersection(Triangle& e2, Point& e1, OutputVector*
     double alpha = 0.5;
     double beta = 0.5;
 
-    //if (det < -0.000000000001 || det > 0.000000000001)
-    {
-        alpha = (b[0]*A[1][1] - b[1]*A[0][1])/det;
-        beta  = (b[1]*A[0][0] - b[0]*A[1][0])/det;
-        if (alpha < 0.000001 ||
+
+    alpha = (b[0]*A[1][1] - b[1]*A[0][1])/det;
+    beta  = (b[1]*A[0][0] - b[0]*A[1][0])/det;
+    if (alpha < 0.000001 ||
             beta  < 0.000001 ||
             alpha + beta  > 0.999999)
-            return 0;
-    }
+        return 0;
+
 
     Vector3 P,Q; //PQ
     P = e1.p();
@@ -478,31 +403,13 @@ int LocalMinDistance::computeIntersection(Triangle& e2, Point& e1, OutputVector*
         if (!testValidity(e2, QP))
             return 0;
     }
-    else
-    {
-        /*
-        core::collision::ContactFiltrationAlgorithm *e1_cfa = e1.getCollisionModel()->getContactFiltrationAlgorithm();
-        if (e1_cfa != 0)
-        {
-        	if (!e1_cfa->validate(e1, PQ))
-        		return 0;
-        }
-
-        core::collision::ContactFiltrationAlgorithm *e2_cfa = e2.getCollisionModel()->getContactFiltrationAlgorithm();
-        if (e2_cfa != 0)
-        {
-        	if (!e2_cfa->validate(e2, QP))
-        		return 0;
-        }
-        */
-    }
 
     //end filter
 
     contacts->resize(contacts->size()+1);
     DetectionOutput *detection = &*(contacts->end()-1);
 
-#ifdef DETECTIONOUTPUT_FREEMOTION
+#ifdef SOFA_DETECTIONOUTPUT_FREEMOTION
     if (e1.hasFreePosition() && e2.hasFreePosition())
     {
         Vector3 Pfree,Qfree,ABfree,ACfree;
@@ -522,11 +429,6 @@ int LocalMinDistance::computeIntersection(Triangle& e2, Point& e1, OutputVector*
     detection->id = e1.getIndex();
     detection->point[0] = Q;
     detection->point[1] = P;
-#ifdef DETECTIONOUTPUT_BARYCENTRICINFO
-    detection->baryCoords[0][0] = 0;
-    detection->baryCoords[1][0] = alpha;
-    detection->baryCoords[1][1] = beta;
-#endif
     detection->normal = QP;
     detection->value = detection->normal.norm();
     detection->normal /= detection->value;
@@ -537,6 +439,9 @@ int LocalMinDistance::computeIntersection(Triangle& e2, Point& e1, OutputVector*
 
 bool LocalMinDistance::testIntersection(Triangle& e2, Sphere& e1)
 {
+    if (!e1.isActive(e2.getCollisionModel()))
+        return false;
+
     const double alarmDist = getAlarmDistance() + e1.r() + e1.getProximity() + e2.getProximity();
 
     const Vector3 AB = e2.p2()-e2.p1();
@@ -568,15 +473,14 @@ bool LocalMinDistance::testIntersection(Triangle& e2, Sphere& e1)
     double alpha = 0.5;
     double beta = 0.5;
 
-    //if (det < -0.000000000001 || det > 0.000000000001)
-    {
-        alpha = (b[0]*A[1][1] - b[1]*A[0][1])/det;
-        beta  = (b[1]*A[0][0] - b[0]*A[1][0])/det;
-        if (alpha < 0.000001 ||
+
+    alpha = (b[0]*A[1][1] - b[1]*A[0][1])/det;
+    beta  = (b[1]*A[0][0] - b[0]*A[1][0])/det;
+    if (alpha < 0.000001 ||
             beta  < 0.000001 ||
             alpha + beta  > 0.999999)
-            return false;
-    }
+        return false;
+
 
     const Vector3 PQ = AB * alpha + AC * beta - AP;
 
@@ -595,27 +499,10 @@ bool LocalMinDistance::testIntersection(Triangle& e2, Sphere& e1)
         }
         else
         {
-            /*
-            core::collision::ContactFiltrationAlgorithm *e1_cfa = e1.getCollisionModel()->getContactFiltrationAlgorithm();
-            if (e1_cfa != 0)
-            {
-            	if (!e1_cfa->validate(e1, PQ))
-            		return false;
-            }
-
-            core::collision::ContactFiltrationAlgorithm *e2_cfa = e2.getCollisionModel()->getContactFiltrationAlgorithm();
-            if (e2_cfa != 0)
-            {
-            	Vector3 QP = -PQ;
-            	return e2_cfa->validate(e2, QP);
-            }
-            */
-
             return true;
         }
 
         // end filter
-
     }
     else
         return false;
@@ -623,6 +510,8 @@ bool LocalMinDistance::testIntersection(Triangle& e2, Sphere& e1)
 
 int LocalMinDistance::computeIntersection(Triangle& e2, Sphere& e1, OutputVector* contacts)
 {
+    if (!e1.isActive(e2.getCollisionModel()))
+        return false;
 
     const double alarmDist = getAlarmDistance() + e1.r() + e1.getProximity() + e2.getProximity();
 
@@ -645,15 +534,12 @@ int LocalMinDistance::computeIntersection(Triangle& e2, Sphere& e1, OutputVector
     double alpha = 0.5;
     double beta = 0.5;
 
-    //if (det < -0.000000000001 || det > 0.000000000001)
-    {
-        alpha = (b[0]*A[1][1] - b[1]*A[0][1])/det;
-        beta  = (b[1]*A[0][0] - b[0]*A[1][0])/det;
-        if (alpha < 0.000001 ||
+    alpha = (b[0]*A[1][1] - b[1]*A[0][1])/det;
+    beta  = (b[1]*A[0][0] - b[0]*A[1][0])/det;
+    if (alpha < 0.000001 ||
             beta  < 0.000001 ||
             alpha + beta  > 0.999999)
-            return 0;
-    }
+        return 0;
 
     Vector3 P,Q; //PQ
     P = e1.p();
@@ -675,31 +561,13 @@ int LocalMinDistance::computeIntersection(Triangle& e2, Sphere& e1, OutputVector
         if (!testValidity(e2, QP))
             return 0;
     }
-    else
-    {
-        /*
-        core::collision::ContactFiltrationAlgorithm *e1_cfa = e1.getCollisionModel()->getContactFiltrationAlgorithm();
-        if (e1_cfa != 0)
-        {
-        	if (!e1_cfa->validate(e1, PQ))
-        		return 0;
-        }
-
-        core::collision::ContactFiltrationAlgorithm *e2_cfa = e2.getCollisionModel()->getContactFiltrationAlgorithm();
-        if (e2_cfa != 0)
-        {
-        	if (!e2_cfa->validate(e2, QP))
-        		return 0;
-        }
-        */
-    }
 
     //end filter
 
     contacts->resize(contacts->size()+1);
     DetectionOutput *detection = &*(contacts->end()-1);
 
-#ifdef DETECTIONOUTPUT_FREEMOTION
+#ifdef SOFA_DETECTIONOUTPUT_FREEMOTION
     if (e1.hasFreePosition() && e2.hasFreePosition())
     {
         Vector3 Pfree,Qfree,ABfree,ACfree;
@@ -719,11 +587,6 @@ int LocalMinDistance::computeIntersection(Triangle& e2, Sphere& e1, OutputVector
     detection->id = e1.getIndex();
     detection->point[0] = Q;
     detection->point[1] = P;
-#ifdef DETECTIONOUTPUT_BARYCENTRICINFO
-    detection->baryCoords[0][0] = 0;
-    detection->baryCoords[1][0] = alpha;
-    detection->baryCoords[1][1] = beta;
-#endif
     detection->normal = QP;
     detection->value = detection->normal.norm();
     detection->normal /= detection->value;
@@ -734,7 +597,7 @@ int LocalMinDistance::computeIntersection(Triangle& e2, Sphere& e1, OutputVector
 bool LocalMinDistance::testIntersection(Line& e2, Point& e1)
 {
 
-    if(!e1.activated(e2.getCollisionModel()) || !e2.activated(e1.getCollisionModel()))
+    if(!e1.isActive(e2.getCollisionModel()) || !e2.isActive(e1.getCollisionModel()))
         return false;
 
     const double alarmDist = getAlarmDistance() + e1.getProximity() + e2.getProximity();
@@ -748,12 +611,11 @@ bool LocalMinDistance::testIntersection(Line& e2, Point& e1)
 
     double alpha = 0.5;
 
-    //if (A < -0.000001 || A > 0.000001)
-    {
-        alpha = b/A;
-        if (alpha < 0.000001 || alpha > 0.999999)
-            return false;
-    }
+
+    alpha = b/A;
+    if (alpha < 0.000001 || alpha > 0.999999)
+        return false;
+
 
     Vector3 P,Q,PQ;
     P = e1.p();
@@ -774,22 +636,6 @@ bool LocalMinDistance::testIntersection(Line& e2, Point& e1)
         }
         else
         {
-            /*
-            core::collision::ContactFiltrationAlgorithm *e1_cfa = e1.getCollisionModel()->getContactFiltrationAlgorithm();
-            if (e1_cfa != 0)
-            {
-            	if (!e1_cfa->validate(e1, PQ))
-            		return false;
-            }
-
-            core::collision::ContactFiltrationAlgorithm *e2_cfa = e2.getCollisionModel()->getContactFiltrationAlgorithm();
-            if (e2_cfa != 0)
-            {
-            	Vector3 QP = -PQ;
-            	return e2_cfa->validate(e2, QP);
-            }
-            */
-
             return true;
         }
 
@@ -801,7 +647,7 @@ bool LocalMinDistance::testIntersection(Line& e2, Point& e1)
 
 int LocalMinDistance::computeIntersection(Line& e2, Point& e1, OutputVector* contacts)
 {
-    if(!e1.activated(e2.getCollisionModel()) || !e2.activated(e1.getCollisionModel()))
+    if(!e1.isActive(e2.getCollisionModel()) || !e2.isActive(e1.getCollisionModel()))
         return 0;
 
     const double alarmDist = getAlarmDistance() + e1.getProximity() + e2.getProximity();
@@ -810,7 +656,6 @@ int LocalMinDistance::computeIntersection(Line& e2, Point& e1, OutputVector* con
 
     if (AB.norm()<0.000000000001*AP.norm())
     {
-        //std::cout<<" AB.norm() = 0 detected"<<std::endl;
         return 0;
     }
 
@@ -822,12 +667,9 @@ int LocalMinDistance::computeIntersection(Line& e2, Point& e1, OutputVector* con
 
     double alpha = 0.5;
 
-    //if (A < -0.000001 || A > 0.000001)
-    {
-        alpha = b/A;
-        if (alpha < 0.000001 || alpha > 0.999999)
-            return 0;
-    }
+    alpha = b/A;
+    if (alpha < 0.000001 || alpha > 0.999999)
+        return 0;
 
     Vector3 P,Q;
     P = e1.p();
@@ -838,16 +680,7 @@ int LocalMinDistance::computeIntersection(Line& e2, Point& e1, OutputVector* con
     if (PQ.norm2() >= alarmDist*alarmDist)
         return 0;
 
-    ///// debug
-    //BaseMeshTopology* topology = e2.getCollisionModel()->getMeshTopology();
-    //const sofa::helper::vector<unsigned int>& trianglesAroundEdge = topology->getTrianglesAroundEdge(e2.getIndex());
-    //if (trianglesAroundEdge.size() == 0)
-    //	std::cout<<"intersection line / point active while triangle Edge Shell = 0"<<std::endl;
-    //// end debug
-
-
     // filter for LMD
-
     if (!useLMDFilters.getValue())
     {
         if (!testValidity(e1, PQ))
@@ -856,31 +689,13 @@ int LocalMinDistance::computeIntersection(Line& e2, Point& e1, OutputVector* con
         if (!testValidity(e2, QP))
             return 0;
     }
-    else
-    {
-        /*
-        core::collision::ContactFiltrationAlgorithm *e1_cfa = e1.getCollisionModel()->getContactFiltrationAlgorithm();
-        if (e1_cfa != 0)
-        {
-        	if (!e1_cfa->validate(e1, PQ))
-        		return 0;
-        }
-
-        core::collision::ContactFiltrationAlgorithm *e2_cfa = e2.getCollisionModel()->getContactFiltrationAlgorithm();
-        if (e2_cfa != 0)
-        {
-        	if (!e2_cfa->validate(e2, QP))
-        		return 0;
-        }
-        */
-    }
 
     // end filter
 
     contacts->resize(contacts->size()+1);
     DetectionOutput *detection = &*(contacts->end()-1);
 
-#ifdef DETECTIONOUTPUT_FREEMOTION
+#ifdef SOFA_DETECTIONOUTPUT_FREEMOTION
     if (e1.hasFreePosition() && e2.hasFreePosition())
     {
         Vector3 ABfree = e2.p2Free() - e2.p1Free();
@@ -898,10 +713,6 @@ int LocalMinDistance::computeIntersection(Line& e2, Point& e1, OutputVector* con
     detection->id = e1.getIndex();
     detection->point[0]=Q;
     detection->point[1]=P;
-#ifdef DETECTIONOUTPUT_BARYCENTRICINFO
-    detection->baryCoords[0][0]=0;
-    detection->baryCoords[1][0]=alpha;
-#endif
     detection->normal=QP;
     detection->value = detection->normal.norm();
     detection->normal /= detection->value;
@@ -925,12 +736,11 @@ bool LocalMinDistance::testIntersection(Line& e2, Sphere& e1)
 
     double alpha = 0.5;
 
-    //if (A < -0.000001 || A > 0.000001)
-    {
-        alpha = b/A;
-        if (alpha < 0.000001 || alpha > 0.999999)
-            return false;
-    }
+
+    alpha = b/A;
+    if (alpha < 0.000001 || alpha > 0.999999)
+        return false;
+
 
     Vector3 P,Q,PQ;
     P = e1.p();
@@ -951,22 +761,6 @@ bool LocalMinDistance::testIntersection(Line& e2, Sphere& e1)
         }
         else
         {
-            /*
-            core::collision::ContactFiltrationAlgorithm *e1_cfa = e1.getCollisionModel()->getContactFiltrationAlgorithm();
-            if (e1_cfa != 0)
-            {
-            	if (!e1_cfa->validate(e1, PQ))
-            		return false;
-            }
-
-            core::collision::ContactFiltrationAlgorithm *e2_cfa = e2.getCollisionModel()->getContactFiltrationAlgorithm();
-            if (e2_cfa != 0)
-            {
-            	Vector3 QP = -PQ;
-            	return e2_cfa->validate(e2, QP);
-            }
-            */
-
             return true;
         }
 
@@ -984,7 +778,6 @@ int LocalMinDistance::computeIntersection(Line& e2, Sphere& e1, OutputVector* co
 
     if (AB.norm()<0.000000000001*AP.norm())
     {
-        //std::cout<<" AB.norm() = 0 detected"<<std::endl;
         return 0;
     }
 
@@ -996,12 +789,11 @@ int LocalMinDistance::computeIntersection(Line& e2, Sphere& e1, OutputVector* co
 
     double alpha = 0.5;
 
-    //if (A < -0.000001 || A > 0.000001)
-    {
-        alpha = b/A;
-        if (alpha < 0.000001 || alpha > 0.999999)
-            return 0;
-    }
+
+    alpha = b/A;
+    if (alpha < 0.000001 || alpha > 0.999999)
+        return 0;
+
 
     Vector3 P,Q;
     P = e1.p();
@@ -1012,16 +804,7 @@ int LocalMinDistance::computeIntersection(Line& e2, Sphere& e1, OutputVector* co
     if (PQ.norm2() >= alarmDist*alarmDist)
         return 0;
 
-    ///// debug
-    //BaseMeshTopology* topology = e2.getCollisionModel()->getMeshTopology();
-    //const sofa::helper::vector<unsigned int>& trianglesAroundEdge = topology->getTrianglesAroundEdge(e2.getIndex());
-    //if (trianglesAroundEdge.size() == 0)
-    //	std::cout<<"intersection line / point active while triangle Edge Shell = 0"<<std::endl;
-    //// end debug
-
-
     // filter for LMD
-
     if (!useLMDFilters.getValue())
     {
         if (!testValidity(e1, PQ))
@@ -1030,31 +813,14 @@ int LocalMinDistance::computeIntersection(Line& e2, Sphere& e1, OutputVector* co
         if (!testValidity(e2, QP))
             return 0;
     }
-    else
-    {
-        /*
-        core::collision::ContactFiltrationAlgorithm *e1_cfa = e1.getCollisionModel()->getContactFiltrationAlgorithm();
-        if (e1_cfa != 0)
-        {
-        	if (!e1_cfa->validate(e1, PQ))
-        		return 0;
-        }
 
-        core::collision::ContactFiltrationAlgorithm *e2_cfa = e2.getCollisionModel()->getContactFiltrationAlgorithm();
-        if (e2_cfa != 0)
-        {
-        	if (!e2_cfa->validate(e2, QP))
-        		return 0;
-        }
-        */
-    }
 
     // end filter
 
     contacts->resize(contacts->size()+1);
     DetectionOutput *detection = &*(contacts->end()-1);
 
-#ifdef DETECTIONOUTPUT_FREEMOTION
+#ifdef SOFA_DETECTIONOUTPUT_FREEMOTION
     if (e1.hasFreePosition() && e2.hasFreePosition())
     {
         Vector3 ABfree = e2.p2Free() - e2.p1Free();
@@ -1072,10 +838,6 @@ int LocalMinDistance::computeIntersection(Line& e2, Sphere& e1, OutputVector* co
     detection->id = e1.getIndex();
     detection->point[0]=Q;
     detection->point[1]=P;
-#ifdef DETECTIONOUTPUT_BARYCENTRICINFO
-    detection->baryCoords[0][0]=0;
-    detection->baryCoords[1][0]=alpha;
-#endif
     detection->normal=QP;
     detection->value = detection->normal.norm();
     detection->normal /= detection->value;
@@ -1086,7 +848,7 @@ int LocalMinDistance::computeIntersection(Line& e2, Sphere& e1, OutputVector* co
 
 bool LocalMinDistance::testIntersection(Point& e1, Point& e2)
 {
-    if(!e1.activated(e2.getCollisionModel()) || !e2.activated(e1.getCollisionModel()))
+    if(!e1.isActive(e2.getCollisionModel()) || !e2.isActive(e1.getCollisionModel()))
         return 0;
 
     const double alarmDist = getAlarmDistance() + e1.getProximity() + e2.getProximity();
@@ -1107,22 +869,6 @@ bool LocalMinDistance::testIntersection(Point& e1, Point& e2)
         }
         else
         {
-            /*
-            core::collision::ContactFiltrationAlgorithm *e1_cfa = e1.getCollisionModel()->getContactFiltrationAlgorithm();
-            if (e1_cfa != 0)
-            {
-            	if (!e1_cfa->validate(e1, PQ))
-            		return false;
-            }
-
-            core::collision::ContactFiltrationAlgorithm *e2_cfa = e2.getCollisionModel()->getContactFiltrationAlgorithm();
-            if (e2_cfa != 0)
-            {
-            	Vector3 QP = -PQ;
-            	return e2_cfa->validate(e2, QP);
-            }
-            */
-
             return true;
         }
 
@@ -1134,7 +880,7 @@ bool LocalMinDistance::testIntersection(Point& e1, Point& e2)
 
 int LocalMinDistance::computeIntersection(Point& e1, Point& e2, OutputVector* contacts)
 {
-    if(!e1.activated(e2.getCollisionModel()) || !e2.activated(e1.getCollisionModel()))
+    if(!e1.isActive(e2.getCollisionModel()) || !e2.isActive(e1.getCollisionModel()))
         return 0;
 
     const double alarmDist = getAlarmDistance() + e1.getProximity() + e2.getProximity();
@@ -1160,32 +906,13 @@ int LocalMinDistance::computeIntersection(Point& e1, Point& e2, OutputVector* co
         if (!testValidity(e2, QP))
             return 0;
     }
-    else
-    {
-        /*
-        core::collision::ContactFiltrationAlgorithm *e1_cfa = e1.getCollisionModel()->getContactFiltrationAlgorithm();
-        if (e1_cfa != 0)
-        {
-        	if (!e1_cfa->validate(e1, PQ))
-        		return 0;
-        }
-
-        core::collision::ContactFiltrationAlgorithm *e2_cfa = e2.getCollisionModel()->getContactFiltrationAlgorithm();
-        if (e2_cfa != 0)
-        {
-        	Vector3 QP = -PQ;
-        	if (!e2_cfa->validate(e2, QP))
-        		return 0;
-        }
-        */
-    }
 
     // end filter
 
     contacts->resize(contacts->size()+1);
     DetectionOutput *detection = &*(contacts->end()-1);
 
-#ifdef DETECTIONOUTPUT_FREEMOTION
+#ifdef SOFA_DETECTIONOUTPUT_FREEMOTION
     if (e1.hasFreePosition() && e2.hasFreePosition())
     {
         Vector3 Pfree,Qfree;
@@ -1203,10 +930,6 @@ int LocalMinDistance::computeIntersection(Point& e1, Point& e2, OutputVector* co
     detection->id = (e1.getCollisionModel()->getSize() > e2.getCollisionModel()->getSize()) ? e1.getIndex() : e2.getIndex();
     detection->point[0]=P;
     detection->point[1]=Q;
-#ifdef DETECTIONOUTPUT_BARYCENTRICINFO
-    detection->baryCoords[0][0]=0;
-    detection->baryCoords[1][0]=0;
-#endif
     detection->normal=PQ;
     detection->value = detection->normal.norm();
     detection->normal /= detection->value;
@@ -1234,22 +957,6 @@ bool LocalMinDistance::testIntersection(Sphere& e1, Point& e2)
         }
         else
         {
-            /*
-            core::collision::ContactFiltrationAlgorithm *e1_cfa = e1.getCollisionModel()->getContactFiltrationAlgorithm();
-            if (e1_cfa != 0)
-            {
-            	if (!e1_cfa->validate(e1, PQ))
-            		return false;
-            }
-
-            core::collision::ContactFiltrationAlgorithm *e2_cfa = e2.getCollisionModel()->getContactFiltrationAlgorithm();
-            if (e2_cfa != 0)
-            {
-            	Vector3 QP = -PQ;
-            	return e2_cfa->validate(e2, QP);
-            }
-            */
-
             return true;
         }
 
@@ -1284,32 +991,13 @@ int LocalMinDistance::computeIntersection(Sphere& e1, Point& e2, OutputVector* c
         if (!testValidity(e2, QP))
             return 0;
     }
-    else
-    {
-        /*
-        core::collision::ContactFiltrationAlgorithm *e1_cfa = e1.getCollisionModel()->getContactFiltrationAlgorithm();
-        if (e1_cfa != 0)
-        {
-        	if (!e1_cfa->validate(e1, PQ))
-        		return 0;
-        }
-
-        core::collision::ContactFiltrationAlgorithm *e2_cfa = e2.getCollisionModel()->getContactFiltrationAlgorithm();
-        if (e2_cfa != 0)
-        {
-        	Vector3 QP = -PQ;
-        	if (!e2_cfa->validate(e2, QP))
-        		return 0;
-        }
-        */
-    }
 
     // end filter
 
     contacts->resize(contacts->size()+1);
     DetectionOutput *detection = &*(contacts->end()-1);
 
-#ifdef DETECTIONOUTPUT_FREEMOTION
+#ifdef SOFA_DETECTIONOUTPUT_FREEMOTION
     if (e1.hasFreePosition() && e2.hasFreePosition())
     {
         Vector3 Pfree,Qfree;
@@ -1327,10 +1015,6 @@ int LocalMinDistance::computeIntersection(Sphere& e1, Point& e2, OutputVector* c
     detection->id = (e1.getCollisionModel()->getSize() > e2.getCollisionModel()->getSize()) ? e1.getIndex() : e2.getIndex();
     detection->point[0]=P;
     detection->point[1]=Q;
-#ifdef DETECTIONOUTPUT_BARYCENTRICINFO
-    detection->baryCoords[0][0]=0;
-    detection->baryCoords[1][0]=0;
-#endif
     detection->normal=PQ;
     detection->value = detection->normal.norm();
     detection->normal /= detection->value;
@@ -1358,22 +1042,6 @@ bool LocalMinDistance::testIntersection(Sphere& e1, Sphere& e2)
         }
         else
         {
-            /*
-            core::collision::ContactFiltrationAlgorithm *e1_cfa = e1.getCollisionModel()->getContactFiltrationAlgorithm();
-            if (e1_cfa != 0)
-            {
-            	if (!e1_cfa->validate(e1, PQ))
-            		return false;
-            }
-
-            core::collision::ContactFiltrationAlgorithm *e2_cfa = e2.getCollisionModel()->getContactFiltrationAlgorithm();
-            if (e2_cfa != 0)
-            {
-            	Vector3 QP = -PQ;
-            	return e2_cfa->validate(e2, QP);
-            }
-            */
-
             return true;
         }
 
@@ -1408,32 +1076,13 @@ int LocalMinDistance::computeIntersection(Sphere& e1, Sphere& e2, OutputVector* 
         if (!testValidity(e2, QP))
             return 0;
     }
-    else
-    {
-        /*
-        core::collision::ContactFiltrationAlgorithm *e1_cfa = e1.getCollisionModel()->getContactFiltrationAlgorithm();
-        if (e1_cfa != 0)
-        {
-        	if (!e1_cfa->validate(e1, PQ))
-        		return 0;
-        }
-
-        core::collision::ContactFiltrationAlgorithm *e2_cfa = e2.getCollisionModel()->getContactFiltrationAlgorithm();
-        if (e2_cfa != 0)
-        {
-        	Vector3 QP = -PQ;
-        	if (!e2_cfa->validate(e2, QP))
-        		return 0;
-        }
-        */
-    }
 
     // end filter
 
     contacts->resize(contacts->size()+1);
     DetectionOutput *detection = &*(contacts->end()-1);
 
-#ifdef DETECTIONOUTPUT_FREEMOTION
+#ifdef SOFA_DETECTIONOUTPUT_FREEMOTION
     if (e1.hasFreePosition() && e2.hasFreePosition())
     {
         Vector3 Pfree,Qfree;
@@ -1451,10 +1100,6 @@ int LocalMinDistance::computeIntersection(Sphere& e1, Sphere& e2, OutputVector* 
     detection->id = (e1.getCollisionModel()->getSize() > e2.getCollisionModel()->getSize()) ? e1.getIndex() : e2.getIndex();
     detection->point[0]=P;
     detection->point[1]=Q;
-#ifdef DETECTIONOUTPUT_BARYCENTRICINFO
-    detection->baryCoords[0][0]=0;
-    detection->baryCoords[1][0]=0;
-#endif
     detection->normal=PQ;
     detection->value = detection->normal.norm();
     detection->normal /= detection->value;
@@ -1481,7 +1126,6 @@ bool LocalMinDistance::testIntersection(Ray &t1,Triangle &t2)
 
     if (PQ.norm2() < alarmDist*alarmDist)
     {
-        //sout<<"Collision between Line - Triangle"<<sendl;
         return true;
     }
     else
@@ -1516,7 +1160,7 @@ int LocalMinDistance::computeIntersection(Ray &t1, Triangle &t2, OutputVector* c
     detection->id = t1.getIndex();
     detection->point[1]=P;
     detection->point[0]=Q;
-#ifdef DETECTIONOUTPUT_FREEMOTION
+#ifdef SOFA_DETECTIONOUTPUT_FREEMOTION
     detection->freePoint[1] = P;
     detection->freePoint[0] = Q;
 #endif
@@ -1580,51 +1224,20 @@ int LocalMinDistance::computeIntersection(Ray &ray1, Sphere &sph2, OutputVector*
 
 bool LocalMinDistance::testValidity(Point &p, const Vector3 &PQ)
 {
-
-    //PointModel *pMtest =p.getCollisionModel();
-
-    //if (p.getIndex()==4 && pMtest->bothSide.getValue())
-    //	std::cout<<"Test validity for point 4"<<std::endl;
-
-    //if( pMtest->bothSide.getValue())
-    //	return true;
-
     if (!filterIntersection.getValue())
         return true;
-
-//	if (!p.activated)
-//		std::cout<<"Problem testValidity on inactive point"<<std::endl;
-
-
-
 
     Vector3 pt = p.p();
 
     sofa::simulation::Node* node = dynamic_cast<sofa::simulation::Node*>(p.getCollisionModel()->getContext());
-    if ( !(node->get< LineModel >()) )
+    if ( !(node->get< LineCollisionModel<sofa::defaulttype::Vec3Types> >()) )
         return true;
 
-    BaseMeshTopology* topology = p.getCollisionModel()->getMeshTopology();
+    BaseMeshTopology* topology = p.getCollisionModel()->getCollisionTopology();
     const helper::vector<Vector3>& x =(p.getCollisionModel()->getMechanicalState()->read(core::ConstVecCoordId::position())->getValue());
 
     const helper::vector <unsigned int>& trianglesAroundVertex = topology->getTrianglesAroundVertex(p.getIndex());
     const helper::vector <unsigned int>& edgesAroundVertex = topology->getEdgesAroundVertex(p.getIndex());
-/////////
-    /*std::cout << "LocalMinDistance::testValidity(Point &p, const Vector3 &PQ) : " << std::endl;
-    std::cout << "trianglesAroundVertex : " << std::endl;
-    for (unsigned int i=0 ; i<trianglesAroundVertex.size() ; i++)
-    {
-    	std::cout << trianglesAroundVertex[i] << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "edgesAroundVertex : " << std::endl;
-    for (unsigned int i=0 ; i<edgesAroundVertex.size() ; i++)
-    {
-    	std::cout << edgesAroundVertex[i] << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "end LMD " << std::endl;*/
-////////
     Vector3 nMean;
 
     for (unsigned int i=0; i<trianglesAroundVertex.size(); i++)
@@ -1653,19 +1266,14 @@ bool LocalMinDistance::testValidity(Point &p, const Vector3 &PQ)
     if (nMean.norm()> 0.0000000001)
     {
         /// validity test with nMean, except if bothSide
-        PointModel *pM = p.getCollisionModel();
+        PointCollisionModel<sofa::defaulttype::Vec3Types> *pM = p.getCollisionModel();
         bool bothSide_computation = pM->bothSide.getValue();
         nMean.normalize();
         if (dot(nMean, PQ) < -angleCone.getValue()*PQ.norm() && !bothSide_computation)
         {
-            //std::cout<<" -------- LocalMinDistance -------- Reject proximity: PQ:"<<PQ<<"  nMean : "<<nMean<<std::endl;
             return false;
         }
     }
-    //else
-    //	std::cerr<<"WARNING nMean is null"<<std::endl;
-
-
 
     for (unsigned int i=0; i<edgesAroundVertex.size(); i++)
     {
@@ -1679,7 +1287,6 @@ bool LocalMinDistance::testValidity(Point &p, const Vector3 &PQ)
         computedAngleCone+=angleCone.getValue();
         if (dot(l , PQ) < -computedAngleCone*PQ.norm())
         {
-            //std::cout<<" -------- LocalMinDistance -------- Reject proximity: PQ:"<<PQ<<"  l : "<<l<<std::endl;
             return false;
         }
     }
@@ -1692,15 +1299,9 @@ bool LocalMinDistance::testValidity(Line &l, const Vector3 &PQ)
     if (!filterIntersection.getValue())
         return true;
 
-//	if (!l.activated)
-//		std::cout<<"Problem testValidity on inactive point"<<std::endl;
-
-    LineModel *lM = l.getCollisionModel();
+    LineCollisionModel<sofa::defaulttype::Vec3Types> *lM = l.getCollisionModel();
     bool bothSide_computation = lM->bothSide.getValue();
 
-
-
-    //return true;
     Vector3 nMean;
     Vector3 n1, n2;
     Vector3 t1, t2;
@@ -1711,34 +1312,9 @@ bool LocalMinDistance::testValidity(Line &l, const Vector3 &PQ)
     Vector3 AB = pt2 - pt1;
     AB.normalize();
 
-    BaseMeshTopology* topology = l.getCollisionModel()->getMeshTopology();
+    BaseMeshTopology* topology = l.getCollisionModel()->getCollisionTopology();
     const helper::vector<Vector3>& x =(l.getCollisionModel()->getMechanicalState()->read(core::ConstVecCoordId::position())->getValue());
     const sofa::helper::vector<unsigned int>& trianglesAroundEdge = topology->getTrianglesAroundEdge(l.getIndex());
-
-    //
-    bool debug= false;
-    //
-    //if(l.i1()==34 && l.i2()==35 || l.i1()==35 && l.i2()==45 )
-    //{
-    //	debug=true;
-    //	std::cout<<"testValidity sur segment "<<l.i1() <<" - "<< l.i2() << " : "<<std::endl;
-    //	std::cout<<"trianglesAroundEdge.size()="<<trianglesAroundEdge.size()<<std::endl;
-    //	std::cout<<"PQ = "<<PQ<<std::endl;
-    //}
-
-    /*
-    	std::cout << "LocalMinDistance::testValidity(Point &p, const Vector3 &PQ) : " << std::endl;
-    	std::cout << "trianglesAroundEdge : " << std::endl;
-    	for (unsigned int i=0 ; i<trianglesAroundEdge.size() ; i++)
-    	{
-    		std::cout << trianglesAroundEdge[i] << " ";
-    	}
-    	std::cout << std::endl;
-    	std::cout << "end LMD " << std::endl;
-    */
-    // filter if there are two triangles around the edge
-
-    //std::cout<<"testValidity sur segment "<<l.i1() <<" - "<< l.i2() << " : "<<std::endl;
 
     if ( trianglesAroundEdge.size() == 2)
     {
@@ -1749,13 +1325,11 @@ bool LocalMinDistance::testValidity(Line &l, const Vector3 &PQ)
         if ( (l.i1()==triangle0[0]&&l.i2()==triangle0[1]) || (l.i1()==triangle0[1]&&l.i2()==triangle0[2]) || (l.i1()==triangle0[2]&&l.i2()==triangle0[0]) )
         {
             triangle0_is_left=true;
-            //std::cout<<"triangle0_is_left"<<std::endl;
         }
 
 
         // compute the normal of the triangle situated on the right
         const BaseMeshTopology::Triangle& triangleRight = triangle0_is_left ? topology->getTriangle(trianglesAroundEdge[1]): topology->getTriangle(trianglesAroundEdge[0]);
-        //const BaseMeshTopology::Triangle& triangleRight = topology->getTriangle(trianglesAroundEdge[0]);
         n1 = cross(x[triangleRight[1]]-x[triangleRight[0]], x[triangleRight[2]]-x[triangleRight[0]]);
         n1.normalize();
         nMean = n1;
@@ -1764,7 +1338,6 @@ bool LocalMinDistance::testValidity(Line &l, const Vector3 &PQ)
 
         // compute the normal of the triangle situated on the left
         const BaseMeshTopology::Triangle& triangleLeft = triangle0_is_left ? topology->getTriangle(trianglesAroundEdge[0]): topology->getTriangle(trianglesAroundEdge[1]);
-        //const fixed_array<PointID,3>& triangleLeft = topology->getTriangle(trianglesAroundEdge[1]);
         n2 = cross(x[triangleLeft[1]]-x[triangleLeft[0]], x[triangleLeft[2]]-x[triangleLeft[0]]);
         n2.normalize();
         nMean += n2;
@@ -1775,8 +1348,8 @@ bool LocalMinDistance::testValidity(Line &l, const Vector3 &PQ)
 
         if ((nMean*PQ) < 0  && !bothSide_computation) // test
         {
-            if(debug)
-                std::cout<<" rejected because of nMean: "<<nMean<<std::endl;
+            msg_info_when(EMIT_EXTRA_DEBUG_MESSAGE)
+                    <<" rejected because of nMean: "<<nMean ;
             return false;
         }
 
@@ -1788,8 +1361,8 @@ bool LocalMinDistance::testValidity(Line &l, const Vector3 &PQ)
 
         if (t1*PQ < -computedAngleCone*PQ.norm())
         {
-            if(debug)
-                std::cout<<" rejected because of right triangle normal: "<<n1<<" tang "<< t1<<std::endl;
+            msg_info_when(EMIT_EXTRA_DEBUG_MESSAGE)
+                    <<" rejected because of right triangle normal: "<<n1<<" tang "<< t1 ;
             return false;
         }
 
@@ -1801,40 +1374,33 @@ bool LocalMinDistance::testValidity(Line &l, const Vector3 &PQ)
 
         if (t2*PQ < -computedAngleCone*PQ.norm())
         {
-            if(debug)
-                std::cout<<" rejected because of left triangle normal: "<<n2<<std::endl;
+            msg_info_when(EMIT_EXTRA_DEBUG_MESSAGE)
+                <<" rejected because of left triangle normal: "<<n2 ;
+
             return false;
         }
 
     }
     else
     {
-
-        //std::cout<<"in test validity for segment,  trianglesAroundEdge.size() ="<<trianglesAroundEdge.size()<<std::endl;
-
         n1 = PQ;
         n1.normalize();
-        //
-        ///////// ??? /////////
         if (fabs(dot(AB,n1)) > angleCone.getValue() + 0.0001 )		// dot(AB,n1) should be equal to 0
         {
             // means that proximity was detected with a null determinant
             // in function computeIntersection
-            if(debug)
-                std::cout<<"bad case detected  -  abs(dot(AB,n1)) ="<<fabs(dot(AB,n1))<<std::endl;
+            msg_info_when(EMIT_EXTRA_DEBUG_MESSAGE)
+                <<"bad case detected  -  abs(dot(AB,n1)) ="<<fabs(dot(AB,n1)) ;
             return false;
         }
-        //////////////////////
-
     }
-    //sout<<"trianglesAroundEdge.size()"<<trianglesAroundEdge.size()<<sendl;
     return true;
 }
 
 bool LocalMinDistance::testValidity(Triangle &t, const Vector3 &PQ)
 {
-    TriangleModel *tM = t.getCollisionModel();
-    bool bothSide_computation = tM->bothSide.getValue();
+    TriangleCollisionModel<sofa::defaulttype::Vec3Types> *tM = t.getCollisionModel();
+    bool bothSide_computation = tM->d_bothSide.getValue();
 
     if (!filterIntersection.getValue()  || bothSide_computation)
         return true;
@@ -1858,14 +1424,6 @@ void LocalMinDistance::draw(const core::visual::VisualParams* vparams)
 } // namespace collision
 
 } // namespace component
-
-namespace core
-{
-namespace collision
-{
-template class SOFA_CONSTRAINT_API IntersectorFactory<component::collision::LocalMinDistance>;
-}
-}
 
 } // namespace sofa
 

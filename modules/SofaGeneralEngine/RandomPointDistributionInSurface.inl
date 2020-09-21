@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -25,17 +22,12 @@
 #ifndef SOFA_COMPONENT_ENGINE_RANDOMPOINTDISTRIBUTIONINSURFACE_INL
 #define SOFA_COMPONENT_ENGINE_RANDOMPOINTDISTRIBUTIONINSURFACE_INL
 
-#if !defined(__GNUC__) || (__GNUC__ > 3 || (_GNUC__ == 3 && __GNUC_MINOR__ > 3))
-#pragma once
-#endif
-
 #include <SofaGeneralEngine/RandomPointDistributionInSurface.h>
 #include <sofa/core/visual/VisualParams.h>
-#include <sofa/helper/gl/template.h>
-#include <sofa/helper/gl/BasicShapes.h>
+#include <sofa/defaulttype/RGBAColor.h>
 #include <cstdlib>
 #include <ctime>
-#include <limits.h>
+#include <climits>
 
 namespace sofa
 {
@@ -76,7 +68,7 @@ void RandomPointDistributionInSurface<DataTypes>::init()
     // initialize random seed
     if (randomSeed.getValue() == 0)
     {
-        randomSeed.setValue((unsigned int)time(NULL));
+        randomSeed.setValue((unsigned int)time(nullptr));
     }
 
     //srand(randomSeed.getValue());
@@ -128,12 +120,12 @@ void RandomPointDistributionInSurface<DataTypes>::generateRandomDirections()
 {
     /*Real d[3];
     for (unsigned int i=0 ;i<3 ;i++)
-    	d[i] = (2.0*((Real) rand())/RAND_MAX) - 1.0; //[-1; 1]
+        d[i] = (2.0*((Real) rand())/RAND_MAX) - 1.0; //[-1; 1]
 
     for (unsigned int i=0 ;i<numberOfTests.getValue() ;i++)
     {
-    	Vec3 v(d[i%3], d[(i+1)%3], d[(i+2)%3]);
-    	directions.push_back(v);
+        Vec3 v(d[i%3], d[(i+1)%3], d[(i+2)%3]);
+        directions.push_back(v);
     }
     */
 
@@ -174,9 +166,7 @@ bool RandomPointDistributionInSurface<DataTypes>::isInside(Coord p)
 
     for (unsigned int i=0 ; i<numberOfTests.getValue() ; i++)
     {
-        //std::cout << "p " << p << " dir " << directions[i] << std::endl;
         trianglesOctree.octreeRoot->trace(p, directions[i], result);
-        //if intersect a triangle
         if(result.tid > -1.0)
         {
             BaseMeshTopology::Triangle triangle = triangles[result.tid];
@@ -209,30 +199,24 @@ bool RandomPointDistributionInSurface<DataTypes>::testDistance(Coord p)
 }
 
 template <class DataTypes>
-void RandomPointDistributionInSurface<DataTypes>::update()
+void RandomPointDistributionInSurface<DataTypes>::doUpdate()
 {
     const VecCoord& vertices = f_vertices.getValue();
     const helper::vector<sofa::core::topology::BaseMeshTopology::Triangle>& triangles = f_triangles.getValue();
 
     if (triangles.size() <= 1 ||  vertices.size() <= 1)
     {
-        serr << "Error in input data (number of vertices of triangles is less than 1)." << sendl;
+        msg_error() << "In input data (number of vertices of triangles is less than 1).";
         return;
     }
-
-    cleanDirty();
 
     VecCoord* inPoints = f_inPoints.beginWriteOnly();
     inPoints->clear();
     VecCoord* outPoints = f_outPoints.beginWriteOnly();
     outPoints->clear();
 
-    //Hack : octree is not templated
-#ifdef SOFA_SMP
-    collision::TriangleOctreeRoot::VecCoord verticesD;
-#else
+
     helper::vector<defaulttype::Vector3> verticesD;
-#endif
     for (unsigned int i=0 ; i<vertices.size() ; i++)
         verticesD.push_back(vertices[i]);
 
@@ -263,7 +247,7 @@ void RandomPointDistributionInSurface<DataTypes>::update()
     }
 
     if (safeCounter == safeLimit)
-        sout << "ERROR while generating point ; cancelling to break infinite loop" << sendl;
+        msg_error() << "While generating point ; cancelling to break infinite loop";
 
     f_inPoints.endEdit();
     f_outPoints.endEdit();
@@ -273,55 +257,32 @@ void RandomPointDistributionInSurface<DataTypes>::update()
 template <class DataTypes>
 void RandomPointDistributionInSurface<DataTypes>::draw(const core::visual::VisualParams* vparams)
 {
-#ifndef SOFA_NO_OPENGL
     if (!vparams->displayFlags().getShowBehaviorModels() || !isVisible.getValue())
         return;
 
-    if (vparams->displayFlags().getShowWireFrame())
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-    //DRAW
+    vparams->drawTool()->saveLastState();
+    
     const VecCoord& in = f_inPoints.getValue();
     const VecCoord& out = f_outPoints.getValue();
-    glDisable(GL_LIGHTING);
-    glPointSize(5.0);
-    glBegin(GL_POINTS);
-    glColor3f(1.0,0.0,0.0);
+    vparams->drawTool()->disableLighting();
+
+    std::vector<sofa::defaulttype::Vector3> vertices;
+
     for (unsigned int i=0 ; i<in.size() ; i++)
-        helper::gl::glVertexT(in[i]);
+        vertices.push_back(in[i]);
+
+    vparams->drawTool()->drawPoints(vertices, 5.0, sofa::defaulttype::RGBAColor::red());
+    vertices.clear();
 
     if (drawOutputPoints.getValue())
     {
-        glColor3f(0.0,0.0,1.0);
         for (unsigned int i=0 ; i<out.size() ; i++)
-            helper::gl::glVertexT(out[i]);
+            vertices.push_back(out[i]);
+
+        vparams->drawTool()->drawPoints(vertices, 5.0, sofa::defaulttype::RGBAColor::blue());
     }
 
-    glEnd();
-    //Debug : normals
-//    const VecCoord& vertices = f_vertices.getValue();
-//    const helper::vector<BaseMeshTopology::Triangle>& triangles = f_triangles.getValue();
-//
-//    glBegin(GL_LINES);
-//    for (unsigned int i=0 ; i<triangles.size() ; i++)
-//    {
-//    	BaseMeshTopology::Triangle triangle = triangles[i];
-//
-//    	Coord n = cross(vertices[triangle[1]]-vertices[triangle[0]], vertices[triangle[2]]-vertices[triangle[0]]);
-//    	Coord c = (vertices[triangle[0]] + vertices[triangle[1]] + vertices[triangle[2]])/3;
-//
-//    	helper::gl::glVertexT(c);
-//    	helper::gl::glVertexT(c+n);
-//    }
-//    glEnd();
-    //
-    //trianglesOctree.octreeRoot->draw(vparams);
-
-    if (vparams->displayFlags().getShowWireFrame())
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    glEnable(GL_LIGHTING);
-#endif /* SOFA_NO_OPENGL */
+    vparams->drawTool()->restoreLastState();
 }
 
 } // namespace engine

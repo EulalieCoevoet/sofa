@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -44,28 +41,28 @@ namespace collision
 template < class TCollisionModel, class DataTypes >
 void IdentityContactMapper<TCollisionModel,DataTypes>::cleanup()
 {
-    if (mapping!=NULL)
+    if (mapping!=nullptr)
     {
         simulation::Node* parent = dynamic_cast<simulation::Node*>(model->getContext());
-        if (parent!=NULL)
+        if (parent!=nullptr)
         {
             simulation::Node::SPtr child = dynamic_cast<simulation::Node*>(mapping->getContext());
             child->detachFromGraph();
             child->execute<simulation::DeleteVisitor>(sofa::core::ExecParams::defaultInstance());
             child.reset(); //delete child;
-            mapping = NULL;
+            mapping = nullptr;
         }
     }
 }
 template < class TCollisionModel, class DataTypes >
 typename IdentityContactMapper<TCollisionModel,DataTypes>::MMechanicalState* IdentityContactMapper<TCollisionModel,DataTypes>::createMapping(const char* name)
 {
-    if (model==NULL) return NULL;
+    if (model==nullptr) return nullptr;
     simulation::Node* parent = dynamic_cast<simulation::Node*>(model->getContext());
-    if (parent==NULL)
+    if (parent==nullptr)
     {
-        std::cerr << "ERROR: IdentityContactMapper only works for scenegraph scenes.\n";
-        return NULL;
+        msg_error("IdentityContactMapper") << "IdentityContactMapper only works for scenegraph scenes.";
+        return nullptr;
     }
     simulation::Node::SPtr child = parent->createChild(name);
     typename MMechanicalState::SPtr mstate = sofa::core::objectmodel::New<MMechanicalObject>(); child->addObject(mstate);

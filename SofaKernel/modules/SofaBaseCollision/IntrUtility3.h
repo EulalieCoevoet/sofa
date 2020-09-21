@@ -1,3 +1,24 @@
+/******************************************************************************
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
+*******************************************************************************
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 // File modified from GeometricTools
 // http://www.geometrictools.com/
 
@@ -8,7 +29,6 @@
 
 #include <sofa/defaulttype/Vec.h>
 #include <SofaBaseCollision/OBBModel.h>
-
 
 namespace sofa{
 namespace component{
@@ -302,43 +322,25 @@ template <typename TDataTypes>
 defaulttype::Vec<3,typename TDataTypes::Real> getPointFromIndex (int index, const TOBB<TDataTypes>& box);
 //----------------------------------------------------------------------------
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_COLLISION_INTRUTILITY3_CPP)
+#if  !defined(SOFA_COMPONENT_COLLISION_INTRUTILITY3_CPP)
 
 extern template struct SOFA_BASE_COLLISION_API IntrUtil<SReal>;
 
-#ifndef SOFA_FLOAT
-extern template struct SOFA_BASE_COLLISION_API IntrUtil<TOBB<defaulttype::Rigid3dTypes> >;
-extern template class SOFA_BASE_COLLISION_API FindContactSet<TOBB<defaulttype::Rigid3dTypes> >;
-extern template class SOFA_BASE_COLLISION_API IntrAxis<TOBB<defaulttype::Rigid3dTypes> >;
+extern template struct SOFA_BASE_COLLISION_API IntrUtil<TOBB<defaulttype::Rigid3Types> >;
+extern template class SOFA_BASE_COLLISION_API FindContactSet<TOBB<defaulttype::Rigid3Types> >;
+extern template class SOFA_BASE_COLLISION_API IntrAxis<TOBB<defaulttype::Rigid3Types> >;
 extern template class SOFA_BASE_COLLISION_API IntrConfiguration<double>;
 extern template struct SOFA_BASE_COLLISION_API IntrConfigManager<double>;
-extern template struct SOFA_BASE_COLLISION_API IntrConfigManager<TOBB<defaulttype::Rigid3dTypes> >;
+extern template struct SOFA_BASE_COLLISION_API IntrConfigManager<TOBB<defaulttype::Rigid3Types> >;
 extern template SOFA_BASE_COLLISION_API void ClipConvexPolygonAgainstPlane(const defaulttype::Vec<3,SReal>&, SReal, int&,defaulttype::Vec<3,SReal>*);
 extern template SOFA_BASE_COLLISION_API defaulttype::Vec<3,SReal> GetPointFromIndex (int, const MyBox<SReal>& );
-extern template SOFA_BASE_COLLISION_API defaulttype::Vec<3,defaulttype::Rigid3dTypes::Real> getPointFromIndex (int, const TOBB<defaulttype::Rigid3dTypes>& );
-extern template SOFA_BASE_COLLISION_API class CapIntrConfiguration<SReal>;
-#endif
-#ifndef SOFA_DOUBLE
-extern template struct SOFA_BASE_COLLISION_API IntrUtil<float>;
-extern template struct SOFA_BASE_COLLISION_API IntrUtil<TOBB<defaulttype::Rigid3fTypes> >;
-extern template class SOFA_BASE_COLLISION_API FindContactSet<TOBB<defaulttype::Rigid3fTypes> >;
-extern template class SOFA_BASE_COLLISION_API IntrAxis<TOBB<defaulttype::Rigid3fTypes> >;
-extern template class SOFA_BASE_COLLISION_API IntrConfiguration<float>;
-extern template struct SOFA_BASE_COLLISION_API IntrConfigManager<float>;
-extern template struct SOFA_BASE_COLLISION_API IntrConfigManager<TOBB<defaulttype::Rigid3fTypes> >;
-extern template SOFA_BASE_COLLISION_API void ClipConvexPolygonAgainstPlane(const defaulttype::Vec<3,float>&, float, int&,defaulttype::Vec<3,float>*);
-extern template SOFA_BASE_COLLISION_API defaulttype::Vec<3,float> GetPointFromIndex (int, const MyBox<float>& );
-extern template SOFA_BASE_COLLISION_API defaulttype::Vec<3,defaulttype::Rigid3fTypes::Real> getPointFromIndex (int, const TOBB<defaulttype::Rigid3fTypes>& );
-extern template SOFA_BASE_COLLISION_API class CapIntrConfiguration<float>;
-#endif
+extern template SOFA_BASE_COLLISION_API defaulttype::Vec<3,defaulttype::Rigid3Types::Real> getPointFromIndex (int, const TOBB<defaulttype::Rigid3Types>& );
+extern template class SOFA_BASE_COLLISION_API CapIntrConfiguration<SReal>;
+
 #endif
 
 }
 }
 }
-
-#ifndef SOFA_EXTERN_TEMPLATE
-#include <SofaBaseCollision/IntrUtility3.inl>
-#endif
 
 #endif

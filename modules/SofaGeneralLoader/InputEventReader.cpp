@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -42,8 +39,6 @@ namespace component
 namespace misc
 {
 
-SOFA_DECL_CLASS(InputEventReader)
-
 // Register in the Factory
 int InputEventReaderClass = core::RegisterObject("Read events from file")
         .add< InputEventReader >();
@@ -57,7 +52,7 @@ InputEventReader::InputEventReader()
     , p_key2(initData(&p_key2, '1', "key2","Key event generated when the right pedal is pressed"))
     , p_writeEvents(initData(&p_writeEvents, false , "writeEvents","If true, write incoming events ; if false, read events from that file (if an output filename is provided)"))
     , p_outputFilename(initData(&p_outputFilename, "outputFilename","Other filename where events will be stored (or read)"))
-    , inFile(NULL), outFile(NULL)
+    , inFile(nullptr), outFile(nullptr)
     , fd(-1)
     , deplX(0), deplY(0)
     , pedalValue(-1)
@@ -69,7 +64,7 @@ void InputEventReader::init()
 {
 #ifdef __linux__
     if((fd = open(filename.getFullPath().c_str(), O_RDONLY)) < 0)
-        sout << "ERROR: impossible to open the file: " << filename.getValue() << sendl;
+        msg_error() << "Impossible to open the file: " << filename.getValue();
 #endif
 
     if(p_outputFilename.isSet())
@@ -80,9 +75,9 @@ void InputEventReader::init()
             outFile->open(p_outputFilename.getFullPath().c_str());
             if( !outFile->is_open() )
             {
-                serr << "File " <<p_outputFilename.getFullPath() << " not writable" << sendl;
+                msg_error() << "File " <<p_outputFilename.getFullPath() << " not writable";
                 delete outFile;
-                outFile = NULL;
+                outFile = nullptr;
             }
         }
         else
@@ -90,9 +85,9 @@ void InputEventReader::init()
             inFile = new std::ifstream(p_outputFilename.getFullPath().c_str(), std::ifstream::in | std::ifstream::binary);
             if( !inFile->is_open() )
             {
-                serr << "File " <<p_outputFilename.getFullPath() << " not readable" << sendl;
+                msg_error() << "File " <<p_outputFilename.getFullPath() << " not readable";
                 delete inFile;
-                inFile = NULL;
+                inFile = nullptr;
             }
         }
     }
@@ -113,7 +108,7 @@ void InputEventReader::manageEvent(const input_event &ev)
 #endif
 #ifdef __linux__
     if (p_printEvent.getValue())
-        serr << "event type 0x" << std::hex << ev.type << std::dec << " code 0x" << std::hex << ev.code << std::dec << " value " << ev.value << sendl;
+        msg_error() << "event type 0x" << std::hex << ev.type << std::dec << " code 0x" << std::hex << ev.code << std::dec << " value " << ev.value;
 
     if (ev.type == EV_REL)
     {
@@ -187,7 +182,7 @@ void InputEventReader::getInputEvents()
         while (poll(&pfd, 1, 0 /*timeout.getValue()*/)>0 && (pfd.revents & POLLIN))
         {
             if (read(fd, &temp, sizeof(struct input_event)) == -1)
-                serr << "Error: read function return an error." << sendl;
+                msg_error() << "Read function return an error.";
 
             memcpy(&ev, &temp, sizeof(struct input_event));
 
@@ -217,8 +212,6 @@ void InputEventReader::getInputEvents()
             std::getline(*inFile, line);
             std::istringstream ln(line);
 
-            //if(ln.str().empty()) std::cout << "NO EVENT" << std::endl;
-
             while(!ln.eof())
             {
                 struct input_event ev;
@@ -247,23 +240,17 @@ void InputEventReader::handleEvent(core::objectmodel::Event *event)
 
         //Pedals Value
         //get root
-        //sofa::simulation::Node* node = static_cast<sofa::simulation::Node*>(this->getContext());
-        //while (node->getParent() != NULL)
-        //	node = static_cast<sofa::simulation::Node*>(node->getParent());
-
         if (currentPedalState != NO_PEDAL)
         {
             if (oldPedalState == NO_PEDAL)
             {
                 if (currentPedalState == LEFT_PEDAL)
                 {
-                    //std::cout << "//left press event" << std::endl;
                     sofa::core::objectmodel::KeypressedEvent ev(p_key1.getValue());
                     this->getContext()->propagateEvent(core::ExecParams::defaultInstance(), &ev);
                 }
                 else
                 {
-                    //std::cout << "//right press event" << std::endl;
                     sofa::core::objectmodel::KeypressedEvent ev(p_key2.getValue());
                     this->getContext()->propagateEvent(core::ExecParams::defaultInstance(), &ev);
                 }
@@ -275,13 +262,11 @@ void InputEventReader::handleEvent(core::objectmodel::Event *event)
             {
                 if (oldPedalState == LEFT_PEDAL)
                 {
-                    //std::cout << "//left release event"<< std::endl;
                     sofa::core::objectmodel::KeyreleasedEvent ev(p_key1.getValue());
                     this->getContext()->propagateEvent(core::ExecParams::defaultInstance(), &ev);
                 }
                 else
                 {
-                    //std::cout << "//right release event"<< std::endl;
                     sofa::core::objectmodel::KeyreleasedEvent ev(p_key2.getValue());
                     this->getContext()->propagateEvent(core::ExecParams::defaultInstance(), &ev);
                 }

@@ -1,3 +1,24 @@
+/******************************************************************************
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
+*******************************************************************************
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_CONTROLLER_SLEEPCONTROLLER_H
 #define SOFA_COMPONENT_CONTROLLER_SLEEPCONTROLLER_H
 #include "config.h"
@@ -41,8 +62,8 @@ class StateTester : public BaseStateTester
 {
 public:
     virtual ~StateTester();
-	virtual bool canConvert(core::behavior::BaseMechanicalState* baseState);
-	virtual bool wantsToSleep(core::behavior::BaseMechanicalState* baseState, SReal speedThreshold, SReal rotationThreshold);
+	bool canConvert(core::behavior::BaseMechanicalState* baseState) override;
+	bool wantsToSleep(core::behavior::BaseMechanicalState* baseState, SReal speedThreshold, SReal rotationThreshold) override;
 };
 
 /**
@@ -58,16 +79,17 @@ class SOFA_USER_INTERACTION_API SleepController : public core::objectmodel::Base
 public:
     SOFA_CLASS(SleepController, core::objectmodel::BaseObject);
 
-	virtual void init();
-	virtual void reset();
-	virtual void handleEvent(core::objectmodel::Event*);
+	void init() override;
+	void reset() override;
+	void handleEvent(core::objectmodel::Event*) override;
 
-	Data<double> d_minTimeSinceWakeUp; // Do not do anything before objects have been moving for this duration
-	Data<SReal> d_speedThreshold, d_rotationThreshold; // Put to sleep objects in which all particules move slower than this value (and rotate slower for rigid particles)
+	Data<double> d_minTimeSinceWakeUp; ///< Do not do anything before objects have been moving for this duration
+	Data<SReal> d_speedThreshold; ///< Speed value under which we consider a particule to be immobile
+	Data<SReal> d_rotationThreshold; ///< If non null, this is the rotation speed value under which we consider a particule to be immobile
 
 protected:
     SleepController();
-    virtual ~SleepController();
+    ~SleepController() override;
 
 	void putNodesToSleep();
 	void wakeUpNodes();
@@ -89,7 +111,7 @@ protected:
 	std::vector<double> m_timeSinceWakeUp; // For each monitored node, the duration since it has awaken
 	std::vector<bool> m_initialState; // The initial state of each node we are monitoring (for reset)
 
-	typedef boost::shared_ptr<BaseStateTester> StateTesterPtr;
+	typedef std::shared_ptr<BaseStateTester> StateTesterPtr;
 	typedef std::vector<StateTesterPtr> StateTesters;
 	StateTesters m_stateTesters; // All supported templates
 	StateTesters m_correspondingTesters; // The correct template for each state of the list m_statesThanCanSleep
@@ -106,7 +128,7 @@ class SOFA_USER_INTERACTION_API GetStatesThatCanSleep : public simulation::Visit
 public:
 	GetStatesThatCanSleep(const core::ExecParams* params, std::vector<core::behavior::BaseMechanicalState*>& states);
 
-	virtual void processNodeBottomUp(simulation::Node* node);
+	void processNodeBottomUp(simulation::Node* node) override;
 
 protected:
 	std::vector<core::behavior::BaseMechanicalState*>& m_states;
@@ -120,7 +142,7 @@ class SOFA_USER_INTERACTION_API UpdateAllSleepStates : public simulation::Visito
 public:
 	UpdateAllSleepStates(const core::ExecParams* params);
 
-	virtual Visitor::Result processNodeTopDown(simulation::Node* node);
+	Visitor::Result processNodeTopDown(simulation::Node* node) override;
 };
 
 } // namespace controller

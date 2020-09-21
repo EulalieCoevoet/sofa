@@ -11,8 +11,7 @@
 #include <sofa/simulation/MechanicalOperations.h>
 #include <sofa/simulation/VectorOperations.h>
 
-// TODO forward instead ?
-#include "../numericalsolver/KKTSolver.h"
+#include <Compliant/assembly/AssembledSystem.h>
 
 #include <sofa/helper/OptionsGroup.h>
 
@@ -34,6 +33,7 @@ namespace component {
 
 namespace linearsolver {
 class AssembledSystem;
+class KKTSolver;
 }
 
 
@@ -96,8 +96,8 @@ class SOFA_Compliant_API CompliantImplicitSolver : public sofa::core::behavior::
         SReal alpha;
         SReal beta;
         core::MechanicalParams _mparams;
-        const core::MultiVecCoordId& posId;
-        const core::MultiVecDerivId& velId;
+        core::MultiVecCoordId posId;
+        core::MultiVecDerivId velId;
 
         SolverOperations( const core::ExecParams* ep , sofa::core::objectmodel::BaseContext* ctx,
                           SReal a, SReal b, SReal dt,
@@ -140,10 +140,6 @@ class SOFA_Compliant_API CompliantImplicitSolver : public sofa::core::behavior::
 
             mparams().setImplicitVelocity( alpha );
             mparams().setImplicitPosition( beta );
-
-//            mparams().setX( posId );
-//            mparams().setV( velId );
-
             mop.mparams = mparams();
         }
 
@@ -159,26 +155,30 @@ class SOFA_Compliant_API CompliantImplicitSolver : public sofa::core::behavior::
 
     typedef linearsolver::AssembledSystem system_type;
 				
-    virtual void init();
+    void init() override;
+    void parse(core::objectmodel::BaseObjectDescription* arg) override;
 
     // OdeSolver API
-    virtual void solve(const core::ExecParams* params,
+    void solve(const core::ExecParams* params,
                        SReal dt,
                        core::MultiVecCoordId posId,
-                       core::MultiVecDerivId velId);
+                       core::MultiVecDerivId velId) override;
 
 
 	CompliantImplicitSolver();
-    virtual ~CompliantImplicitSolver();
+    ~CompliantImplicitSolver() override;
 
-    virtual void reset();
-    virtual void cleanup();
+    void reset() override;
+    void cleanup() override;
 
     enum { NO_STABILIZATION=0, PRE_STABILIZATION, POST_STABILIZATION_RHS, POST_STABILIZATION_ASSEMBLY, NB_STABILIZATION };
     Data<helper::OptionsGroup> stabilization;
 
-    Data<bool> warm_start, propagate_lambdas, debug;
-    Data<SReal> alpha, beta;     ///< the \alpha and \beta parameters of the integration scheme
+    Data<bool> warm_start;
+    Data<bool> debug;
+    Data<helper::OptionsGroup> constraint_forces;
+    Data<SReal> alpha;     ///< the \alpha and \beta parameters of the integration scheme
+    Data<SReal> beta;     ///< the \alpha and \beta parameters of the integration scheme
 	Data<SReal> stabilization_damping;
 
     enum { FORMULATION_VEL=0, FORMULATION_DV, FORMULATION_ACC, NB_FORMULATION };
@@ -215,7 +215,7 @@ class SOFA_Compliant_API CompliantImplicitSolver : public sofa::core::behavior::
 	
 	// linear solver: TODO hide in pimpl ?
 	typedef linearsolver::KKTSolver kkt_type;
-	kkt_type::SPtr kkt;
+    core::sptr<kkt_type> kkt;
 
 
 
@@ -228,7 +228,7 @@ public:
     /// Compute the forces f (stiffness and constraint forces)
     virtual void compute_forces(SolverOperations& sop,
                                 core::behavior::MultiVecDeriv& f,  // the total force sum (stiffness + constraint forces if required)
-                                core::behavior::MultiVecDeriv* f_k = NULL // the stiffness force only
+                                core::behavior::MultiVecDeriv* f_k = nullptr // the stiffness force only
                                );
 
     /// evaluate violated and active constraints
@@ -279,13 +279,12 @@ public:
     system_type::vec getLambda() const { assert(storeDSol); return dynamics_solution.tail(sys.n); }
     system_type::vec getDv() const { assert(storeDSol); return dynamics_solution.head(sys.m); }
     system_type::vec getPhi() const { assert(storeDSol); return dynamics_rhs.tail(sys.n); }
-//    system_type::vec getF() const { assert(storeDSol); return dynamics_rhs.head(sys.m); }  FF: I suspect this one is wrong, because rhs does not contain forces but momenta, does it ?
+
     // assembled matrices
     const system_type::rmat& H() const {return sys.H;}
     const system_type::rmat& P() const {return sys.P;}
     const system_type::rmat& J() const {return sys.J;}
     const system_type::rmat& C() const {return sys.C;}
-
     //@}
 
     /// compute post-stabilization correcting constraint in position-based

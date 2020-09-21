@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -67,14 +64,14 @@ public:
     bool labelObjectClass;
 
     ExportDotVisitor(const sofa::core::ExecParams* params, std::ostream* out);
-    ~ExportDotVisitor();
+    ~ExportDotVisitor() override;
 
     void processObject(GNode* node, core::objectmodel::BaseObject* obj);
 
-    virtual Result processNodeTopDown(GNode* node);
-    virtual void processNodeBottomUp(GNode* node);
+    Result processNodeTopDown(GNode* node) override;
+    void processNodeBottomUp(GNode* node) override;
 
-    virtual const char* getClassName() const { return "ExportDotVisitor"; }
+    const char* getClassName() const override { return "ExportDotVisitor"; }
 
 protected:
 
@@ -84,10 +81,10 @@ protected:
     std::map<std::string, int> nextIndex;
 
     /// Test if a node should be displayed
-    bool display(GNode* node, const char** color=NULL);
+    bool display(GNode* node, const char** color=nullptr);
 
     /// Test if an object should be displayed
-    bool display(core::objectmodel::BaseObject* obj, const char** color=NULL);
+    bool display(core::objectmodel::BaseObject* obj, const char** color=nullptr);
 
     /// Find the node or object a given object should be attached to.
     /// This is the parent node if it is displayed, otherwise it is the attached MechanicalState or Solver.

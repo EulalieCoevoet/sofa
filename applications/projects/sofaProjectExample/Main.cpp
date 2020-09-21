@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -13,11 +13,8 @@
 * more details.                                                               *
 *                                                                             *
 * You should have received a copy of the GNU General Public License along     *
-* with this program; if not, write to the Free Software Foundation, Inc., 51  *
-* Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.                   *
+* with this program. If not, see <http://www.gnu.org/licenses/>.              *
 *******************************************************************************
-*                            SOFA :: Applications                             *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -42,13 +39,11 @@
 #include <SofaBaseCollision/BruteForceDetection.h>
 #include <SofaBaseCollision/NewProximityIntersection.h>
 #include <SofaBaseCollision/DefaultContactManager.h>
-#include <SofaMiscCollision/DefaultCollisionGroupManager.h>
 #include <SofaMeshCollision/TriangleModel.h>
 
-//#include <sofa/component/typedef/Sofa_typedef.h>
 #include <SofaOpenglVisual/OglModel.h>
 #include <SofaBaseMechanics/BarycentricMapping.h>
-#include <SofaComponentMain/init.h>
+#include <SofaMain/init.h>
 
 #include <sofa/core/objectmodel/Context.h>
 
@@ -111,7 +106,6 @@ using sofa::core::Mapping;
 using sofa::core::behavior::MechanicalState;
 using sofa::core::State;
 using sofa::core::objectmodel::New;
-using sofa::defaulttype::ExtVectorTypes;
 
 using sofa::component::topology::MeshTopology;
 using sofa::component::projectiveconstraintset::FixedConstraint;
@@ -258,13 +252,9 @@ int main(int argc, char** argv)
     cylOglModel->setColor("red");
 
 
-    typedef BarycentricMapping< Vec3dTypes, ExtVec3fTypes > BarycentricMapping3d_to_Ext3f;
-    BarycentricMapping3d_to_Ext3f::SPtr barycentricMapping = New<BarycentricMapping3d_to_Ext3f>(mechanicalObject.get(), cylOglModel.get());
+    typedef BarycentricMapping< Vec3dTypes, Vec3fTypes > BarycentricMapping3d_to_Vec3f;
+    BarycentricMapping3d_to_Vec3f::SPtr barycentricMapping = New<BarycentricMapping3d_to_Vec3f>(mechanicalObject.get(), cylOglModel.get());
     barycentricMapping->setName("Barycentric");
-    //barycentricMapping->setPathInputObject("../..");
-    //barycentricMapping->setPathOutputObject("Visual");
-
-
 
 
     // collision node
@@ -280,7 +270,7 @@ int main(int argc, char** argv)
 
     MechanicalObject3d::SPtr cylSurfMechanicalObject = New<MechanicalObject3d>();
 
-    TriangleModel::SPtr triangleModel = New<TriangleModel>();
+    TriangleCollisionModel<sofa::defaulttype::Vec3Types>::SPtr triangleModel = New<TriangleCollisionModel<sofa::defaulttype::Vec3Types>>();
 
     typedef BarycentricMapping< Vec3dTypes, Vec3dTypes > BarycentricMechanicalMapping3d_to_3d;
     BarycentricMechanicalMapping3d_to_3d::SPtr cylSurfBarycentricMapping = New<BarycentricMechanicalMapping3d_to_3d>(mechanicalObject.get(), cylSurfMechanicalObject.get());

@@ -1,6 +1,8 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.12)
 project(ARTrack)
 
+add_subdirectory(extlibs/ARTrackLib ARTrackLib)
+set_target_properties(ARTrackLib PROPERTIES DEBUG_POSTFIX "_d")
 
 set(HEADER_FILES
     ARTrackController.h

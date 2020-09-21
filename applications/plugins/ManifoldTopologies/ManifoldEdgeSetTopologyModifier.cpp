@@ -1,34 +1,27 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#include "ManifoldEdgeSetTopologyModifier.h"
 
-#include <sofa/core/visual/VisualParams.h>
-#include "ManifoldEdgeSetTopologyContainer.h"
-#include <algorithm>
-#include <functional>
-#include <iostream>
+#include <ManifoldTopologies/ManifoldEdgeSetTopologyModifier.h>
+#include <ManifoldTopologies/ManifoldEdgeSetTopologyContainer.h>
 #include <sofa/core/ObjectFactory.h>
 
 namespace sofa
@@ -40,7 +33,6 @@ namespace component
 namespace topology
 {
 using namespace sofa::defaulttype;
-SOFA_DECL_CLASS(ManifoldEdgeSetTopologyModifier)
 int ManifoldEdgeSetTopologyModifierClass = core::RegisterObject("ManifoldEdge set topology modifier")
         .add< ManifoldEdgeSetTopologyModifier >();
 
@@ -109,17 +101,17 @@ void ManifoldEdgeSetTopologyModifier::renumberPoints( const sofa::helper::vector
 
 void ManifoldEdgeSetTopologyModifier::addEdges(const sofa::helper::vector< Edge >& edges)
 {
-    unsigned int nEdges = m_container->getNumberOfEdges();
+    const size_t nEdges = m_container->getNumberOfEdges();
 
     /// actually add edges in the topology container
     addEdgesProcess(edges);
 
-    sofa::helper::vector<unsigned int> edgesIndex;
+    sofa::helper::vector<EdgeID> edgesIndex;
     edgesIndex.reserve(edges.size());
 
     for (unsigned int i=0; i<edges.size(); ++i)
     {
-        edgesIndex.push_back(nEdges+i);
+        edgesIndex.push_back(EdgeID(nEdges+i));
     }
 
     // add topology event in the stack of topological events
@@ -133,16 +125,16 @@ void ManifoldEdgeSetTopologyModifier::addEdges(const sofa::helper::vector< Edge 
         const sofa::helper::vector< sofa::helper::vector< unsigned int > > & ancestors ,
         const sofa::helper::vector< sofa::helper::vector< double > >& baryCoefs)
 {
-    unsigned int nEdges = m_container->getNumberOfEdges();
+    const size_t nEdges = m_container->getNumberOfEdges();
 
     /// actually add edges in the topology container
     addEdgesProcess(edges);
 
-    sofa::helper::vector<unsigned int> edgesIndex;
+    sofa::helper::vector<EdgeID> edgesIndex;
 
     for (unsigned int i=0; i<edges.size(); ++i)
     {
-        edgesIndex[i]=nEdges+i;
+        edgesIndex[i] = EdgeID(nEdges + i);
     }
 
     // add topology event in the stack of topological events

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -34,8 +31,6 @@ namespace component
 namespace misc
 {
 
-SOFA_DECL_CLASS(ReadState)
-
 using namespace defaulttype;
 
 int ReadStateClass = core::RegisterObject("Read State vectors from file at each timestep")
@@ -44,7 +39,7 @@ int ReadStateClass = core::RegisterObject("Read State vectors from file at each 
 ReadStateCreator::ReadStateCreator(const core::ExecParams* params)
     : Visitor(params)
     , sceneName("")
-#ifdef SOFA_HAVE_ZLIB
+#if SOFAGENERALLOADER_HAVE_ZLIB
     , extension(".txt.gz")
 #else
     , extension(".txt")
@@ -58,7 +53,7 @@ ReadStateCreator::ReadStateCreator(const core::ExecParams* params)
 ReadStateCreator::ReadStateCreator(const std::string &n, bool _createInMapping, const core::ExecParams* params, bool i, int c)
     : Visitor(params)
     , sceneName(n)
-#ifdef SOFA_HAVE_ZLIB
+#if SOFAGENERALLOADER_HAVE_ZLIB
     , extension(".txt.gz")
 #else
     , extension(".txt")
@@ -87,11 +82,11 @@ void ReadStateCreator::addReadState(sofa::core::behavior::BaseMechanicalState *m
 {
     sofa::core::objectmodel::BaseContext* context = gnode->getContext();
     sofa::core::BaseMapping *mapping; context->get(mapping);
-    if (createInMapping || mapping== NULL)
+    if (createInMapping || mapping== nullptr)
     {
         sofa::component::misc::ReadState::SPtr rs;
         context->get(rs, this->subsetsToManage, core::objectmodel::BaseContext::Local);
-        if (rs == NULL)
+        if (rs == nullptr)
         {
             rs = sofa::core::objectmodel::New<ReadState>();
             gnode->addObject(rs);
@@ -102,7 +97,7 @@ void ReadStateCreator::addReadState(sofa::core::behavior::BaseMechanicalState *m
         std::ostringstream ofilename;
         ofilename << sceneName << "_" << counterReadState << "_" << ms->getName()  << "_mstate" << extension ;
 
-        rs->f_filename.setValue(ofilename.str());  rs->f_listening.setValue(false); //Deactivated only called by extern functions
+        rs->d_filename.setValue(ofilename.str());  rs->f_listening.setValue(false); //Deactivated only called by extern functions
         if (init) rs->init();
 
         ++counterReadState;
@@ -113,7 +108,7 @@ void ReadStateCreator::addReadState(sofa::core::behavior::BaseMechanicalState *m
 simulation::Visitor::Result ReadStateActivator::processNodeTopDown( simulation::Node* gnode)
 {
     sofa::component::misc::ReadState *rs = gnode->get< sofa::component::misc::ReadState >(this->subsetsToManage);
-    if (rs != NULL) { changeStateReader(rs);}
+    if (rs != nullptr) { changeStateReader(rs);}
 
     return simulation::Visitor::RESULT_CONTINUE;
 }
@@ -131,7 +126,7 @@ simulation::Visitor::Result ReadStateModifier::processNodeTopDown( simulation::N
     using namespace sofa::defaulttype;
 
     sofa::component::misc::ReadState*rs = gnode->get< sofa::component::misc::ReadState>(this->subsetsToManage);
-    if (rs != NULL) {changeTimeReader(rs);}
+    if (rs != nullptr) {changeTimeReader(rs);}
 
     return simulation::Visitor::RESULT_CONTINUE;
 }

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -176,7 +173,7 @@ int MeshMinProximityIntersection::computeIntersection(Triangle& e2, TSphere<T>& 
     }
     else
     {
-        intersection->serr<<"WARNING: null distance between contact detected"<<intersection->sendl;
+        msg_warning(intersection) << "Null distance between contact detected";
         detection->normal= defaulttype::Vector3(1,0,0);
     }
     detection->value -= contactDist;
@@ -262,7 +259,7 @@ int MeshMinProximityIntersection::computeIntersection(Line& e2, TSphere<T>& e1, 
     }
     else
     {
-        intersection->serr<<"WARNING: null distance between contact detected"<<intersection->sendl;
+        msg_warning(intersection) << "Null distance between contact detected";
         detection->normal= defaulttype::Vector3(1,0,0);
     }
     detection->point[0]=Q;
@@ -316,7 +313,7 @@ int MeshMinProximityIntersection::computeIntersection(TSphere<T>& e1, Point& e2,
     }
     else
     {
-        intersection->serr<<"WARNING: null distance between contact detected"<<intersection->sendl;
+        msg_warning(intersection) << "Null distance between contact detected";
         detection->normal= defaulttype::Vector3(1,0,0);
     }
     detection->value -= contactDist;

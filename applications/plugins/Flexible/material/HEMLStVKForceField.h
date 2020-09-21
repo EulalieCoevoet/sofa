@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -83,19 +80,19 @@ public:
 
     /** @name  Material parameters */
     //@{
-    Data<Real> d_youngModulus;
-    Data<Real> d_poissonRatio;
+    Data<Real> d_youngModulus; ///< Young Modulus
+    Data<Real> d_poissonRatio; ///< Poisson Ratio ]-1,0.5[
     //@}
 
 
 
-    virtual void bwdInit()
+    virtual void bwdInit() override
     {
         Inherit1::bwdInit();
         reinit();
     }
 
-    virtual void reinit()
+    virtual void reinit() override
     {
         Inherit1::reinit();
 
@@ -175,7 +172,7 @@ public:
 
 
     // W = (l-l0)^T M (l-l0)
-    virtual SReal getPotentialEnergy(const core::MechanicalParams* /*mparams*/, const DataVecCoord& _x) const
+    virtual SReal getPotentialEnergy(const core::MechanicalParams* /*mparams*/, const DataVecCoord& _x) const override
     {
         const VecCoord& x = _x.getValue();
         const VecCoord& x0 = this->getMState()->read(core::ConstVecCoordId::restPosition())->getValue();
@@ -196,7 +193,7 @@ public:
 
 
     // f += -2 (l-l0)^T M == K (l-l0)
-    virtual void addForce(const core::MechanicalParams* /*mparams*/, DataVecDeriv& _f, const DataVecCoord& _x, const DataVecDeriv& /*_v*/)
+    virtual void addForce(const core::MechanicalParams* /*mparams*/, DataVecDeriv& _f, const DataVecCoord& _x, const DataVecDeriv& /*_v*/) override
     {
         VecDeriv& f = *_f.beginEdit();
         const VecCoord& x = _x.getValue();
@@ -215,14 +212,14 @@ public:
 
 
     // df += -2 M dx == K dx
-    virtual void addDForce(const core::MechanicalParams* mparams, DataVecDeriv& df, const DataVecDeriv& dx )
+    virtual void addDForce(const core::MechanicalParams* mparams, DataVecDeriv& df, const DataVecDeriv& dx ) override
     {
         m_K.addMult( df, dx, mparams->kFactor()  );
     }
 
 
     // K = -2 M
-    void addKToMatrix( sofa::defaulttype::BaseMatrix * matrix, SReal kFact, unsigned int &offset )
+    void addKToMatrix( sofa::defaulttype::BaseMatrix * matrix, SReal kFact, unsigned int &offset ) override
     {
         m_K.addToBaseMatrix( matrix, kFact, offset );
     }

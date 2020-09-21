@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -41,11 +38,20 @@ namespace component
 namespace collision
 {
 
+template < class TCollisionModel, class DataTypes >
+RigidContactMapper<TCollisionModel,DataTypes>::RigidContactMapper()
+    : model(nullptr)
+    , child(nullptr)
+    , mapping(nullptr)
+    , outmodel(nullptr)
+    , nbp(0)
+{
+}
 
 template < class TCollisionModel, class DataTypes >
 void RigidContactMapper<TCollisionModel,DataTypes>::cleanup()
 {
-    if (child!=NULL)
+    if (child!=nullptr)
     {
         child->detachFromGraph();
         child->execute<simulation::DeleteVisitor>(sofa::core::ExecParams::defaultInstance());
@@ -56,15 +62,15 @@ void RigidContactMapper<TCollisionModel,DataTypes>::cleanup()
 template < class TCollisionModel, class DataTypes >
 typename RigidContactMapper<TCollisionModel,DataTypes>::MMechanicalState* RigidContactMapper<TCollisionModel,DataTypes>::createMapping(const char* name)
 {
-    if (model==NULL) return NULL;
+    if (model==nullptr) return nullptr;
     InMechanicalState* instate = model->getMechanicalState();
-    if (instate!=NULL)
+    if (instate!=nullptr)
     {
         simulation::Node* parent = dynamic_cast<simulation::Node*>(instate->getContext());
-        if (parent==NULL)
+        if (parent==nullptr)
         {
-            std::cerr << "ERROR: RigidContactMapper only works for scenegraph scenes.\n";
-            return NULL;
+            msg_error("RigidContactMapper") << "RigidContactMapper only works for scenegraph scenes.";
+            return nullptr;
         }
         child = parent->createChild(name);
         outmodel = sofa::core::objectmodel::New<MMechanicalObject>();
@@ -77,14 +83,14 @@ typename RigidContactMapper<TCollisionModel,DataTypes>::MMechanicalState* RigidC
     else
     {
         simulation::Node* parent = dynamic_cast<simulation::Node*>(model->getContext());
-        if (parent==NULL)
+        if (parent==nullptr)
         {
-            std::cerr << "ERROR: RigidContactMapper only works for scenegraph scenes.\n";
-            return NULL;
+            msg_error("RigidContactMapper") << "RigidContactMapper only works for scenegraph scenes.";
+            return nullptr;
         }
         child = parent->createChild(name);
         outmodel = sofa::core::objectmodel::New<MMechanicalObject>(); child->addObject(outmodel);
-        mapping = NULL;
+        mapping = nullptr;
     }
     return outmodel.get();
 }

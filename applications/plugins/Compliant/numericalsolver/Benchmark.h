@@ -6,14 +6,7 @@
 
 #include <Eigen/Core>
 
-// Use Boost.Chrono as a header-only library, and avoid depending on
-// Boost.System.  Quote from the Boost.Chrono documentation:
-// "When BOOST_CHRONO_HEADER_ONLY is defined the lib is header-only. However, you
-// will either need to define BOOST_CHRONO_DONT_PROVIDE_HYBRID_ERROR_HANDLING or
-// link with Boost.System."
-#define BOOST_CHRONO_HEADER_ONLY
-#define BOOST_CHRONO_DONT_PROVIDE_HYBRID_ERROR_HANDLING
-#include <boost/chrono.hpp>
+#include <chrono>
 
 namespace sofa {
 namespace component {
@@ -30,10 +23,14 @@ class SOFA_Compliant_API Benchmark : public core::objectmodel::BaseObject {
 	// should not dealloc/realloc, so we should be fine.
 	
 	// duration
-	Data<SReal> factor;
+	Data<SReal> factor; ///< time elapsed during factor
 	
 	// convergence
-    Data< helper::vector<SReal> > primal, dual, complementarity, optimality, duration;
+    Data< helper::vector<SReal> > primal; ///< primal error
+    Data< helper::vector<SReal> > dual; ///< dual error
+    Data< helper::vector<SReal> > complementarity; ///< complementarity error
+    Data< helper::vector<SReal> > optimality; ///< optimality error
+    Data< helper::vector<SReal> > duration; ///< cumulated solve time
 	
 	typedef SReal real;
 	typedef Eigen::Matrix<real, Eigen::Dynamic, 1> vec;
@@ -60,7 +57,7 @@ class SOFA_Compliant_API Benchmark : public core::objectmodel::BaseObject {
 			 const vec& rhs,	// the lcp rhs: b - J Minv f
 			 const Response& response, 
 			 const vec& dual,
-			 const vec* prec = 0); 
+			 const vec* prec = nullptr); 
 	
 	// push the results for the last iteration, including elapsed
 	// time, for a QP solver. restart timer at the end.
@@ -92,7 +89,7 @@ class SOFA_Compliant_API Benchmark : public core::objectmodel::BaseObject {
 
   protected:
 	
-	typedef boost::chrono::high_resolution_clock clock_type;
+    typedef std::chrono::high_resolution_clock clock_type;
 	clock_type::time_point last;
 
 	void push(const vec& primal, const vec& dual);

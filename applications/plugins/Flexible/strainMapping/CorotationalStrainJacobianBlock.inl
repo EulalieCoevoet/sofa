@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -108,7 +105,6 @@ bool computeSVD( const Mat<3,3,Real> &F, Mat<3,3,Real> &r, Mat<3,3,Real> &s, Mat
     // the world rotation of the element based on the two rotations computed by the SVD (world and material space)
     r = U.multTransposed( V ); // r = U * Vt
     s = r.multTranspose( F ); // s = rt * F
-    //s = V.multDiagonal( F_diag ).multTransposed( V ); // s = V * F_diag * Vt
 
     return degenerated;
 }
@@ -122,6 +118,44 @@ void computeSVD( const Mat<3,2,Real> &F, Mat<3,2,Real> &r, Mat<2,2,Real> &s, Mat
     r = U.multTransposed( V ); // r = U * Vt
     s = r.multTranspose( F ); // s = rt * F
 }
+
+
+/// minimizes the Frobenius-norm F(R) = ||A − R||^2
+/// efficient only if the input R is close to the solution (warm-start mandatory)
+/// Muller et al, 2016, "A Robust Method to Extract the Rotational Part of Deformations"
+/// @TODO move this function in Decompose so it can be used somewhere else
+template<typename Real>
+void extractRotation(const Mat<3,3,Real> &_A, Mat<3,3,Real> &_R, const unsigned int maxIter=10, const Real perturbation = helper::Decompose<Real>::zeroTolerance())
+{
+    // TODO directly work on sofa matrices, w/o the need for Eigen::Map
+    typedef Eigen::Matrix<Real,3,3> Matrix33R;
+    const Eigen::Map< const Matrix33R > A(_A.ptr());
+    Eigen::Map< Matrix33R > R(_R.ptr());
+
+    typedef Eigen::Matrix<Real, 3, 1> Vector3;
+    typedef Eigen::Quaternion<Real> QuaternionR;
+    typedef Eigen::AngleAxis<Real> AngleAxisR;
+
+    QuaternionR q(R);
+
+    for (unsigned int iter = 0; iter < maxIter; iter++)
+    {
+        Vector3 omega = (R.col(0).cross(A.col(0)) + R.col
+            (1).cross(A.col(1)) + R.col(2).cross(A.col(2))
+            ) * (1.0 / fabs(R.col(0).dot(A.col(0)) + R.col
+            (1).dot(A.col(1)) + R.col(2).dot(A.col(2))) +
+            perturbation);
+        Real w = (Real)omega.norm();
+        if (w < perturbation) break;
+
+        // TODO do this directly in matrix form
+        q = QuaternionR(AngleAxisR(w, (1.0 / w) * omega)) * q;
+        q.normalize();
+        R = q.matrix();
+    }
+}
+
+
 
 
 ////////////////////////////////////////////////////////
@@ -192,6 +226,21 @@ public:
             if( _dROverdF ) { delete _dROverdF; _dROverdF=NULL; }
             if( _degenerated ) { delete _degenerated; _degenerated=NULL; }
         }
+    }
+    void init_frobenius( bool /*geometricStiffness*/ )
+    {
+//        if( _matrix ) { delete _matrix; _matrix=NULL; }
+
+//        if( geometricStiffness )
+//        {
+//            if( !_dROverdF ) _dROverdF = new Mat<frame_size,frame_size,Real>();
+//            if( !_degenerated ) _degenerated = new bool;
+//        }
+//        else
+//        {
+//            if( _dROverdF ) { delete _dROverdF; _dROverdF=NULL; }
+//            if( _degenerated ) { delete _degenerated; _degenerated=NULL; }
+//        }
     }
 
 
@@ -268,6 +317,7 @@ public:
     void init_qr( bool geometricStiffness ) { _geometricStiffnessData.init_qr( geometricStiffness ); }
     void init_polar( bool geometricStiffness ) { _geometricStiffnessData.init_polar( geometricStiffness ); }
     void init_svd( bool geometricStiffness ) { _geometricStiffnessData.init_svd( geometricStiffness ); }
+    void init_frobenius( bool geometricStiffness ) { _geometricStiffnessData.init_frobenius( geometricStiffness ); _R.identity(); }
 
 
     void addapply( OutCoord& /*result*/, const InCoord& /*data*/ ) {}
@@ -326,6 +376,13 @@ public:
         }
         else helper::Decompose<Real>::polarDecomposition_stable( data.getF(), _R, strainmat );
 
+        addapply_common( result, data, strainmat );
+    }
+
+    void addapply_frobenius( OutCoord& result, const InCoord& data )
+    {
+        extractRotation<Real>( data.getF(), _R );
+        StrainMat strainmat = _R.multTranspose( data.getF() );
         addapply_common( result, data, strainmat );
     }
 
@@ -511,17 +568,6 @@ public:
 
         // order 0
         df.getF() += dR * StressVoigtToMat( childForce.getStrain() ) * (Real)kfactor;
-
-        if( order > 0 )
-        {
-            // order 1
-            /*for(unsigned int k=0;k<spatial_dimensions;k++)
-            {
-                df.getGradientF(k) += dR * StressVoigtToMat( childForce.getStrainGradient(k) ) * kfactor;
-                helper::Decompose<Real>::QRDecompositionGradient_dQ( _R, *_dJ_Mat1, dx.getF(), dR );
-                df.getF() += dR * StressVoigtToMat( childForce.getStrainGradient(k) ) * kfactor;
-            }*/
-        }
     }
     void addDForce_polar( InDeriv& df, const InDeriv& dx, const OutDeriv& childForce, const SReal& kfactor )
     {
@@ -532,27 +578,13 @@ public:
 
         // order 0
         df.getF() += dR * StressVoigtToMat( childForce.getStrain() ) * (Real)kfactor;
-
-        if( order > 0 )
-        {
-            // order 1
-            /*for(unsigned int k=0;k<spatial_dimensions;k++)
-            {
-                df.getGradientF(k) += dR * StressVoigtToMat( childForce.getStrainGradient(k) ) * kfactor;
-                helper::Decompose<Real>::polarDecompositionGradient_dQ( *_dJ_Mat1, _R, dx.getF(), dR );
-                df.getF() += dR * StressVoigtToMat( childForce.getStrainGradient(k) ) * kfactor;
-            }*/
-        }
     }
     void addDForce_svd( InDeriv& df, const InDeriv& dx, const OutDeriv& childForce, const SReal& kfactor )
     {
         if( _geometricStiffnessData.degenerated() ) return;  // inverted or too flat -> no geometric stiffness for robustness
 
-//        df.getVec() += getK( childForce ) * dx.getVec() * kfactor;
-//        return;
 
         Affine dR;
-        //if( !helper::Decompose<Real>::polarDecomposition_stable_Gradient_dQ( *_dJ_Mat1, *_dJ_Vec, *_dJ_Mat2, dx.getF(), dR ) ) return;
 
         const Mat<frame_size,frame_size,Real> &dROverdF = *_geometricStiffnessData.dROverdF();
         for( int k=0 ; k<spatial_dimensions ; ++k ) // line of df
@@ -564,22 +596,10 @@ public:
 
         // order 0
         df.getF() += dR * StressVoigtToMat( childForce.getStrain() ) * (Real)kfactor;
-
-
-
-//        if( order > 0 )
-//        {
-//            // order 1
-//            for( unsigned int g=0 ; g<spatial_dimensions ; g++ )
-//            {
-//                for( int k=0 ; k<spatial_dimensions ; ++k ) // line of df
-//                for( int l=0 ; l<material_dimensions ; ++l ) // col of df
-//                for( int j=0 ; j<material_dimensions ; ++j ) // col of dR
-//                for( int i=0 ; i<spatial_dimensions ; ++i ) // line of dR
-//                    dR[i][j] += dROverdF[i*material_dimensions+j][k*material_dimensions+l] * dx.getGradientF(g)[k][l];
-//                df.getGradientF(g) += dR * StressVoigtToMat( childForce.getStrainGradient(g) ) * kfactor;
-//            }
-//        }
+    }
+    void addDForce_frobenius( InDeriv& /*df*/, const InDeriv& /*dx*/, const OutDeriv& /*childForce*/, const SReal& /*kfactor*/ )
+    {
+        // not yet implemented
     }
 };
 
@@ -636,6 +656,7 @@ public:
     void init_qr( bool geometricStiffness ) { _geometricStiffnessData.init_qr( geometricStiffness ); }
     void init_polar( bool geometricStiffness ) { _geometricStiffnessData.init_svd( geometricStiffness ); }
     void init_svd( bool geometricStiffness ) { _geometricStiffnessData.init_svd( geometricStiffness ); }
+    void init_frobenius( bool geometricStiffness ) { _geometricStiffnessData.init_frobenius( geometricStiffness ); }
 
 
     void addapply( OutCoord& /*result*/, const InCoord& /*data*/ ) {}
@@ -651,9 +672,6 @@ public:
     void addapply_qr( OutCoord& result, const InCoord& data )
     {
         StrainMat strainmat;
-
-        //computeQR( data.getF(), _R, strainmat );
-
 
         if( _geometricStiffnessData.invT() )
         {
@@ -699,6 +717,10 @@ public:
 
         for(unsigned int j=0; j<material_dimensions; j++) strainmat[j][j]-=(Real)1.;
         result.getStrain() += StrainMatToVoigt( strainmat );
+    }
+    void addapply_frobenius( OutCoord& /*result*/, const InCoord& /*data*/ )
+    {
+        // not yet implemented
     }
 
     void addmult( OutDeriv& result,const InDeriv& data )
@@ -789,7 +811,6 @@ public:
         if( _geometricStiffnessData.degenerated() ) return;
 
         Affine dR;
-        //if( !helper::Decompose<Real>::polarDecompositionGradient_dQ( U, Fdiag, V, dx.getF(), dR ) ) return;
 
         const Mat<frame_size,frame_size,Real> &dROverdF = *_geometricStiffnessData.dROverdF();
         for( int k=0 ; k<spatial_dimensions ; ++k ) // line of df
@@ -799,6 +820,10 @@ public:
                         dR[i][j] += dROverdF[i*material_dimensions+j][k*material_dimensions+l] * dx.getF()[k][l];
 
         df.getF() += dR * StressVoigtToMat( childForce.getStrain() ) * (Real)kfactor;
+    }
+    void addDForce_frobenius( InDeriv& /*df*/, const InDeriv& /*dx*/, const OutDeriv& /*childForce*/, const SReal& /*kfactor*/ )
+    {
+        // not yet implemented
     }
 };
 
@@ -854,7 +879,7 @@ public:
     void init_qr( bool ) { }
     void init_polar( bool ) {}
     void init_svd( bool ) {}
-
+    void init_frobenius( bool ) {}
 
     void addapply( OutCoord& /*result*/, const InCoord& /*data*/ ) {}
 
@@ -883,6 +908,10 @@ public:
     }
 
     void addapply_svd( OutCoord& result, const InCoord& data )
+    {
+        addapply_qr( result, data );
+    }
+    void addapply_frobenius( OutCoord& result, const InCoord& data )
     {
         addapply_qr( result, data );
     }
@@ -927,6 +956,10 @@ public:
         addDForce_qr( df, dx, childForce, kfactor );
     }
     void addDForce_svd( InDeriv& df, const InDeriv& dx, const OutDeriv& childForce, const SReal& kfactor )
+    {
+        addDForce_qr( df, dx, childForce, kfactor );
+    }
+    void addDForce_frobenius( InDeriv& df, const InDeriv& dx, const OutDeriv& childForce, const SReal& kfactor )
     {
         addDForce_qr( df, dx, childForce, kfactor );
     }
@@ -984,6 +1017,7 @@ public:
     void init_qr( bool ) {}
     void init_polar( bool ) {}
     void init_svd( bool ) {}
+    void init_frobenius( bool ) {}
 
 
     void addapply( OutCoord& /*result*/, const InCoord& /*data*/ ) {}
@@ -1009,12 +1043,16 @@ public:
         addapply_common( result, data, strainmat );
     }
 
-
     void addapply_svd( OutCoord& result, const InCoord& data )
     {
         StrainMat strainmat;
         helper::Decompose<Real>::polarDecomposition_stable( data.getF(), _R, strainmat );
         addapply_common( result, data, strainmat );
+    }
+
+    void addapply_frobenius( OutCoord& /*result*/, const InCoord& /*data*/ )
+    {
+        // not yet implemented
     }
 
     void addapply_common( OutCoord& result, const InCoord& /*data*/, StrainMat& strainmat )
@@ -1023,45 +1061,18 @@ public:
         for(unsigned int j=0; j<material_dimensions; j++) strainmat[j][j]-=(Real)1.;
         result.getStrain() += StrainMatToVoigt( strainmat );
 
-//        if( order > 0 )
-//        {
-//            // order 1
-//            for(unsigned int k=0; k<spatial_dimensions; k++)
-//            {
-//                StrainMat T = _R.multTranspose( data.getGradientF( k ) ); // T = Rt * g
-//                result.getStrainGradient(k) += StrainMatToVoigt( cauchyStrainTensor( T ) ); // (T+Tt)*0.5
-//            }
-//        }
     }
 
     void addmult( OutDeriv& result,const InDeriv& data )
     {
         // order 0
         result.getStrain() += StrainMatToVoigt( _R.multTranspose( data.getF() ) );
-
-//        if( order > 0 )
-//        {
-//            // order 1
-//            for(unsigned int k=0; k<spatial_dimensions; k++)
-//            {
-//                result.getStrainGradient(k) += StrainMatToVoigt( _R.multTranspose( data.getGradientF(k) ) );
-//            }
-//        }
     }
 
     void addMultTranspose( InDeriv& result, const OutDeriv& data )
     {
         // order 0
         result.getF() += _R*StressVoigtToMat( data.getStrain() );
-
-//        if( order > 0 )
-//        {
-//            // order 1
-//            for(unsigned int k=0; k<spatial_dimensions; k++)
-//            {
-//                result.getGradientF(k) += _R*StressVoigtToMat( data.getStrainGradient(k) );
-//            }
-//        }
     }
 
     MatBlock getJ()
@@ -1074,18 +1085,6 @@ public:
         typedef Eigen::Matrix<Real,strain_size,frame_size,Eigen::RowMajor> JBlock;
         JBlock J = this->assembleJ( _R );
         eB.block(0,0,strain_size,frame_size) = J;
-
-//        if( order > 0 )
-//        {
-//            // order 1
-//            unsigned int offsetE=strain_size;
-//            for(unsigned int k=0; k<spatial_dimensions; k++)
-//            {
-//                eB.block(offsetE,(k+1)*frame_size,strain_size,frame_size) = J;
-//                offsetE+=strain_size;
-//            }
-//        }
-
         return B;
     }
 
@@ -1108,6 +1107,10 @@ public:
     void addDForce_svd( InDeriv& /*df*/, const InDeriv& /*dx*/, const OutDeriv& /*childForce*/, const SReal& /*kfactor*/ )
     {
         // TODO
+    }
+    void addDForce_frobenius( InDeriv& /*df*/, const InDeriv& /*dx*/, const OutDeriv& /*childForce*/, const SReal& /*kfactor*/ )
+    {
+        // not yet implemented
     }
 };
 

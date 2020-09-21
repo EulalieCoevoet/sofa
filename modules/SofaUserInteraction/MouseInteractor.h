@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -47,40 +44,37 @@ namespace collision
  */
 struct BodyPicked
 {
-    BodyPicked():body(NULL), mstate(NULL) {}
+    BodyPicked():body(nullptr), mstate(nullptr), dist(0) {}
     sofa::core::CollisionModel *body;
     sofa::core::behavior::BaseMechanicalState *mstate;
     unsigned int indexCollisionElement;
     defaulttype::Vector3 point;
-#ifdef DETECTIONOUTPUT_BARYCENTRICINFO
-    defaulttype::Vector3 baryCoords;
-#endif
     SReal dist;
     SReal rayLength;
-    operator bool() { return mstate != NULL; }
+    operator bool() { return mstate != nullptr; }
 };
 
 class SOFA_USER_INTERACTION_API BaseMouseInteractor : public core::BehaviorModel
 {
 public:
     SOFA_ABSTRACT_CLASS(BaseMouseInteractor, core::BehaviorModel);
-    typedef sofa::component::collision::RayModel MouseCollisionModel;
+    typedef sofa::component::collision::RayCollisionModel MouseCollisionModel;
     typedef helper::vector< InteractionPerformer* > VecPerformer;
 protected:
     BaseMouseInteractor(): isAttached(false),distanceFromMouse(0) {}
 public:
-    virtual void draw(const core::visual::VisualParams* vparams);
+    void draw(const core::visual::VisualParams* vparams) override;
 
-    void cleanup();
+    void cleanup() override;
 
 
     //Interactions handling
     void addInteractionPerformer(InteractionPerformer *i);
     bool removeInteractionPerformer( InteractionPerformer *i);
     //Called at each time step: launch all the performers
-    void updatePosition( SReal dt);
+    void updatePosition( SReal dt) override;
     //Propagate an event in case to all the performers
-    void handleEvent(core::objectmodel::Event *e);
+    void handleEvent(core::objectmodel::Event *e) override;
 
 
     virtual core::behavior::BaseMechanicalState *getMouseContainer()=0;
@@ -121,37 +115,22 @@ public:
     typedef sofa::component::container::MechanicalObject< DataTypes > MouseContainer;
     typedef typename DataTypes::Coord Coord;
 public:
-    MouseInteractor():mouseInSofa(NULL) {}
-    ~MouseInteractor() {}
+    MouseInteractor():mouseInSofa(nullptr) {}
+    ~MouseInteractor() override {}
 
-    void init();
+    void init() override;
 
-    core::behavior::BaseMechanicalState *getMouseContainer() {return mouseInSofa;}
+    core::behavior::BaseMechanicalState *getMouseContainer() override {return mouseInSofa;}
 
-
-    virtual std::string getTemplateName() const
-    {
-        return templateName(this);
-    }
-    static std::string templateName(const MouseInteractor<DataTypes>* = NULL)
-    {
-        return DataTypes::Name();
-    }
 protected:
     MouseContainer       *mouseInSofa;
 };
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_COLLISION_MOUSEINTERACTOR_CPP)
-#ifndef SOFA_DOUBLE
-extern template class SOFA_USER_INTERACTION_API MouseInteractor<defaulttype::Vec2fTypes>;
-extern template class SOFA_USER_INTERACTION_API MouseInteractor<defaulttype::Vec3fTypes>;
-extern template class SOFA_USER_INTERACTION_API MouseInteractor<defaulttype::Rigid3fTypes>;
-#endif
-#ifndef SOFA_FLOAT
-extern template class SOFA_USER_INTERACTION_API MouseInteractor<defaulttype::Vec2dTypes>;
-extern template class SOFA_USER_INTERACTION_API MouseInteractor<defaulttype::Vec3dTypes>;
-extern template class SOFA_USER_INTERACTION_API MouseInteractor<defaulttype::Rigid3dTypes>;
-#endif
+#if  !defined(SOFA_COMPONENT_COLLISION_MOUSEINTERACTOR_CPP)
+extern template class SOFA_USER_INTERACTION_API MouseInteractor<defaulttype::Vec2Types>;
+extern template class SOFA_USER_INTERACTION_API MouseInteractor<defaulttype::Vec3Types>;
+extern template class SOFA_USER_INTERACTION_API MouseInteractor<defaulttype::Rigid3Types>;
+
 #endif
 
 

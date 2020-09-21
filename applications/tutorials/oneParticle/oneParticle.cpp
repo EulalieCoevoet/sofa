@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -13,11 +13,8 @@
 * more details.                                                               *
 *                                                                             *
 * You should have received a copy of the GNU General Public License along     *
-* with this program; if not, write to the Free Software Foundation, Inc., 51  *
-* Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.                   *
+* with this program. If not, see <http://www.gnu.org/licenses/>.              *
 *******************************************************************************
-*                            SOFA :: Applications                             *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -38,11 +35,10 @@
 #include <sofa/helper/system/glut.h>
 #include <sofa/helper/accessor.h>
 
-#include <SofaComponentCommon/initComponentCommon.h>
-#include <SofaComponentBase/initComponentBase.h>
-#include <SofaComponentGeneral/initComponentGeneral.h>
-#include <SofaComponentAdvanced/initComponentAdvanced.h>
-#include <SofaComponentMisc/initComponentMisc.h>
+#include <SofaCommon/initSofaCommon.h>
+#include <SofaBase/initSofaBase.h>
+#include <SofaGeneral/initSofaGeneral.h>
+#include <SofaMisc/initSofaMisc.h>
 
 
 
@@ -54,8 +50,6 @@ using sofa::helper::WriteAccessor;
 using sofa::core::VecId;
 using sofa::core::objectmodel::New;
 
-//Using double by default, if you have SOFA_FLOAT in use in you sofa-default.cfg, then it will be FLOAT.
-#include <sofa/component/typedef/Sofa_typedef.h>
 // ---------------------------------------------------------------------
 // ---
 // ---------------------------------------------------------------------
@@ -63,11 +57,10 @@ int main(int argc, char** argv)
 {
     glutInit(&argc,argv);
     sofa::simulation::graph::init();
-    sofa::component::initComponentBase();
-    sofa::component::initComponentCommon();
-    sofa::component::initComponentGeneral();
-    sofa::component::initComponentAdvanced();
-    sofa::component::initComponentMisc();
+    sofa::component::initSofaBase();
+    sofa::component::initSofaCommon();
+    sofa::component::initSofaGeneral();
+    sofa::component::initSofaMisc();
     sofa::gui::initMain();
 
     sofa::helper::parse("This is a SOFA application.")
@@ -109,7 +102,7 @@ int main(int argc, char** argv)
 
     // this currently reveals a bug
 //    // attach a collision surface to the particle
-//    SphereModel::SPtr sphere = New<SphereModel>();
+//    SphereCollisionModel<sofa::defaulttype::Vec3Types>::SPtr sphere = New<SphereCollisionModel<sofa::defaulttype::Vec3Types>>();
 //    particule_node->addObject(sphere);
 //    sphere->defaultRadius.setValue(0.1);
 

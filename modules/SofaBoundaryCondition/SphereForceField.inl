@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -27,10 +24,8 @@
 
 #include "SphereForceField.h"
 #include <sofa/core/visual/VisualParams.h>
-#include <sofa/helper/system/config.h>
 #include <sofa/helper/rmath.h>
-#include <sofa/helper/system/gl.h>
-#include <assert.h>
+#include <cassert>
 #include <iostream>
 
 namespace sofa
@@ -57,6 +52,19 @@ namespace forcefield
 // dfi/dxj = -stiffness * ( (xi-ci) * r/|x-c|^2 * (xj-cj)/|x-c| + (i==j) * (|x-c|-r)/|x-c| )
 //         = -stiffness * ( (xi-ci)/|x-c| * (xj-cj)/|x-c| * r/|x-c| + (i==j) * (1 - r/|x-c|) )
 // df = -stiffness * ( (x-c)/|x-c| * dot(dx,(x-c)/|x-c|) * r/|x-c|   + dx * (1 - r/|x-c|) )
+
+template<class DataTypes>
+SphereForceField<DataTypes>::SphereForceField()
+    : contacts(initData(&contacts,"contacts", "Contacts"))
+    , sphereCenter(initData(&sphereCenter, "center", "sphere center"))
+    , sphereRadius(initData(&sphereRadius, (Real)1, "radius", "sphere radius"))
+    , stiffness(initData(&stiffness, (Real)500, "stiffness", "force stiffness"))
+    , damping(initData(&damping, (Real)5, "damping", "force damping"))
+    , color(initData(&color, defaulttype::RGBAColor(0.0f,0.0f,1.0f, 1.0f), "color", "sphere color. (default=[0,0,1,1])"))
+    , localRange( initData(&localRange, defaulttype::Vec<2,int>(-1,-1), "localRange", "optional range of local DOF indices. Any computation involving only indices outside of this range are discarded (useful for parallelization using mesh partitionning)" ) )
+    , bilateral( initData(&bilateral, false, "bilateral", "if true the sphere force field is applied on both sides"))
+{
+}
 
 template<class DataTypes>
 void SphereForceField<DataTypes>::addForce(const core::MechanicalParams* /* mparams */, DataVecDeriv& d_f, const DataVecCoord& d_x, const DataVecDeriv& d_v)
@@ -178,21 +186,47 @@ void SphereForceField<DataTypes>::updateStiffness( const VecCoord& x )
 template<class DataTypes>
 void SphereForceField<DataTypes>::draw(const core::visual::VisualParams* vparams)
 {
-#ifndef SOFA_NO_OPENGL
     if (!vparams->displayFlags().getShowForceFields()) return;
-    if (!bDraw.getValue()) return;
+
+    vparams->drawTool()->saveLastState();
 
     defaulttype::Vec3d center;
     DataTypes::get(center[0], center[1], center[2], sphereCenter.getValue());
-    const Real r = sphereRadius.getValue();
+    const Real& r = sphereRadius.getValue();
 
-    glEnable(GL_LIGHTING);
+    vparams->drawTool()->enableLighting();
+
     vparams->drawTool()->drawSphere(center, (float)(r*0.99) );
-    glDisable(GL_LIGHTING);
+    vparams->drawTool()->disableLighting();
 
-#endif /* SOFA_NO_OPENGL */
+    vparams->drawTool()->restoreLastState();
 }
 
+template<class DataTypes>
+SReal SphereForceField<DataTypes>::getPotentialEnergy(const core::MechanicalParams* /*mparams*/, const DataVecCoord&  /* x */) const
+{
+    msg_warning() << "Method getPotentialEnergy not implemented yet.";
+    return 0.0;
+}
+
+template<class DataTypes>
+void SphereForceField<DataTypes>::setSphere(const Coord& center, Real radius)
+{
+    sphereCenter.setValue( center );
+    sphereRadius.setValue( radius );
+}
+
+template<class DataTypes>
+void SphereForceField<DataTypes>::setStiffness(Real stiff)
+{
+    stiffness.setValue( stiff );
+}
+
+template<class DataTypes>
+void SphereForceField<DataTypes>::setDamping(Real damp)
+{
+    damping.setValue( damp );
+}
 
 } // namespace forcefield
 

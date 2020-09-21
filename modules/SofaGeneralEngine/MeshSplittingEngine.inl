@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -53,13 +50,36 @@ inline void parseIndices(helper::vector<unsigned int>& pairs, const container1& 
                 pairs[2*cells[indices[i]][j]]=parentIndex;
 }
 
+template <class DataTypes>
+MeshSplittingEngine<DataTypes>::MeshSplittingEngine()
+    : Inherited()
+    , inputPosition(initData(&inputPosition,"position","input vertices"))
+    , inputEdges(initData(&inputEdges,"edges","input edges"))
+    , inputTriangles(initData(&inputTriangles,"triangles","input triangles"))
+    , inputQuads(initData(&inputQuads,"quads","input quads"))
+    , inputTets(initData(&inputTets,"tetrahedra","input tetrahedra"))
+    , inputHexa(initData(&inputHexa,"hexahedra","input hexahedra"))
+    , nbInputs (initData(&nbInputs, (unsigned)0, "nbInputs", "Number of input vectors"))
+    , indices(this, "indices", "input vertex indices", helper::DataEngineInput)
+    , edgeIndices(this, "edgeIndices", "input edge indices", helper::DataEngineInput)
+    , triangleIndices(this, "triangleIndices", "input triangle indices", helper::DataEngineInput)
+    , quadIndices(this, "quadIndices", "input quad indices", helper::DataEngineInput)
+    , tetrahedronIndices(this, "tetrahedronIndices", "input tetrahedron indices", helper::DataEngineInput)
+    , hexahedronIndices(this, "hexahedronIndices", "input hexahedron indices", helper::DataEngineInput)
+    , indexPairs( initData( &indexPairs, helper::vector<unsigned>(), "indexPairs", "couples for input vertices: ROI index + index in the ROI"))
+    , position(this, "position", "output vertices", helper::DataEngineOutput)
+{
+    resizeData();
+}
 
 template <class DataTypes>
-void MeshSplittingEngine<DataTypes>::update()
+MeshSplittingEngine<DataTypes>::~MeshSplittingEngine()
 {
-    updateAllInputsIfDirty();
-    cleanDirty();
+}
 
+template <class DataTypes>
+void MeshSplittingEngine<DataTypes>::doUpdate()
+{
     helper::ReadAccessor<Data< SeqPositions > > i_pos(this->inputPosition);
     const size_t& nb = nbInputs.getValue();
 
@@ -89,7 +109,7 @@ void MeshSplittingEngine<DataTypes>::update()
     }
     for(size_t i=0;i<nb+1;++i) position[i]->endEdit();
 
-    if(this->f_printLog.getValue())    std::cout<<this->name<<":"<<"updated"<<std::endl;
+    msg_info() <<this->name<<":"<<"updated" ;
 }
 
 

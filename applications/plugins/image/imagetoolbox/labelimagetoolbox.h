@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -29,7 +26,7 @@
 #include <QObject>
 #include <image/image_gui/config.h>
 #include <image/ImageTypes.h>
-#include "sofa/defaulttype/defaulttype.h"
+#include "sofa/defaulttype/config.h"
 #include "sofa/defaulttype/VecTypes.h"
 #include <sofa/core/DataEngine.h>
 #include <sofa/core/objectmodel/BaseObject.h>
@@ -82,7 +79,7 @@ public:
     
     
     
-    Data< bool > d_islinkedToToolBox;
+    Data< bool > d_islinkedToToolBox; ///< true if a toobbox use this Label
     Data< sofa::defaulttype::Vec4d > d_color;
 
 //    virtual std::string getTemplateName() const    { return templateName(this);    }
@@ -90,36 +87,34 @@ public:
 
     LabelImageToolBox();
 
-    virtual void init()
+    void init() override
     {
         //addInput(&image);
         //addOutput(&triangles);
         setDirtyValue();
     }
 
-    virtual void reinit() { update(); }
+    void reinit() override { update(); }
 
 protected:
 
     unsigned int time;
 
-    virtual void update()
-    {
-        cleanDirty();
-
-    }
-
-    void handleEvent(sofa::core::objectmodel::Event * /*event*/)
+    void doUpdate() override
     {
     }
 
-    virtual void draw(const core::visual::VisualParams* /*vparams*/)
+    void handleEvent(sofa::core::objectmodel::Event * /*event*/) override
+    {
+    }
+
+    void draw(const core::visual::VisualParams* /*vparams*/) override
     {
     }
 
 public:
     
-    virtual sofa::gui::qt::LabelImageToolBoxAction* createTBAction(QWidget* /*parent*/=NULL )=0;
+    virtual sofa::gui::qt::LabelImageToolBoxAction* createTBAction(QWidget* /*parent*/=nullptr )=0;
 
 };
 

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -271,12 +268,12 @@ void CompliantAttachPerformer<DataTypes>::start()
     if( _visualmodel )
     {
         _vm = core::objectmodel::New<visualmodel::OglModel>();
-        defaulttype::ResizableExtVector<visualmodel::OglModel::Coord>& vmpos= *_vm->m_positions.beginWriteOnly();
+        helper::vector<visualmodel::OglModel::Coord>& vmpos= *_vm->m_positions.beginWriteOnly();
         vmpos.resize(2);
         vmpos[0] = visualmodel::OglModel::Coord( _baseCollisionMState->getPX(pickedParticleIndex), _baseCollisionMState->getPY(pickedParticleIndex), _baseCollisionMState->getPZ(pickedParticleIndex) );
         vmpos[1] = pointOnRay;
         _vm->m_positions.endEdit();
-        defaulttype::ResizableExtVector< visualmodel::OglModel::Triangle >& vmtri= *_vm->m_triangles.beginWriteOnly();
+        helper::vector< visualmodel::OglModel::Triangle >& vmtri= *_vm->m_triangles.beginWriteOnly();
         vmtri.resize(1);
         vmtri[0] = visualmodel::OglModel::Triangle( 0, 0, 1 );
         _vm->m_triangles.endEdit();
@@ -318,7 +315,7 @@ void CompliantAttachPerformer<DataTypes>::execute()
 
     if( _visualmodel )
     {
-        defaulttype::ResizableExtVector<visualmodel::OglModel::Coord>& vmpos= *_vm->m_positions.beginWriteOnly();
+        helper::vector<visualmodel::OglModel::Coord>& vmpos= *_vm->m_positions.beginWriteOnly();
         vmpos[0] = visualmodel::OglModel::Coord( _baseCollisionMState->getPX(pickedParticleIndex), _baseCollisionMState->getPY(pickedParticleIndex), _baseCollisionMState->getPZ(pickedParticleIndex) );
         vmpos[1] = DataTypes::getCPos(xmouse[0]);
         _vm->m_positions.endEdit();

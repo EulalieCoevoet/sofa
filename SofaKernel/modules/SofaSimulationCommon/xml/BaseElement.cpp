@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -26,7 +23,7 @@
 #include "BaseElement.h"
 #include <sofa/helper/Factory.inl>
 #include <sofa/helper/system/SetDirectory.h>
-#include <string.h>
+#include <cstring>
 
 namespace sofa
 {
@@ -44,17 +41,13 @@ namespace xml
 {
 
 BaseElement::BaseElement(const std::string& name, const std::string& type, BaseElement* newParent)
-    : BaseObjectDescription(name.c_str(), type.c_str()), parent(NULL), includeNodeType(INCLUDE_NODE_CHILD)
+    : BaseObjectDescription(name.c_str(), type.c_str()), parent(nullptr), includeNodeType(INCLUDE_NODE_CHILD)
 {
-    if (newParent!=NULL) newParent->addChild(this);
-    //attributes["name"]=&this->name;
-    //attributes["type"]=&this->type;
+    if (newParent!=nullptr) newParent->addChild(this);
 }
 
 BaseElement::~BaseElement()
 {
-    //attributes.erase("name");
-    //attributes.erase("type");
     for (ChildList::iterator it = children.begin();
             it != children.end(); ++it)
     {
@@ -67,7 +60,7 @@ BaseElement::~BaseElement()
 std::string BaseElement::getBaseFile()
 {
     if (isFileRoot()) return basefile;
-    else if (getParentElement()!=NULL) return getParentElement()->getBaseFile();
+    else if (getParentElement()!=nullptr) return getParentElement()->getBaseFile();
     else return "";
 }
 
@@ -82,16 +75,22 @@ bool BaseElement::isFileRoot()
     return !basefile.empty();
 }
 
-// const std::map<std::string,std::string*>& BaseElement::getAttributeMap() const
-// {
-// 	return attributes;
-// }
-//
-// std::map<std::string,std::string*>& BaseElement::getAttributeMap()
-// {
-// 	return attributes;
-// }
+const std::string& BaseElement::getSrcFile() const {
+    return m_srcfile ;
+}
 
+void BaseElement::setSrcFile(const std::string& filename) {
+    m_srcfile = filename ;
+}
+
+int BaseElement::getSrcLine() const {
+    return m_srcline ;
+}
+
+void BaseElement::setSrcLine(const int l)
+{
+    m_srcline = l ;
+}
 
 bool BaseElement::presenceAttribute(const std::string& s)
 {
@@ -103,11 +102,6 @@ bool BaseElement::removeAttribute(const std::string& attr)
     AttributeMap::iterator it = attributes.find(attr);
     if (it == attributes.end())
         return false;
-    //if (it->second == &name)
-    //    return false;
-    //if (it->second == &type)
-    //    return false;
-    //delete it->second;
     attributes.erase(it);
     return true;
 }
@@ -122,7 +116,7 @@ bool BaseElement::addChild(BaseElement* child)
     if (child->getParent()==this) return false;
     BaseElement* oldParent =  child->getParentElement();
     if (!child->setParent(this)) return false;
-    if (oldParent != NULL)
+    if (oldParent != nullptr)
     {
         oldParent->removeChild(child);
     }
@@ -138,7 +132,7 @@ bool BaseElement::removeChild(BaseElement* child)
     {
         if (*it == child)
         {
-            child->setParent(NULL);
+            child->setParent(nullptr);
             children.erase(it);
             return true;
         }
@@ -165,10 +159,10 @@ BaseElement* BaseElement::Create(const std::string& nodeClass, const std::string
 /// Find a node given its name
 BaseElement* BaseElement::findNode(const char* nodeName, bool absolute)
 {
-    if (nodeName == NULL) return NULL;
+    if (nodeName == nullptr) return nullptr;
     if (nodeName[0]=='\\' || nodeName[0]=='/')
     {
-        if (!absolute && getParentElement()!=NULL)
+        if (!absolute && getParentElement()!=nullptr)
             return getParentElement()->findNode(nodeName);
         else
         { ++nodeName; absolute = true; }
@@ -176,7 +170,7 @@ BaseElement* BaseElement::findNode(const char* nodeName, bool absolute)
     if (nodeName[0]=='\0')
     {
         if (absolute) return this;
-        else return NULL;
+        else return nullptr;
     }
     const char* sep = nodeName;
     while (*sep!='\0' && *sep!='\\' && *sep!='/')
@@ -185,7 +179,7 @@ BaseElement* BaseElement::findNode(const char* nodeName, bool absolute)
         return findNode(sep, true);
     if (!strncmp(nodeName,"..",sep-nodeName))
     {
-        if (getParentElement()==NULL) return NULL;
+        if (getParentElement()==nullptr) return nullptr;
         else return getParentElement()->findNode(sep,true);
     }
     for (child_iterator<> it = begin(); it != end(); ++it)
@@ -193,13 +187,13 @@ BaseElement* BaseElement::findNode(const char* nodeName, bool absolute)
         if (it->getName().length() == (unsigned)(sep-nodeName) && !strncmp(it->getName().c_str(), nodeName, sep-nodeName))
         {
             BaseElement* res = it->findNode(sep,true);
-            if (res!=NULL) return res;
+            if (res!=nullptr) return res;
         }
     }
-    if (!absolute && getParentElement()!=NULL)
+    if (!absolute && getParentElement()!=nullptr)
         return getParentElement()->findNode(nodeName);
     else
-        return NULL;
+        return nullptr;
 }
 
 } // namespace xml

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -13,11 +13,8 @@
 * more details.                                                               *
 *                                                                             *
 * You should have received a copy of the GNU General Public License along     *
-* with this program; if not, write to the Free Software Foundation, Inc., 51  *
-* Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.                   *
+* with this program. If not, see <http://www.gnu.org/licenses/>.              *
 *******************************************************************************
-*                            SOFA :: Applications                             *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -33,7 +30,7 @@
 #include <sofa/simulation/Simulation.h>
 #include <sofa/simulation/Visitor.h>
 #include <sofa/core/ObjectFactory.h>
-#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/Mat.h>
 #include <sofa/helper/ArgumentParser.h>
 #include <sofa/helper/BackTrace.h>
@@ -52,7 +49,7 @@
 #include <SofaMeshCollision/PointModel.h>
 #include <SofaBaseCollision/MinProximityIntersection.h>
 #include <SofaBaseCollision/BruteForceDetection.h>
-#include <SofaComponentMain/init.h>
+#include <SofaMain/init.h>
 
 #include <SofaBaseVisual/VisualModelImpl.h>
 #include <SofaOpenglVisual/OglModel.h>
@@ -61,7 +58,7 @@
 #include <sofa/gpu/cuda/CudaDistanceGridCollisionModel.h>
 #endif
 
-#include <sofa/gui/SofaGUI.h>
+#include <sofa/gui/config.h>
 #include <sofa/helper/system/gl.h>
 #include <sofa/helper/system/glut.h>
 
@@ -342,7 +339,6 @@ public:
     }
 };
 
-SOFA_DECL_CLASS(FlowVRModule)
 int FlowVRModuleClass = sofa::core::RegisterObject("FlowVR main module")
         .add<FlowVRModule>()
         ;
@@ -391,7 +387,7 @@ public:
     Data<double> maxVDist;
 
     // Velocity is estimated by searching the nearest primitive from each new point
-    // To do it we need to create an additionnal PointModel collision model, as well as a Detection and Intersection class
+    // To do it we need to create an additionnal PointCollisionModel<sofa::defaulttype::Vec3Types> collision model, as well as a Detection and Intersection class
     sofa::simulation::tree::GNode * newPointsNode;
     typedef sofa::simulation::tree::GNode::Sequence<sofa::core::CollisionModel>::iterator CMIterator;
     sofa::component::container::MechanicalObject<Vec3Types> * newPoints;
@@ -669,17 +665,16 @@ public:
     }
 };
 
-SOFA_DECL_CLASS(FlowVRInputMesh)
 int FlowVRInputMeshClass = sofa::core::RegisterObject("Import a mesh from a FlowVR InputPort")
         .add< FlowVRInputMesh >()
         ;
 
 template<class T>
-class SofaFlowVRAllocator : public sofa::defaulttype::ExtVectorAllocator<T>
+class SofaFlowVRAllocator : public sofa::defaulttype::StdVectorAllocator<T>
 {
 public:
-    typedef typename sofa::defaulttype::ExtVectorAllocator<T>::value_type value_type;
-    typedef typename sofa::defaulttype::ExtVectorAllocator<T>::size_type size_type;
+    typedef typename sofa::defaulttype::StdVectorAllocator<T>::value_type value_type;
+    typedef typename sofa::defaulttype::StdVectorAllocator<T>::size_type size_type;
     virtual void close(value_type* /*data*/)
     {
         delete this;
@@ -922,7 +917,6 @@ public:
     }
 };
 
-SOFA_DECL_CLASS(FlowVRInputDistanceGrid)
 int FlowVRInputDistanceGridClass = sofa::core::RegisterObject("Import a distance field from a FlowVR InputPort")
         .add< FlowVRInputDistanceGrid<sofa::component::collision::RigidDistanceGridCollisionModel,sofa::component::collision::DistanceGrid> >()
 #ifdef SOFA_GPU_CUDA
@@ -1161,7 +1155,6 @@ public:
 
 };
 
-SOFA_DECL_CLASS(FlowVRRenderWriter)
 int FlowVRRenderWriterClass = sofa::core::RegisterObject("FlowVRRender scene manager")
         .add<FlowVRRenderWriter>()
         ;
@@ -1504,7 +1497,7 @@ public:
                 memcpy(vb->data(), &(n[0]), vb->dataSize());
             }
 
-            const ResizableExtVector<TexCoord>& t = vtexcoords;
+            const sofa::helper::vector<TexCoord>& t = vtexcoords;
             if (!t.empty() && !idVBT) // only send texcoords once
             {
                 if (!idVBT)
@@ -1531,9 +1524,9 @@ public:
                     scene->addParam(idP, flowvr::render::ChunkPrimParam::VBUFFER_NUMDATA, "tangent", 0);
                 }
 
-                ResizableExtVector<Vec4f> tangent; tangent.resize(t.size());
-                ResizableExtVector<Coord> tangent1; tangent1.resize(t.size());
-                ResizableExtVector<Coord> tangent2; tangent2.resize(t.size());
+                sofa::helper::vector<Vec4f> tangent; tangent.resize(t.size());
+                sofa::helper::vector<Coord> tangent1; tangent1.resize(t.size());
+                sofa::helper::vector<Coord> tangent2; tangent2.resize(t.size());
 
                 // see http://www.terathon.com/code/tangent.php
 
@@ -1744,7 +1737,6 @@ public:
     }
 };
 
-SOFA_DECL_CLASS(FlowVRRenderMesh)
 int FlowVRRenderMeshClass = sofa::core::RegisterObject("FlowVRRender Visual Model")
         .add< FlowVRRenderMesh >()
         ;

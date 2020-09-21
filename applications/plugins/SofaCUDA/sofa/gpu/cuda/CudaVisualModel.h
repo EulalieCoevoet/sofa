@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -91,10 +88,13 @@ public:
     /// Index of elements attached to each points (layout per bloc of NBLOC vertices, with first element of each vertex, then second element, etc)
     gpu::cuda::CudaVector<int> velems;
 
-    Data<defaulttype::Vec4f> matAmbient, matDiffuse, matSpecular, matEmissive;
-    Data<float> matShininess;
-    Data<bool> useVBO;
-    Data<bool> computeNormals;
+    Data<defaulttype::Vec4f> matAmbient; ///< material ambient color
+    Data<defaulttype::Vec4f> matDiffuse; ///< material diffuse color and alpha
+    Data<defaulttype::Vec4f> matSpecular; ///< material specular color
+    Data<defaulttype::Vec4f> matEmissive; ///< material emissive color
+    Data<float> matShininess; ///< material specular shininess
+    Data<bool> useVBO; ///< true to activate Vertex Buffer Object
+    Data<bool> computeNormals; ///< true to compute smooth normals
 
     CudaVisualModel()
         : state(NULL), topology(NULL), needUpdateTopology(true), nbElement(0), nbVertex(0), nbElementPerVertex(0)
@@ -107,18 +107,18 @@ public:
         , computeNormals( initData( &computeNormals, false, "computeNormals", "true to compute smooth normals") )
     {}
 
-    virtual void init();
-    virtual void reinit();
+    virtual void init() override;
+    virtual void reinit() override;
     virtual void internalDraw(const core::visual::VisualParams* vparams);
-    virtual void drawVisual(const core::visual::VisualParams*);
-    virtual void drawTransparent(const core::visual::VisualParams*);
-    virtual void drawShadow(const core::visual::VisualParams*);
-    virtual void updateVisual();
+    virtual void drawVisual(const core::visual::VisualParams*) override;
+    virtual void drawTransparent(const core::visual::VisualParams*) override;
+    virtual void drawShadow(const core::visual::VisualParams*) override;
+    virtual void updateVisual() override;
     virtual void updateTopology();
     virtual void updateNormals();
-    virtual void handleTopologyChange();
+    virtual void handleTopologyChange() override;
 
-    virtual std::string getTemplateName() const
+    virtual std::string getTemplateName() const override
     {
         return templateName(this);
     }
@@ -128,7 +128,7 @@ public:
     }
 
 
-    virtual void computeBBox(const core::ExecParams* params, bool=false);
+    virtual void computeBBox(const core::ExecParams* params, bool=false) override;
 
 protected:
 

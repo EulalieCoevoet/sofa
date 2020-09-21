@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -75,34 +72,23 @@ protected:
     DistanceLMConstraintInternalData<DataTypes> data;
     friend class DistanceLMConstraintInternalData<DataTypes>;
 
-
-    DistanceLMConstraint( MechanicalState *dof)
-        : core::behavior::LMConstraint<DataTypes,DataTypes>(dof,dof)
-        , vecConstraint(sofa::core::objectmodel::Base::initData(&vecConstraint, "vecConstraint", "List of the edges to constrain"))
-    {}
-
-    DistanceLMConstraint( MechanicalState *dof1, MechanicalState * dof2)
-        : core::behavior::LMConstraint<DataTypes,DataTypes>(dof1,dof2)
-        , vecConstraint(sofa::core::objectmodel::Base::initData(&vecConstraint, "vecConstraint", "List of the edges to constrain"))
-    {}
-
-    DistanceLMConstraint()
-        : vecConstraint(sofa::core::objectmodel::Base::initData(&vecConstraint, "vecConstraint", "List of the edges to constrain"))
-    {}
+    DistanceLMConstraint();
+    DistanceLMConstraint( MechanicalState *dof);
+    DistanceLMConstraint( MechanicalState *dof1, MechanicalState * dof2);
 
     ~DistanceLMConstraint() {}
 public:
-    void init();
-    void reinit();
+    void init() override;
+    void reinit() override;
 
     // -- LMConstraint interface
 
-    void buildConstraintMatrix(const core::ConstraintParams* cParams, core::MultiMatrixDerivId cId, unsigned int &cIndex);
-    void writeConstraintEquations(unsigned int& lineNumber, core::MultiVecId id, ConstOrder order);
+    void buildConstraintMatrix(const core::ConstraintParams* cParams, core::MultiMatrixDerivId cId, unsigned int &cIndex) override;
+    void writeConstraintEquations(unsigned int& lineNumber, core::MultiVecId id, ConstOrder order) override;
 
-    virtual void draw(const core::visual::VisualParams* vparams);
+    void draw(const core::visual::VisualParams* vparams) override;
 
-    bool isCorrectionComputedWithSimulatedDOF(core::ConstraintParams::ConstOrder /*order*/) const
+    bool isCorrectionComputedWithSimulatedDOF(core::ConstraintParams::ConstOrder /*order*/) const override
     {
         simulation::Node* node1=(simulation::Node*) this->constrainedObject1->getContext();
         simulation::Node* node2=(simulation::Node*) this->constrainedObject2->getContext();
@@ -110,18 +96,11 @@ public:
         else return false;
     }
 
-    std::string getTemplateName() const
-    {
-        return templateName(this);
-    }
-    static std::string templateName(const DistanceLMConstraint<DataTypes>* = NULL)
-    {
-        return DataTypes::Name();
-    }
-
     //Edges involving a distance constraint
-    Data< SeqEdges > vecConstraint;
+    Data< SeqEdges > vecConstraint; ///< List of the edges to constrain
 
+    /// Link to be set to the topology container in the component graph.
+    SingleLink <DistanceLMConstraint<DataTypes>, sofa::core::topology::BaseMeshTopology, BaseLink::FLAG_STOREPATH | BaseLink::FLAG_STRONGLINK> l_topology;
 protected :
 
     ///Compute the length of an edge given the vector of coordinates corresponding
@@ -130,33 +109,20 @@ protected :
     Deriv getDirection(const Edge &e, const VecCoord &x1, const VecCoord &x2) const;
     void updateRestLength();
 
-    // Base Components of the current context
-    core::topology::BaseMeshTopology *topology;
-
     helper::vector<  unsigned int > registeredConstraints;
 
     // rest length pre-computated
     sofa::helper::vector< double > l0;
 };
 
-#ifndef SOFA_FLOAT
 template<>
-defaulttype::Rigid3dTypes::Deriv DistanceLMConstraint<defaulttype::Rigid3dTypes>::getDirection(const Edge &e, const VecCoord &x1, const VecCoord &x2) const;
-#endif
-#ifndef SOFA_DOUBLE
-template<>
-defaulttype::Rigid3fTypes::Deriv DistanceLMConstraint<defaulttype::Rigid3fTypes>::getDirection(const Edge &e, const VecCoord &x1, const VecCoord &x2) const;
-#endif
+defaulttype::Rigid3Types::Deriv DistanceLMConstraint<defaulttype::Rigid3Types>::getDirection(const Edge &e, const VecCoord &x1, const VecCoord &x2) const;
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_CONSTRAINTSET_DISTANCELMCONSTRAINT_CPP)
-#ifndef SOFA_FLOAT
-extern template class SOFA_CONSTRAINT_API DistanceLMConstraint<defaulttype::Vec3dTypes>;
-extern template class SOFA_CONSTRAINT_API DistanceLMConstraint<defaulttype::Rigid3dTypes>;
-#endif
-#ifndef SOFA_DOUBLE
-extern template class SOFA_CONSTRAINT_API DistanceLMConstraint<defaulttype::Vec3fTypes>;
-extern template class SOFA_CONSTRAINT_API DistanceLMConstraint<defaulttype::Rigid3fTypes>;
-#endif
+
+#if  !defined(SOFA_COMPONENT_CONSTRAINTSET_DISTANCELMCONSTRAINT_CPP)
+extern template class SOFA_CONSTRAINT_API DistanceLMConstraint<defaulttype::Vec3Types>;
+extern template class SOFA_CONSTRAINT_API DistanceLMConstraint<defaulttype::Rigid3Types>;
+
 #endif
 
 } // namespace constraintset

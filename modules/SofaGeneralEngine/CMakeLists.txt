@@ -1,7 +1,16 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.12)
 project(SofaGeneralEngine)
 
 set(HEADER_FILES
+    config.h
+    initGeneralEngine.h
+    )
+
+set(SOURCE_FILES
+    initGeneralEngine.cpp
+    )
+
+list(APPEND HEADER_FILES
     AverageCoord.h
     AverageCoord.inl
     ClusteringEngine.h
@@ -64,6 +73,8 @@ set(HEADER_FILES
     MeshSplittingEngine.inl
     MeshSubsetEngine.h
     MeshSubsetEngine.inl
+    NearestPointROI.h
+    NearestPointROI.inl
     NormEngine.h
     NormEngine.inl
     NormalsFromPoints.h
@@ -95,6 +106,8 @@ set(HEADER_FILES
     Spiral.inl
     SubsetTopology.h
     SubsetTopology.inl
+    SumEngine.h
+    SumEngine.inl
     TextureInterpolation.h
     TextureInterpolation.inl
     TransformEngine.h
@@ -108,11 +121,8 @@ set(HEADER_FILES
     ValuesFromPositions.inl
     Vertex2Frame.h
     Vertex2Frame.inl
-    config.h
-    initGeneralEngine.h
-)
-
-set(SOURCE_FILES
+    )
+list(APPEND SOURCE_FILES
     AverageCoord.cpp
     ClusteringEngine.cpp
     ComplementaryROI.cpp
@@ -145,6 +155,7 @@ set(SOURCE_FILES
     MeshSampler.cpp
     MeshSplittingEngine.cpp
     MeshSubsetEngine.cpp
+    NearestPointROI.cpp
     NormEngine.cpp
     NormalsFromPoints.cpp
     PairBoxRoi.cpp
@@ -162,6 +173,7 @@ set(SOURCE_FILES
     SphereROI.cpp
     Spiral.cpp
     SubsetTopology.cpp
+    SumEngine.cpp
     TextureInterpolation.cpp
     TransformEngine.cpp
     TransformMatrixEngine.cpp
@@ -169,12 +181,9 @@ set(SOURCE_FILES
     ValuesFromIndices.cpp
     ValuesFromPositions.cpp
     Vertex2Frame.cpp
-    initGeneralEngine.cpp
-)
+    )
 
 add_library(${PROJECT_NAME} SHARED ${HEADER_FILES} ${SOURCE_FILES})
 target_link_libraries(${PROJECT_NAME} PUBLIC SofaMeshCollision SofaGeneralMeshCollision)
-set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-DSOFA_BUILD_GENERAL_ENGINE")
-set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${HEADER_FILES}")
 
-sofa_install_targets(SofaGeneral ${PROJECT_NAME} ${PROJECT_NAME})
+sofa_install_targets(SofaGeneral ${PROJECT_NAME} "SofaGeneral/${PROJECT_NAME}")

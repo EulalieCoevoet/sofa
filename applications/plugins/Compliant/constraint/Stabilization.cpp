@@ -8,7 +8,6 @@ namespace component {
 namespace odesolver {
 
 
-SOFA_DECL_CLASS(Stabilization)
 int StabilizationClass = core::RegisterObject("Kinematic constraint stabilization").add< Stabilization >();
 
 
@@ -77,7 +76,7 @@ void Stabilization::dynamics(SReal* dst, unsigned n, unsigned dim, bool stabiliz
 
 
 
-void Stabilization::filterConstraints( helper::vector<bool>* activateMask, const core::MultiVecCoordId& posId, unsigned n, unsigned dim )
+void Stabilization::filterConstraints( helper::vector<bool>*& activateMask, const core::MultiVecCoordId& posId, unsigned n, unsigned dim )
 {
     // All the constraints remain active
     // but non-violated constraint must not be stabilized
@@ -95,10 +94,7 @@ void Stabilization::filterConstraints( helper::vector<bool>* activateMask, const
     for( unsigned block=0 ; block<n ; ++block )
     {
         unsigned line = block*dim; // first constraint line
-        if( violation[line]<0 ) // violated constraint
-            mask[block]=true;
-        else
-            mask[block]=false;
+        mask[block] = ( violation[line]<0 ); // violated constraint
     }
 
     this->mask.endEdit();
@@ -106,7 +102,6 @@ void Stabilization::filterConstraints( helper::vector<bool>* activateMask, const
     delete [] violation;
 
     activateMask = &mask;
-    (void) activateMask;
 }
 
 

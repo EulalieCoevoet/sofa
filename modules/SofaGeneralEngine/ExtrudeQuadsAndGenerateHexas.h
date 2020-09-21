@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -26,16 +23,14 @@
 #define SOFA_COMPONENT_ENGINE_EXTRUDEQUADSANDGENERATEHEXAS_H
 #include "config.h"
 
-#if !defined(__GNUC__) || (__GNUC__ > 3 || (_GNUC__ == 3 && __GNUC_MINOR__ > 3))
-#pragma once
-#endif
+
 
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/core/DataEngine.h>
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/core/behavior/MechanicalState.h>
 #include <sofa/core/topology/BaseMeshTopology.h>
-#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/defaulttype/VecTypes.h>
 
 namespace sofa
 {
@@ -64,48 +59,34 @@ protected:
 
     ExtrudeQuadsAndGenerateHexas();
 
-    ~ExtrudeQuadsAndGenerateHexas() {}
+    ~ExtrudeQuadsAndGenerateHexas() override {}
 public:
-    void init();
+    void init() override;
 
-    void reinit();
+    void reinit() override;
 
-    void update();
+    void doUpdate() override;
 
-    void draw( const core::visual::VisualParams* );
-
-    virtual std::string getTemplateName() const
-    {
-        return templateName(this);
-    }
-
-    static std::string templateName(const ExtrudeQuadsAndGenerateHexas<DataTypes>* = NULL)
-    {
-        return DataTypes::Name();
-    }
+    void draw( const core::visual::VisualParams* ) override;
 
     bool                                             initialized;
-    Data<bool>                                       isVisible;
-    Data<Coord>                                      f_scale;
+    Data<bool>                                       isVisible; ///< is Visible ?
+    Data<Coord>                                      f_scale; ///< Apply a scaling factor to the extruded mesh
     Data<Real>                                       f_thickness;
-    Data<Real>                                       f_thicknessIn;
-    Data<Real>                                       f_thicknessOut;
-    Data<int>                                        f_numberOfSlices;
-    Data<VecCoord>                                   f_surfaceVertices;
-    Data< helper::vector<sofa::core::topology::BaseMeshTopology::Quad> >   f_surfaceQuads;
-    Data<VecCoord>                                   f_extrudedVertices;
-    Data< helper::vector<sofa::core::topology::BaseMeshTopology::Quad> >   f_extrudedSurfaceQuads;
-    Data< helper::vector<sofa::core::topology::BaseMeshTopology::Quad> >   f_extrudedQuads;
-    Data< helper::vector<sofa::core::topology::BaseMeshTopology::Hexa> >   f_extrudedHexas;
+    Data<Real>                                       f_thicknessIn; ///< Thickness of the extruded volume in the opposite direction of the normals
+    Data<Real>                                       f_thicknessOut; ///< Thickness of the extruded volume in the direction of the normals
+    Data<int>                                        f_numberOfSlices; ///< Number of slices / steps in the extrusion
+    Data<VecCoord>                                   f_surfaceVertices; ///< Position coordinates of the surface
+    Data< helper::vector<sofa::core::topology::BaseMeshTopology::Quad> >   f_surfaceQuads; ///< Indices of the quads of the surface to extrude
+    Data<VecCoord>                                   f_extrudedVertices; ///< Coordinates of the extruded vertices
+    Data< helper::vector<sofa::core::topology::BaseMeshTopology::Quad> >   f_extrudedSurfaceQuads; ///< List of new surface quads generated during the extrusion
+    Data< helper::vector<sofa::core::topology::BaseMeshTopology::Quad> >   f_extrudedQuads; ///< List of all quads generated during the extrusion
+    Data< helper::vector<sofa::core::topology::BaseMeshTopology::Hexa> >   f_extrudedHexas; ///< List of hexahedra generated during the extrusion
 };
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_ENGINE_EXTRUDEQUADSANDGENERATEHEXAS_CPP)
-#ifndef SOFA_FLOAT
-extern template class SOFA_GENERAL_ENGINE_API ExtrudeQuadsAndGenerateHexas<defaulttype::Vec3dTypes>;
-#endif //SOFA_FLOAT
-#ifndef SOFA_DOUBLE
-extern template class SOFA_GENERAL_ENGINE_API ExtrudeQuadsAndGenerateHexas<defaulttype::Vec3fTypes>;
-#endif //SOFA_DOUBLE
+#if  !defined(SOFA_COMPONENT_ENGINE_EXTRUDEQUADSANDGENERATEHEXAS_CPP)
+extern template class SOFA_GENERAL_ENGINE_API ExtrudeQuadsAndGenerateHexas<defaulttype::Vec3Types>;
+ 
 #endif
 
 } // namespace engine

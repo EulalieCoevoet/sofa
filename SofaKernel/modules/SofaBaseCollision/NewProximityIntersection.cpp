@@ -1,29 +1,25 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #define SOFA_COMPONENT_COLLISION_NEWPROXIMITYINTERSECTION_CPP
-#include <sofa/helper/system/config.h>
 #include <SofaBaseCollision/NewProximityIntersection.inl>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/defaulttype/Mat.h>
@@ -32,9 +28,16 @@
 #include <iostream>
 #include <algorithm>
 
-
 namespace sofa
 {
+
+namespace core
+{
+    namespace collision
+    {
+        template class SOFA_BASE_COLLISION_API IntersectorFactory<component::collision::NewProximityIntersection>;
+    }
+}
 
 namespace component
 {
@@ -45,8 +48,6 @@ namespace collision
 using namespace sofa::defaulttype;
 using namespace sofa::core::collision;
 using namespace helper;
-
-SOFA_DECL_CLASS(NewProximityIntersection)
 
 int NewProximityIntersectionClass = core::RegisterObject("Optimized Proximity Intersection based on Triangle-Triangle tests, ignoring Edge-Edge cases")
         .add< NewProximityIntersection >()
@@ -60,22 +61,22 @@ NewProximityIntersection::NewProximityIntersection()
 
 void NewProximityIntersection::init()
 {
-    intersectors.add<CubeModel, CubeModel, NewProximityIntersection>(this);
-    intersectors.add<SphereModel, SphereModel, NewProximityIntersection>(this);
-    intersectors.add<CapsuleModel,CapsuleModel, NewProximityIntersection> (this);
-    intersectors.add<CapsuleModel,SphereModel, NewProximityIntersection> (this);
-    intersectors.add<OBBModel,OBBModel, NewProximityIntersection> (this);
-    intersectors.add<CapsuleModel,OBBModel, NewProximityIntersection> (this);
-    intersectors.add<SphereModel,OBBModel, NewProximityIntersection> (this);
+    intersectors.add<CubeCollisionModel, CubeCollisionModel, NewProximityIntersection>(this);
+    intersectors.add<SphereCollisionModel<sofa::defaulttype::Vec3Types>, SphereCollisionModel<sofa::defaulttype::Vec3Types>, NewProximityIntersection>(this);
+    intersectors.add<CapsuleCollisionModel<sofa::defaulttype::Vec3Types>,CapsuleCollisionModel<sofa::defaulttype::Vec3Types>, NewProximityIntersection> (this);
+    intersectors.add<CapsuleCollisionModel<sofa::defaulttype::Vec3Types>,SphereCollisionModel<sofa::defaulttype::Vec3Types>, NewProximityIntersection> (this);
+    intersectors.add<OBBCollisionModel<sofa::defaulttype::Rigid3Types>,OBBCollisionModel<sofa::defaulttype::Rigid3Types>, NewProximityIntersection> (this);
+    intersectors.add<CapsuleCollisionModel<sofa::defaulttype::Vec3Types>,OBBCollisionModel<sofa::defaulttype::Rigid3Types>, NewProximityIntersection> (this);
+    intersectors.add<SphereCollisionModel<sofa::defaulttype::Vec3Types>,OBBCollisionModel<sofa::defaulttype::Rigid3Types>, NewProximityIntersection> (this);
     intersectors.add<RigidSphereModel,RigidSphereModel, NewProximityIntersection> (this);
-    intersectors.add<SphereModel,RigidSphereModel, NewProximityIntersection> (this);
-    intersectors.add<CapsuleModel,RigidSphereModel, NewProximityIntersection> (this);
-    intersectors.add<RigidSphereModel,OBBModel, NewProximityIntersection> (this);
+    intersectors.add<SphereCollisionModel<sofa::defaulttype::Vec3Types>,RigidSphereModel, NewProximityIntersection> (this);
+    intersectors.add<CapsuleCollisionModel<sofa::defaulttype::Vec3Types>,RigidSphereModel, NewProximityIntersection> (this);
+    intersectors.add<RigidSphereModel,OBBCollisionModel<sofa::defaulttype::Rigid3Types>, NewProximityIntersection> (this);
 
-    intersectors.add<CapsuleModel,RigidCapsuleModel, NewProximityIntersection> (this);
-    intersectors.add<RigidCapsuleModel,SphereModel, NewProximityIntersection> (this);
-    intersectors.add<RigidCapsuleModel,OBBModel, NewProximityIntersection> (this);
-    intersectors.add<RigidCapsuleModel,RigidSphereModel, NewProximityIntersection> (this);
+    intersectors.add<CapsuleCollisionModel<sofa::defaulttype::Vec3Types>,CapsuleCollisionModel<sofa::defaulttype::Rigid3Types>, NewProximityIntersection> (this);
+    intersectors.add<CapsuleCollisionModel<sofa::defaulttype::Rigid3Types>,SphereCollisionModel<sofa::defaulttype::Vec3Types>, NewProximityIntersection> (this);
+    intersectors.add<CapsuleCollisionModel<sofa::defaulttype::Rigid3Types>,OBBCollisionModel<sofa::defaulttype::Rigid3Types>, NewProximityIntersection> (this);
+    intersectors.add<CapsuleCollisionModel<sofa::defaulttype::Rigid3Types>,RigidSphereModel, NewProximityIntersection> (this);
 
     IntersectorFactory::getInstance()->addIntersectors(this);
 
@@ -85,14 +86,6 @@ void NewProximityIntersection::init()
 } // namespace collision
 
 } // namespace component
-
-namespace core
-{
-namespace collision
-{
-template class SOFA_BASE_COLLISION_API IntersectorFactory<component::collision::NewProximityIntersection>;
-}
-}
 
 } // namespace sofa
 

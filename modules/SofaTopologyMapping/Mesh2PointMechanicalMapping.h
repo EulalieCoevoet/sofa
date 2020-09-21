@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -65,21 +62,21 @@ public:
     typedef typename In::MatrixDeriv InMatrixDeriv;
     typedef typename InCoord::value_type Real;
 protected:
-    Mesh2PointMechanicalMapping(core::State<In>* from = NULL, core::State<Out>* to = NULL);
+    Mesh2PointMechanicalMapping(core::State<In>* from = nullptr, core::State<Out>* to = nullptr);
 
     virtual ~Mesh2PointMechanicalMapping();
 
 public:
 
-    void init();
+    void init() override;
 
-    void apply(const core::MechanicalParams *mparams, Data<OutVecCoord>& out, const Data<InVecCoord>& in);
+    void apply(const core::MechanicalParams *mparams, Data<OutVecCoord>& out, const Data<InVecCoord>& in) override;
 
-    void applyJ(const core::MechanicalParams *mparams, Data<OutVecDeriv>& out, const Data<InVecDeriv>& in);
+    void applyJ(const core::MechanicalParams *mparams, Data<OutVecDeriv>& out, const Data<InVecDeriv>& in) override;
 
-    void applyJT(const core::MechanicalParams *mparams, Data<InVecDeriv>& out, const Data<OutVecDeriv>& in);
+    void applyJT(const core::MechanicalParams *mparams, Data<InVecDeriv>& out, const Data<OutVecDeriv>& in) override;
 
-    void applyJT(const core::ConstraintParams *cparams, Data<InMatrixDeriv>& out, const Data<OutMatrixDeriv>& in);
+    void applyJT(const core::ConstraintParams *cparams, Data<InMatrixDeriv>& out, const Data<OutMatrixDeriv>& in) override;
 
 protected:
     topology::Mesh2PointTopologicalMapping* topoMap;
@@ -89,24 +86,10 @@ protected:
 
 
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_MAPPING_MESH2POINTMECHANICALMAPPING_CPP)  //// ATTENTION PB COMPIL WIN3Z
-#ifndef SOFA_FLOAT
+#if  !defined(SOFA_COMPONENT_MAPPING_MESH2POINTMECHANICALMAPPING_CPP)  //// ATTENTION PB COMPIL WIN3Z
 extern template class SOFA_TOPOLOGY_MAPPING_API Mesh2PointMechanicalMapping< defaulttype::Vec3dTypes, defaulttype::Vec3dTypes >;
-extern template class SOFA_TOPOLOGY_MAPPING_API Mesh2PointMechanicalMapping< defaulttype::Vec3dTypes, defaulttype::ExtVec3dTypes >;
-#endif
-#ifndef SOFA_DOUBLE
-extern template class SOFA_TOPOLOGY_MAPPING_API Mesh2PointMechanicalMapping< defaulttype::Vec3fTypes, defaulttype::Vec3fTypes >;
-extern template class SOFA_TOPOLOGY_MAPPING_API Mesh2PointMechanicalMapping< defaulttype::Vec3fTypes, defaulttype::ExtVec3fTypes >;
-#endif
 
-#ifndef SOFA_FLOAT
-#ifndef SOFA_DOUBLE
-extern template class SOFA_TOPOLOGY_MAPPING_API Mesh2PointMechanicalMapping< defaulttype::Vec3dTypes, defaulttype::Vec3fTypes >;
-extern template class SOFA_TOPOLOGY_MAPPING_API Mesh2PointMechanicalMapping< defaulttype::Vec3fTypes, defaulttype::Vec3dTypes >;
-extern template class SOFA_TOPOLOGY_MAPPING_API Mesh2PointMechanicalMapping< defaulttype::Vec3fTypes, defaulttype::ExtVec3dTypes >;
-extern template class SOFA_TOPOLOGY_MAPPING_API Mesh2PointMechanicalMapping< defaulttype::Vec3dTypes, defaulttype::ExtVec3fTypes >;
-#endif
-#endif
+
 #endif
 
 } // namespace mapping

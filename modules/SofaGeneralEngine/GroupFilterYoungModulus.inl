@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -64,7 +61,7 @@ void GroupFilterYoungModulus<DataTypes>::reinit()
 }
 
 template <class DataTypes>
-void GroupFilterYoungModulus<DataTypes>::update()
+void GroupFilterYoungModulus<DataTypes>::doUpdate()
 {
     //Input
     const std::string& strMap = p_mapGroupModulus.getValue();
@@ -73,8 +70,6 @@ void GroupFilterYoungModulus<DataTypes>::update()
     const helper::vector<int >& elementsGroup = f_elementsGroup.getValue();
 
     const Real& defaultModulus =  p_defaultModulus.getValue();
-
-    cleanDirty();
 
     //Output
     helper::vector<Real>& youngModulusVector = *f_youngModulus.beginWriteOnly();
@@ -115,7 +110,7 @@ void GroupFilterYoungModulus<DataTypes>::update()
                     }
 
                     if (!found)
-                        serr << "Group " << groupName << " not found" << sendl;
+                        msg_error() << "Group " << groupName << " not found";
                     else
                     {
                         mapMG[groups[gid]] = youngModulus;
@@ -124,7 +119,10 @@ void GroupFilterYoungModulus<DataTypes>::update()
                             maxSize = groups[gid].p0+ groups[gid].nbp;
                     }
                 }
-                else serr << "Error while parsing mapping" << sendl;
+                else
+                {
+                    msg_error() << "Error while parsing mapping";
+                }
             }
             //build YM vector
             youngModulusVector.clear();
@@ -185,12 +183,6 @@ void GroupFilterYoungModulus<DataTypes>::update()
             youngModulusVector[i] = mapMG[elem];
         }
     }
-
-
-
-    //std::cout << youngModulusVector.size() << std::endl;
-    //std::cout << youngModulusVector << std::endl;
-
     f_youngModulus.endEdit();
 }
 

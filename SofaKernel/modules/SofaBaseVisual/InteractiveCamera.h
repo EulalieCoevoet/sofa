@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -27,6 +24,10 @@
 #include "config.h"
 
 #include <SofaBaseVisual/BaseCamera.h>
+#include <sofa/helper/gl/Trackball.h>
+#include <sofa/core/objectmodel/KeypressedEvent.h>
+#include <sofa/core/objectmodel/KeyreleasedEvent.h>
+#include <sofa/core/objectmodel/MouseEvent.h>
 
 namespace sofa
 {
@@ -45,13 +46,13 @@ public:
     enum  { TRACKBALL_MODE, PAN_MODE, ZOOM_MODE, WHEEL_ZOOM_MODE, NONE_MODE };
     enum  { CAMERA_LOOKAT_PIVOT = 0, CAMERA_POSITION_PIVOT = 1, SCENE_CENTER_PIVOT = 2, WORLD_CENTER_PIVOT = 3};
 
-    Data<double> p_zoomSpeed;
-    Data<double> p_panSpeed;
-    Data<int> p_pivot;
+    Data<double> p_zoomSpeed; ///< Zoom Speed
+    Data<double> p_panSpeed; ///< Pan Speed
+    Data<int> p_pivot; ///< Pivot (0 => Camera lookAt, 1 => Camera position, 2 => Scene center, 3 => World center
 
 protected:
     InteractiveCamera();
-    virtual ~InteractiveCamera();
+    ~InteractiveCamera() override;
 public:
 private:
     int currentMode;
@@ -59,10 +60,10 @@ private:
     int lastMousePosX, lastMousePosY;
     helper::gl::Trackball currentTrackball;
 
-    void internalUpdate();
+    void internalUpdate() override;
 protected:
     void moveCamera(int x, int y);
-    void manageEvent(core::objectmodel::Event* e);
+    void manageEvent(core::objectmodel::Event* e) override;
     void processMouseEvent(core::objectmodel::MouseEvent* me);
     void processKeyPressedEvent(core::objectmodel::KeypressedEvent* kpe);
     void processKeyReleasedEvent(core::objectmodel::KeyreleasedEvent* kre);

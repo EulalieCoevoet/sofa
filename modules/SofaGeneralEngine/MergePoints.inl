@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -25,13 +22,8 @@
 #ifndef SOFA_COMPONENT_ENGINE_MERGEPOINTS_INL
 #define SOFA_COMPONENT_ENGINE_MERGEPOINTS_INL
 
-#if !defined(__GNUC__) || (__GNUC__ > 3 || (_GNUC__ == 3 && __GNUC_MINOR__ > 3))
-#pragma once
-#endif
-
 #include <SofaGeneralEngine/MergePoints.h>
 #include <sofa/core/visual/VisualParams.h>
-#include <sofa/helper/gl/template.h>
 
 namespace sofa
 {
@@ -73,7 +65,7 @@ void MergePoints<DataTypes>::reinit()
 }
 
 template <class DataTypes>
-void MergePoints<DataTypes>::update()
+void MergePoints<DataTypes>::doUpdate()
 {
     if (f_noUpdate.getValue() && initDone)
         return;
@@ -106,7 +98,7 @@ void MergePoints<DataTypes>::update()
             if (posX < points.size()) // new point to insert
                 points[posX] = x2[i]; // insert X2 inside X1
             else
-                serr << "Error Trying to insert vertex from mapping at pos: " <<  posX << " which is out of bounds of X1." << sendl;
+                msg_error() << "Error Trying to insert vertex from mapping at pos: " << posX << " which is out of bounds of X1.";
         }
 
         // fill indice1 & indice2 buffers
@@ -140,8 +132,6 @@ void MergePoints<DataTypes>::update()
             indices2.push_back(index+i);
         }
     }
-
-    cleanDirty();
 
     f_indices1.endEdit();
     f_indices2.endEdit();

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -27,7 +24,7 @@
 
 #include <SofaBoundaryCondition/OscillatorConstraint.h>
 #include <sofa/core/visual/VisualParams.h>
-#include <math.h>
+#include <cmath>
 
 namespace sofa
 {
@@ -37,15 +34,6 @@ namespace component
 
 namespace projectiveconstraintset
 {
-
-
-template <class TDataTypes>
-OscillatorConstraint<TDataTypes>::OscillatorConstraint()
-    : core::behavior::ProjectiveConstraintSet<TDataTypes>(NULL)
-    , constraints(initData(&constraints,"oscillators","Define a sequence of oscillating particules: \n[index, mean, amplitude, pulsation, phase]"))
-{
-}
-
 
 template <class TDataTypes>
 OscillatorConstraint<TDataTypes>::OscillatorConstraint(core::behavior::MechanicalState<TDataTypes>* mstate)
@@ -71,15 +59,9 @@ template <class TDataTypes> template <class DataDeriv>
 void OscillatorConstraint<TDataTypes>::projectResponseT(const core::MechanicalParams* /*mparams*/, DataDeriv& res)
 {
     const helper::vector<Oscillator> &oscillators = constraints.getValue();
-    //Real t = (Real) this->getContext()->getTime();
     for (unsigned i = 0; i < oscillators.size(); ++i)
     {
         const unsigned& index = oscillators[i].index;
-        //const Deriv& a = constraints[i].second.amplitude;
-        //const Real& w = constraints[i].second.pulsation;
-        //const Real& p = constraints[i].second.phase;
-
-        //res[index] = a*(-w)*w*sin(w*t+p);
         res[index] = Deriv();
     }
 }
@@ -139,6 +121,18 @@ void OscillatorConstraint<TDataTypes>::projectJacobianMatrix(const core::Mechani
         projectResponseT<MatrixDerivRowType>(mparams, rowIt.row());
         ++rowIt;
     }
+}
+
+template <class TDataTypes>
+OscillatorConstraint<TDataTypes>::Oscillator::Oscillator()
+{
+}
+
+template <class TDataTypes>
+OscillatorConstraint<TDataTypes>::Oscillator::Oscillator(unsigned int i, const Coord& m, const Deriv& a,
+        const Real& w, const Real& p) :
+    index(i), mean(m), amplitude(a), pulsation(w), phase(p)
+{
 }
 
 } // namespace constraint

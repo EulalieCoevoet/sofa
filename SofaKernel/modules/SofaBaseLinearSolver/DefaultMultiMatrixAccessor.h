@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -64,7 +61,7 @@ class SOFA_BASE_LINEAR_SOLVER_API DefaultMultiMatrixAccessor : public sofa::core
 {
 public:
     DefaultMultiMatrixAccessor();
-    virtual ~DefaultMultiMatrixAccessor();
+    ~DefaultMultiMatrixAccessor() override;
 
     virtual void clear();
 
@@ -73,29 +70,29 @@ public:
 
     // When a real MS is visited by the visitor, it must be registed in a local data here (realStateOffsets)
     // the global size of the system must be ajusted.
-    virtual void addMechanicalState(const sofa::core::behavior::BaseMechanicalState* mstate);
+    void addMechanicalState(const sofa::core::behavior::BaseMechanicalState* mstate) override;
 
     // When a mapping is visited by the visitor, satisfying that is a mechanical mapping
     // and having implemented getJ, this mapping must be registed in a local data here (mappingList)
-    virtual void addMechanicalMapping(sofa::core::BaseMapping* mapping);
+    void addMechanicalMapping(sofa::core::BaseMapping* mapping) override;
 
     //do nothing for instance
-    virtual void addMappedMechanicalState(const sofa::core::behavior::BaseMechanicalState* mstate);
+    void addMappedMechanicalState(const sofa::core::behavior::BaseMechanicalState* mstate) override;
 
     //Read all Real Mechanical State
     virtual void setupMatrices();
 
     //give the sum of size of all Real Mechanical State in ordre to set the global matrix dimension
-    virtual int getGlobalDimension() const;
+    int getGlobalDimension() const override;
 
     //give position in global matrix of the blog related to a given Mechanical State
-    virtual int getGlobalOffset(const sofa::core::behavior::BaseMechanicalState* mstate) const;
+    int getGlobalOffset(const sofa::core::behavior::BaseMechanicalState* mstate) const override;
 
     //give the Matrix Reference (Matrix and Offset) related to a given Mechanical State
-    virtual MatrixRef getMatrix(const sofa::core::behavior::BaseMechanicalState* mstate) const;
+    MatrixRef getMatrix(const sofa::core::behavior::BaseMechanicalState* mstate) const override;
 
     //give the Matrix Reference (Matrix and Offset) related to a interactionForceField (between 2 Mechanical State)
-    virtual InteractionMatrixRef getMatrix(const sofa::core::behavior::BaseMechanicalState* mstate1, const sofa::core::behavior::BaseMechanicalState* mstate2) const;
+    InteractionMatrixRef getMatrix(const sofa::core::behavior::BaseMechanicalState* mstate1, const sofa::core::behavior::BaseMechanicalState* mstate2) const override;
 
     //Compute the global system matrix
     //If there are no mapping, do nothing
@@ -107,11 +104,15 @@ public:
     //the stiffness and interaction stiffness of this state couldn't directly described on the principal matrix
     //then it demande to create a new matrix
     static defaulttype::BaseMatrix* createMatrix(const sofa::core::behavior::BaseMechanicalState* mstate1, const sofa::core::behavior::BaseMechanicalState* mstate2);
+    static defaulttype::BaseMatrix* createMatrixImpl(const sofa::core::behavior::BaseMechanicalState* mstate1, const sofa::core::behavior::BaseMechanicalState* mstate2, bool doPrintInfo);
+
+    //Activate/deactive the printing of extra information related to the numerical system that is being solved.
+    void setDoPrintInfo(bool value){ m_doPrintInfo = value; }
 
 protected:
-
-    defaulttype::BaseMatrix* globalMatrix;
-    unsigned int globalDim;
+    bool m_doPrintInfo {false} ;
+    defaulttype::BaseMatrix* globalMatrix {nullptr} ;
+    unsigned int globalDim {0} ;
 
     //           case1                                           case2
     //      |               |                                  |       |

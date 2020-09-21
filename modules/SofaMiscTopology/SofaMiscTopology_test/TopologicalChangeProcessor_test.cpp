@@ -1,10 +1,31 @@
+/******************************************************************************
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
+*******************************************************************************
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <SofaTest/Sofa_test.h>
+#include <SofaTest/TestMessageHandler.h>
 
-#include <SofaComponentCommon/initComponentCommon.h>
-#include <SofaComponentBase/initComponentBase.h>
-#include <SofaComponentGeneral/initComponentGeneral.h>
-#include <SofaComponentAdvanced/initComponentAdvanced.h>
-#include <SofaComponentMisc/initComponentMisc.h>
+#include <SofaCommon/initSofaCommon.h>
+#include <SofaBase/initSofaBase.h>
+#include <SofaGeneral/initSofaGeneral.h>
+#include <SofaMisc/initSofaMisc.h>
 
 #include <sofa/simulation/Simulation.h>
 #include <SofaSimulationGraph/DAGSimulation.h>
@@ -17,7 +38,7 @@ namespace sofa {
 /**  Test TopologicalChangeProcessor incise process
   */
 
-struct TopologicalChangeProcessor_test: public Sofa_test<double>
+struct TopologicalChangeProcessor_test: public Sofa_test<>
 {
     // root
    simulation::Node::SPtr root;
@@ -27,18 +48,18 @@ struct TopologicalChangeProcessor_test: public Sofa_test<double>
    void SetUp()
    {
        // Init Sofa
-       sofa::component::initComponentBase();
-       sofa::component::initComponentCommon();
-       sofa::component::initComponentGeneral();
-       sofa::component::initComponentAdvanced();
-       sofa::component::initComponentMisc();
+       sofa::component::initSofaBase();
+       sofa::component::initSofaCommon();
+       sofa::component::initSofaGeneral();
+       sofa::component::initSofaMisc();
 
        sofa::simulation::setSimulation(simulation = new sofa::simulation::graph::DAGSimulation());
        root = simulation::getSimulation()->createNewGraph("root");
 
        // Load the scene from the xml file
        std::string fileName = std::string(SOFAMISCTOPOLOGY_TEST_SCENES_DIR) + "/" + "IncisionTrianglesProcess.scn";
-       root = down_cast<sofa::simulation::Node>( sofa::simulation::getSimulation()->load(fileName.c_str()).get() );
+       std::cout << fileName.c_str() << std::endl;
+       root = sofa::simulation::getSimulation()->load(fileName.c_str()).get();
 
        // Test if root is not null
        if(!root)
@@ -72,7 +93,7 @@ struct TopologicalChangeProcessor_test: public Sofa_test<double>
    /// Unload the scene
    void TearDown()
    {
-       if (root!=NULL)
+       if (root!=nullptr)
            sofa::simulation::getSimulation()->unload(root);
    }
 

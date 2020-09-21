@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -26,10 +23,6 @@
 #define SOFA_COMPONENT_CONTROLLER_OMNIEMU_H
 
 //Sensable include
-//#include <HD/hd.h>
-//#include <HDU/hdu.h>
-//#include <HDU/hduError.h>
-//#include <HDU/hduVector.h>
 #include <sofa/helper/LCPcalc.h>
 #include <sofa/defaulttype/SolidTypes.h>
 
@@ -100,16 +93,16 @@ public:
     typedef Rigid3dTypes::VecCoord VecCoord;
 
     SOFA_CLASS(NewOmniDriverEmu, Controller);
-    Data<double> scale;
-    Data<double> forceScale;
-    Data<int> simuFreq;
-    Data<Vec3d> positionBase;
-    Data<Quat> orientationBase;
-    Data<Vec3d> positionTool;
-    Data<Quat> orientationTool;
-    Data<bool> permanent;
-    Data<bool> omniVisu;
-    Data<bool> simulateTranslation;
+    Data<double> scale; ///< Default scale applied to the Phantom Coordinates. 
+    Data<double> forceScale; ///< Default forceScale applied to the force feedback. 
+    Data<int> simuFreq; ///< frequency of the "simulated Omni"
+    Data<Vec3d> positionBase; ///< Position of the interface base in the scene world coordinates
+    Data<Quat> orientationBase; ///< Orientation of the interface base in the scene world coordinates
+    Data<Vec3d> positionTool; ///< Position of the tool in the omni end effector frame
+    Data<Quat> orientationTool; ///< Orientation of the tool in the omni end effector frame
+    Data<bool> permanent; ///< Apply the force feedback permanently
+    Data<bool> omniVisu; ///< Visualize the position of the interface in the virtual scene
+    Data<bool> simulateTranslation; ///< do very naive "translation simulation" of omni, with constant orientation <0 0 0 1>
 
     OmniData	data;
 
@@ -140,8 +133,8 @@ public:
     CTime *thTimer;
     double lastStep;
     bool executeAsynchro;
-    Data<VecCoord> trajPts;
-    Data<helper::vector<double> > trajTim;
+    Data<VecCoord> trajPts; ///< Trajectory positions
+    Data<helper::vector<double> > trajTim; ///< Trajectory timing
 
 private:
     void handleEvent(core::objectmodel::Event *);

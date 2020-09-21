@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -70,20 +67,20 @@ public:
     enum {bsize=SparseMatrix::Nin};                                                   ///< size of a block
 
     Data<Indices> f_index;   ///< Indices of the constrained frames
-    Data<unsigned> d_method;
+    Data<unsigned> d_method; ///< 0: polar, 1: svd, 2: approximation
 
-    Data<double> _drawSize;
+    Data<double> _drawSize; ///< 0 -> point based rendering, >0 -> radius of spheres
 
     VecCoord oldPos;
 
     // -- Constraint interface
-    virtual void init()
+    virtual void init() override
     {
         Inherit1::init();
         reinit();
     }
 
-    virtual void reinit()
+    virtual void reinit() override
     {
         // sort indices to fill the jacobian in ascending order
         Indices tmp = f_index.getValue();
@@ -105,19 +102,19 @@ public:
         for(unsigned ind=0; ind<indices.size(); ind++) res[indices[ind]].setRigid( oldPos[ind], method );
     }
 
-    virtual void projectResponse(const core::MechanicalParams* /*mparams*/, DataVecDeriv& resData)
+    virtual void projectResponse(const core::MechanicalParams* /*mparams*/, DataVecDeriv& resData) override
     {
         helper::WriteAccessor<DataVecDeriv> res = resData;
         projectResponseT<VecDeriv>( res.wref());
     }
 
-    virtual void projectVelocity(const core::MechanicalParams* /*mparams*/, DataVecDeriv& resData)
+    virtual void projectVelocity(const core::MechanicalParams* /*mparams*/, DataVecDeriv& resData) override
     {
         helper::WriteAccessor<DataVecDeriv> res = resData;
         projectResponseT<VecDeriv>( res.wref());
     }
 
-    virtual void projectPosition(const core::MechanicalParams* /*mparams*/, DataVecCoord& xData)
+    virtual void projectPosition(const core::MechanicalParams* /*mparams*/, DataVecCoord& xData) override
     {
         helper::WriteAccessor<DataVecCoord> res = xData;
         const helper::vector<unsigned> & indices = f_index.getValue();
@@ -126,7 +123,7 @@ public:
         for(unsigned i=0; i<indices.size(); i++)      { oldPos[i]=res[indices[i]];  res[indices[i]].setRigid( method ); }
     }
 
-    virtual void projectJacobianMatrix(const core::MechanicalParams* /*mparams*/, DataMatrixDeriv& cData)
+    virtual void projectJacobianMatrix(const core::MechanicalParams* /*mparams*/, DataMatrixDeriv& cData) override
     {
         helper::WriteAccessor<DataMatrixDeriv> c = cData;
 
@@ -144,7 +141,7 @@ public:
     virtual void applyConstraint(defaulttype::BaseMatrix *, unsigned int /*offset*/) {}
     virtual void applyConstraint(defaulttype::BaseVector *, unsigned int /*offset*/) {}
 
-    void projectMatrix( sofa::defaulttype::BaseMatrix* M, unsigned offset )
+    void projectMatrix( sofa::defaulttype::BaseMatrix* M, unsigned offset ) override
     {
         // resize the jacobian
         SparseMatrix jacobian; ///< projection matrix
@@ -192,7 +189,7 @@ protected:
 
     virtual ~RigidConstraint()  {    }
 
-    virtual void draw(const core::visual::VisualParams* vparams)
+    virtual void draw(const core::visual::VisualParams* vparams) override
     {
         if (!vparams->displayFlags().getShowBehaviorModels()) return;
         if (!this->isActive()) return;
@@ -207,15 +204,10 @@ protected:
 
 };
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(FLEXIBLE_RigidConstraint_CPP)
-#ifndef SOFA_FLOAT
+#if  !defined(FLEXIBLE_RigidConstraint_CPP)
 extern template class SOFA_Flexible_API RigidConstraint<defaulttype::Affine3dTypes>;
 extern template class SOFA_Flexible_API RigidConstraint<defaulttype::Quadratic3dTypes>;
-#endif
-#ifndef SOFA_DOUBLE
-extern template class SOFA_Flexible_API RigidConstraint<defaulttype::Affine3fTypes>;
-extern template class SOFA_Flexible_API RigidConstraint<defaulttype::Quadratic3fTypes>;
-#endif
+
 #endif
 
 }

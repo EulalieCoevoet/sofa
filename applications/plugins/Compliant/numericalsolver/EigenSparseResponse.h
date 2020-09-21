@@ -21,11 +21,11 @@ public:
 
     EigenSparseResponse();
 
-    virtual void factor(const rmat& sys);
-	virtual void solve(cmat& lval, const cmat& rval) const;
-    virtual void solve(vec& lval, const vec& rval) const;
-    virtual void reinit();
-    virtual bool isSymmetric() const { return symmetric; }
+    void factor(const rmat& sys) override;
+	void solve(cmat& lval, const cmat& rval) const override;
+    virtual void solve(vec& lval, const vec& rval) const override;
+    void reinit() override;
+    bool isSymmetric() const override { return symmetric; }
 
     /// Add identity*regularize to matrix H to make it definite (Tikhonov regularization)
     /// (this is useful when H is projected with a projective constraint and becomes semidefinite)
@@ -59,7 +59,8 @@ protected:
 
 
 /// Solving the dynamics equation using a LDL^T Cholesky decomposition
-/// Working for any symmetric positive semidefinite matrix
+/// Working for any symmetric positive (semi)definite matrix
+/// @warning this sparse implementation from Eigen does not handle semidefinite matrices (only definite ones)
 /// (basically for any regular mechanical systems including rigids and deformables,
 /// it is why it is used by default)
 typedef Eigen::SimplicialLDLT< AssembledSystem::cmat > LDLTSparseLinearSolver;
@@ -68,6 +69,21 @@ class SOFA_Compliant_API LDLTResponse : public EigenSparseResponse< LDLTSparseLi
 public:
     SOFA_CLASS(LDLTResponse,SOFA_TEMPLATE2(EigenSparseResponse,LDLTSparseLinearSolver,true));
 };
+
+
+
+/// Solving the dynamics equation using a LLT Cholesky decomposition
+/// Working for any symmetric positive definite matrix
+/// (basically for any regular mechanical systems including rigids and deformables,
+/// it is why it is used by default)
+/// It does not handle semidefinite matrices but should be more efficient than LDLT
+typedef Eigen::SimplicialLLT< AssembledSystem::cmat > LLTSparseLinearSolver;
+class SOFA_Compliant_API LLTResponse : public EigenSparseResponse< LLTSparseLinearSolver,true>
+{
+public:
+    SOFA_CLASS(LLTResponse,SOFA_TEMPLATE2(EigenSparseResponse,LLTSparseLinearSolver,true));
+};
+
 
 
 /// Solving the dynamics equation using a LU factorization
@@ -92,13 +108,13 @@ public:
 
     SOFA_ABSTRACT_CLASS(SOFA_TEMPLATE2(EigenSparseIterativeResponse,LinearSolver,symmetric),SOFA_TEMPLATE2(EigenSparseResponse,LinearSolver,symmetric));
 
-    Data<unsigned> d_iterations;
-    Data<SReal> d_tolerance;
+    Data<unsigned> d_iterations; ///< max iterations
+    Data<SReal> d_tolerance; ///< tolerance
 
     EigenSparseIterativeResponse();
 
-    virtual void init();
-    virtual void reinit();
+    virtual void init() override;
+    virtual void reinit() override;
 
 };
 

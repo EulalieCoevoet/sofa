@@ -1,17 +1,24 @@
-cmake_minimum_required(VERSION 2.8.12)
-project(Compliant)
+cmake_minimum_required(VERSION 3.12)
+project(Compliant VERSION 0.1)
 
-set(COMPLIANT_MAJOR_VERSION 0)
-set(COMPLIANT_MINOR_VERSION 1)
-set(COMPLIANT_VERSION ${COMPLIANT_MAJOR_VERSION}.${COMPLIANT_MINOR_VERSION})
+find_package(SofaMisc REQUIRED)
+find_package(SofaMiscCollision REQUIRED)
+find_package(SofaGui QUIET)
+sofa_find_package(SofaPython QUIET)
+
+# Previous Eigen versions have a critical bug (v.noalias()+=w does not work in some situations)
+find_package(Eigen3 3.2.5 REQUIRED)
 
 set(HEADER_FILES
+    config.h.in
     assembly/AssembledSystem.h
     assembly/AssemblyHelper.h
     assembly/AssemblyVisitor.h
     compliance/DampingCompliance.h
     compliance/DiagonalCompliance.h
     compliance/DiagonalCompliance.inl
+    compliance/LinearDiagonalCompliance.h
+    compliance/LinearDiagonalCompliance.inl
     compliance/UniformCompliance.h
     compliance/UniformCompliance.inl
     compliance/FullCompliance.h
@@ -39,23 +46,27 @@ set(HEADER_FILES
     forcefield/PotentialEnergy.h
     forcefield/UniformLinearPotentialEnergy.h
     forcefield/CompliantPenaltyForceField.h
+    forcefield/UniformStiffness.h
+    forcefield/UniformStiffness.inl
+    forcefield/DiagonalStiffness.h
+    forcefield/DiagonalStiffness.inl
+    mapping/AdditionMapping.h
     mapping/AffineMultiMapping.h
     mapping/AssembledMapping.h
     mapping/AssembledMultiMapping.h
     mapping/AssembledRigidRigidMapping.h
     mapping/ContactMapping.h
     mapping/ContactMultiMapping.h
+    mapping/ConstantAssembledMapping.h
+    mapping/ConstantAssembledMultiMapping.h
     mapping/DifferenceFromTargetMapping.h
     mapping/DifferenceMapping.h
-    mapping/AdditionMapping.h
     mapping/DotProductMapping.h
     mapping/GearMapping.h
     mapping/MaskMapping.h
     mapping/NormalizationMapping.h
     mapping/PairingMultiMapping.h
     mapping/ProjectionMapping.h
-    mapping/PythonMultiMapping.h
-    mapping/PythonMultiMapping.inl	
     mapping/QuadraticMapping.h
     mapping/RigidComMultiMapping.h
     mapping/RigidJointMapping.h
@@ -68,7 +79,7 @@ set(HEADER_FILES
     misc/CompliantSolverMerger.h
     misc/FailNode.h
     misc/RigidMass.h
-	misc/SimpleAnimationLoop.h
+    misc/SimpleAnimationLoop.h
     numericalsolver/AnalysisSolver.h
     numericalsolver/Benchmark.h
     numericalsolver/BenchmarkSolver.h
@@ -104,7 +115,7 @@ set(HEADER_FILES
     preconditioner/CompliantLDLTPreconditioner.h
     preconditioner/IncompleteCholeskyPreconditioner.h
     utils/anderson.h
-    utils/nlnscg.h	
+    utils/nlnscg.h
     utils/basis.h
     utils/bicgstab.h
     utils/cg.h
@@ -118,7 +129,6 @@ set(HEADER_FILES
     utils/map.h
     utils/minres.h
     utils/nan.h
-    utils/pair.h
     utils/preconditionedcg.h
     utils/schur.h
     utils/scoped.h
@@ -127,13 +137,13 @@ set(HEADER_FILES
     utils/sub_kkt.h
     utils/sub_kkt.inl
     utils/thread_variable.h
-)
-
+    )
 set(SOURCE_FILES
     assembly/AssembledSystem.cpp
     assembly/AssemblyVisitor.cpp
     compliance/DampingCompliance.cpp
     compliance/DiagonalCompliance.cpp
+    compliance/LinearDiagonalCompliance.cpp
     compliance/UniformCompliance.cpp
     compliance/FullCompliance.cpp
     constraint/ClosureConstraint.cpp
@@ -156,21 +166,22 @@ set(SOURCE_FILES
     forcefield/PotentialEnergy.cpp
     forcefield/UniformLinearPotentialEnergy.cpp
     forcefield/CompliantPenaltyForceField.cpp
+    forcefield/UniformStiffness.cpp
+    forcefield/DiagonalStiffness.cpp
     initCompliant.cpp
+    mapping/AdditionMapping.cpp
     mapping/AffineMultiMapping.cpp
     mapping/AssembledRigidRigidMapping.cpp
     mapping/ContactMapping.cpp
     mapping/ContactMultiMapping.cpp
     mapping/DifferenceFromTargetMapping.cpp
     mapping/DifferenceMapping.cpp
-    mapping/AdditionMapping.cpp
     mapping/DotProductMapping.cpp
     mapping/GearMapping.cpp
     mapping/MaskMapping.cpp
     mapping/NormalizationMapping.cpp
     mapping/PairingMultiMapping.cpp
     mapping/ProjectionMapping.cpp
-    mapping/PythonMultiMapping.cpp
     mapping/QuadraticMapping.cpp
     mapping/RigidComMultiMapping.cpp
     mapping/RigidJointMapping.cpp
@@ -183,8 +194,7 @@ set(SOURCE_FILES
     misc/CompliantSolverMerger.cpp
     misc/FailNode.cpp
     misc/RigidMass.cpp
-    misc/python.cpp
-	misc/SimpleAnimationLoop.cpp
+    misc/SimpleAnimationLoop.cpp
     numericalsolver/AnalysisSolver.cpp
     numericalsolver/Benchmark.cpp
     numericalsolver/BenchmarkSolver.cpp
@@ -213,42 +223,58 @@ set(SOURCE_FILES
     preconditioner/CompliantLDLTPreconditioner.cpp
     preconditioner/IncompleteCholeskyPreconditioner.cpp
     utils/anderson.cpp
-	utils/nlnscg.cpp	
+    utils/nlnscg.cpp
     utils/sub_kkt.cpp
-)
+    )
+set(README_FILES
+    Compliant.txt
+    )
+if(SofaPython_FOUND)
+    set(PYTHON_FILES
+        python/Compliant/Control.py
+        python/Compliant/Frame.py
+        python/Compliant/Rigid.py
+        python/Compliant/Script.py
+        python/Compliant/StructuralAPI.py
+        python/Compliant/Tools.py
+        python/Compliant/Vec.py
+        python/Compliant/__init__.py
+        python/Compliant/future.py
+        python/Compliant/sml.py
+        )
+    list(APPEND HEADER_FILES
+        mapping/PythonMultiMapping.h
+        mapping/PythonMultiMapping.inl
+        python/Binding_AssembledSystem.h
+        python/python.h
+        )
+    list(APPEND SOURCE_FILES
+        mapping/PythonMultiMapping.cpp
+        python/_Compliant.cpp
+        python/Binding_AssembledSystem.cpp
 
-set(PYTHON_FILES
-    python/Compliant/Control.py
-    python/Compliant/Frame.py
-    python/Compliant/Quaternion.py
-    python/Compliant/Rigid.py
-    python/Compliant/Script.py
-    python/Compliant/StructuralAPI.py
-    python/Compliant/Tools.py
-    python/Compliant/Vec.py
-    python/Compliant/__init__.py
-    python/Compliant/future.py
-    python/Compliant/sml.py
-)
+        # note: need to fix assembled solver in python before removing
+        python/python.cpp
+        )
 
-set(README_FILES Compliant.txt)
-
-find_package(SofaMisc REQUIRED)
-
-## Compliant/config.h
-configure_file(config.h.in "${CMAKE_BINARY_DIR}/include/Compliant/config.h")
-install(FILES "${CMAKE_BINARY_DIR}/include/Compliant/config.h" DESTINATION "include/Compliant")
-
-# Config files and install rules for pythons scripts
-sofa_set_python_directory(${PROJECT_NAME} "python")
+    # Config files and install rules for pythons scripts
+    sofa_install_pythonscripts(PLUGIN_NAME ${PROJECT_NAME} PYTHONSCRIPTS_SOURCE_DIR "python")
+endif()
 
 add_library(${PROJECT_NAME} SHARED ${HEADER_FILES} ${SOURCE_FILES} ${README_FILES} ${PYTHON_FILES})
-target_link_libraries(${PROJECT_NAME} SofaEigen2Solver SofaUserInteraction SofaComponentMisc SofaSimulationGraph)
-target_include_directories(${PROJECT_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>")
-target_include_directories(${PROJECT_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>")
-target_include_directories(${PROJECT_NAME} PUBLIC "$<INSTALL_INTERFACE:include>")
-set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${COMPLIANT_VERSION})
-set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-DSOFA_BUILD_Compliant")
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE "-DSOFA_BUILD_${PROJECT_NAME}")
+target_link_libraries(${PROJECT_NAME} PUBLIC SofaEigen2Solver SofaUserInteraction SofaMisc SofaSimulationGraph SofaMiscCollision)
+target_link_libraries(${PROJECT_NAME} PUBLIC Eigen3::Eigen)
+
+# linking explicitly with rt looks necessary on some posix (e.g. CentOS)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(${PROJECT_NAME} PRIVATE rt)
+endif()
+
+if(SofaPython_FOUND)
+    target_link_libraries(${PROJECT_NAME} PUBLIC SofaPython)
+endif()
 
 if(SOFA_BUILD_TESTS)
     find_package(SofaTest QUIET)
@@ -257,19 +283,14 @@ if(SOFA_BUILD_TESTS)
     endif()
 endif()
 
-find_package(SofaGui QUIET)
-if(SofaGui_FOUND AND SOFA_GUI_QT)
+if(SofaGui_FOUND AND SOFAGUI_HAVE_SOFAGUIQT)
     add_subdirectory(Compliant_gui)
 endif()
 
 ## Install rules for the library; CMake package configurations files
-sofa_create_package(Compliant ${COMPLIANT_VERSION} Compliant Compliant)
-
-## Install rules for the resources
-install(DIRECTORY examples/ DESTINATION share/sofa/plugins/${PROJECT_NAME})
-
-## Hand-crafted install rules for the headers, to preserve the directory structure
-foreach(HEADER ${HEADER_FILES})
-    string(REGEX MATCH "(.*)[/\\]" DIR ${HEADER})
-    install(FILES ${HEADER} DESTINATION "include/${PROJECT_NAME}/${DIR}")
-endforeach(HEADER HEADERS)
+sofa_generate_package(
+    NAME ${PROJECT_NAME}
+    TARGETS ${PROJECT_NAME}
+    VERSION ${PROJECT_VERSION}
+    RELOCATABLE "plugins"
+    )

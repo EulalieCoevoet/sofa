@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -27,10 +24,8 @@
 
 #include <SofaConstraint/BilateralInteractionConstraint.h>
 #include <sofa/core/visual/VisualParams.h>
-
+#include <sofa/defaulttype/RGBAColor.h>
 #include <sofa/defaulttype/Vec.h>
-#include <sofa/helper/gl/template.h>
-
 #include <algorithm> // for std::min
 
 namespace sofa
@@ -42,15 +37,65 @@ namespace component
 namespace constraintset
 {
 
-template<class DataTypes>
-void BilateralInteractionConstraint<DataTypes>::init()
+namespace bilateralinteractionconstraint
 {
+using sofa::core::objectmodel::KeypressedEvent ;
+using sofa::core::objectmodel::Event ;
+using sofa::helper::WriteAccessor ;
+using sofa::defaulttype::Vec;
+
+template<class DataTypes>
+BilateralInteractionConstraint<DataTypes>::BilateralInteractionConstraint(MechanicalState* object1, MechanicalState* object2)
+    : Inherit(object1, object2)
+    , m1(initData(&m1, "first_point","index of the constraint on the first model"))
+    , m2(initData(&m2, "second_point","index of the constraint on the second model"))
+    , restVector(initData(&restVector, "rest_vector","Relative position to maintain between attached points (optional)"))
+
+    , d_numericalTolerance(initData(&d_numericalTolerance, 0.0001, "numericalTolerance",
+                                    "a real value specifying the tolerance during the constraint solving. (optional, default=0.0001)") )
+
+    //TODO(dmarchal): Such kind of behavior shouldn't be implemented in the component but externalized in a second component or in a python script controlling the scene.
+    , activateAtIteration( initData(&activateAtIteration, 0, "activateAtIteration", "activate constraint at specified interation (0 = always enabled, -1=disabled)"))
+
+    //TODO(dmarchal): what do TEST means in the following ? should it be renamed (EXPERIMENTAL FEATURE) and when those Experimental feature will become official feature ?
+    , merge(initData(&merge,false, "merge", "TEST: merge the bilateral constraints in a unique constraint"))
+    , derivative(initData(&derivative,false, "derivative", "TEST: derivative"))
+    , keepOrientDiff(initData(&keepOrientDiff,false, "keepOrientationDifference", "keep the initial difference in orientation (only for rigids)"))
+{
+    this->f_listening.setValue(true);
+}
+
+template<class DataTypes>
+BilateralInteractionConstraint<DataTypes>::BilateralInteractionConstraint(MechanicalState* object)
+    : BilateralInteractionConstraint(object, object)
+{
+}
+
+template<class DataTypes>
+BilateralInteractionConstraint<DataTypes>::BilateralInteractionConstraint()
+    : BilateralInteractionConstraint(nullptr, nullptr)
+{
+}
+
+template<class DataTypes>
+void BilateralInteractionConstraint<DataTypes>::unspecializedInit()
+{
+    /// Do general check of validity for inputs
     Inherit1::init();
+
+    /// Using assert means that the previous lines have check that there is two valid mechanical state.
     assert(this->mstate1);
     assert(this->mstate2);
+
     prevForces.clear();
     iteration = 0;
     activated = (activateAtIteration.getValue() >= 0 && activateAtIteration.getValue() <= iteration);
+}
+
+template<class DataTypes>
+void BilateralInteractionConstraint<DataTypes>::init()
+{
+    unspecializedInit();
 }
 
 template<class DataTypes>
@@ -61,12 +106,17 @@ void BilateralInteractionConstraint<DataTypes>::reinit()
 }
 
 template<class DataTypes>
-void BilateralInteractionConstraint<DataTypes>::buildConstraintMatrix(const core::ConstraintParams*, DataMatrixDeriv &c1_d, DataMatrixDeriv &c2_d, unsigned int &constraintId
-        , const DataVecCoord &/*x1*/, const DataVecCoord &/*x2*/)
+void BilateralInteractionConstraint<DataTypes>::reset(){
+    init();
+}
+
+template<class DataTypes>
+void BilateralInteractionConstraint<DataTypes>::buildConstraintMatrix(const ConstraintParams*, DataMatrixDeriv &c1_d, DataMatrixDeriv &c2_d, unsigned int &constraintId
+                                                                      , const DataVecCoord &/*x1*/, const DataVecCoord &/*x2*/)
 {
     if (!activated)
         return;
-    
+
     unsigned minp = std::min(m1.getValue().size(), m2.getValue().size());
     if (minp == 0)
         return;
@@ -120,8 +170,8 @@ void BilateralInteractionConstraint<DataTypes>::buildConstraintMatrix(const core
         ///////////////// grouped constraints ///////////////
         dfree_square_total.clear();
 
-        const DataVecCoord &d_x1 = *this->mstate1->read(core::ConstVecCoordId::position());
-        const DataVecCoord &d_x2 = *this->mstate2->read(core::ConstVecCoordId::position());
+        const DataVecCoord &d_x1 = *this->mstate1->read(ConstVecCoordId::position());
+        const DataVecCoord &d_x2 = *this->mstate2->read(ConstVecCoordId::position());
 
         const VecCoord &x1 = d_x1.getValue();
         const VecCoord &x2 = d_x2.getValue();
@@ -153,9 +203,9 @@ void BilateralInteractionConstraint<DataTypes>::buildConstraintMatrix(const core
         }
 
         dfree.resize(minp);
-        
-        const DataVecCoord &d_x1free = *this->mstate1->read(core::ConstVecCoordId::freePosition());
-        const DataVecCoord &d_x2free = *this->mstate2->read(core::ConstVecCoordId::freePosition());
+
+        const DataVecCoord &d_x1free = *this->mstate1->read(ConstVecCoordId::freePosition());
+        const DataVecCoord &d_x2free = *this->mstate2->read(ConstVecCoordId::freePosition());
 
         const VecCoord &x1free = d_x1free.getValue();
         const VecCoord &x2free = d_x2free.getValue();
@@ -175,8 +225,6 @@ void BilateralInteractionConstraint<DataTypes>::buildConstraintMatrix(const core
             }
             dfree[pid] = dfree_loc;
 
-            //std::cout<<" BilateralInteractionConstraint add Constraint between point "<<tm1<<" of object1 and "<< tm2<< " of object2"<<std::endl;
-
             const defaulttype::Vec<3, Real> cx(1.0,0,0), cy(0,1.0,0), cz(0,0,1.0);
 
             cid[pid] = constraintId;
@@ -195,8 +243,8 @@ void BilateralInteractionConstraint<DataTypes>::buildConstraintMatrix(const core
             }
             else
             {
-                c1_it.addCol(tm1, -cx*sign(dfree_loc[0]) );
-                c2_it.addCol(tm2, cx*sign(dfree_loc[0]));
+                c1_it.addCol(tm1, -cx*sofa::helper::sign(dfree_loc[0]) );
+                c2_it.addCol(tm2, cx*sofa::helper::sign(dfree_loc[0]));
             }
 
 
@@ -211,8 +259,8 @@ void BilateralInteractionConstraint<DataTypes>::buildConstraintMatrix(const core
             }
             else
             {
-                c1_it.addCol(tm1, -cy*sign(dfree_loc[1]));
-                c2_it.addCol(tm2, cy*sign(dfree_loc[1]));
+                c1_it.addCol(tm1, -cy*sofa::helper::sign(dfree_loc[1]));
+                c2_it.addCol(tm2, cy*sofa::helper::sign(dfree_loc[1]));
             }
 
             // contribution along z axis
@@ -225,8 +273,8 @@ void BilateralInteractionConstraint<DataTypes>::buildConstraintMatrix(const core
             }
             else
             {
-                c1_it.addCol(tm1, -cz*sign(dfree_loc[2]));
-                c2_it.addCol(tm2, cz*sign(dfree_loc[2]));
+                c1_it.addCol(tm1, -cz*sofa::helper::sign(dfree_loc[2]));
+                c2_it.addCol(tm2, cz*sofa::helper::sign(dfree_loc[2]));
             }
         }
 
@@ -240,8 +288,10 @@ void BilateralInteractionConstraint<DataTypes>::buildConstraintMatrix(const core
 
 
 template<class DataTypes>
-void BilateralInteractionConstraint<DataTypes>::getConstraintViolation(const core::ConstraintParams* cParams, defaulttype::BaseVector *v, const DataVecCoord &d_x1, const DataVecCoord &d_x2
-        , const DataVecDeriv & d_v1, const DataVecDeriv & d_v2)
+void BilateralInteractionConstraint<DataTypes>::getConstraintViolation(const ConstraintParams* cParams,
+                                                                       BaseVector *v,
+                                                                       const DataVecCoord &d_x1, const DataVecCoord &d_x2
+                                                                       , const DataVecDeriv & d_v1, const DataVecDeriv & d_v2)
 {
     if (!activated) return;
 
@@ -252,7 +302,7 @@ void BilateralInteractionConstraint<DataTypes>::getConstraintViolation(const cor
 
     const VecDeriv& restVector = this->restVector.getValue();
 
-    if (cParams->constOrder() == core::ConstraintParams::VEL)
+    if (cParams->constOrder() == ConstraintParams::VEL)
     {
         getVelocityViolation(v, d_x1, d_x2, d_v1, d_v2);
         return;
@@ -293,7 +343,7 @@ void BilateralInteractionConstraint<DataTypes>::getConstraintViolation(const cor
                 else
                 {
 
-                    v->add(cid[pid]+i  , dfree[pid][i]*sign(dfree[pid][i] ) );
+                    v->add(cid[pid]+i  , dfree[pid][i]*sofa::helper::sign(dfree[pid][i] ) );
                 }
             }
 
@@ -303,10 +353,12 @@ void BilateralInteractionConstraint<DataTypes>::getConstraintViolation(const cor
 
 
 template<class DataTypes>
-void BilateralInteractionConstraint<DataTypes>::getVelocityViolation(defaulttype::BaseVector *v, const DataVecCoord &d_x1, const DataVecCoord &d_x2, const DataVecDeriv &d_v1, const DataVecDeriv &d_v2)
+void BilateralInteractionConstraint<DataTypes>::getVelocityViolation(BaseVector *v,
+                                                                     const DataVecCoord &d_x1,
+                                                                     const DataVecCoord &d_x2,
+                                                                     const DataVecDeriv &d_v1,
+                                                                     const DataVecDeriv &d_v2)
 {
-    std::cout<<"getVelocityViolation called "<<std::endl;
-
     const helper::vector<int> &m1Indices = m1.getValue();
     const helper::vector<int> &m2Indices = m2.getValue();
 
@@ -317,26 +369,34 @@ void BilateralInteractionConstraint<DataTypes>::getVelocityViolation(defaulttype
 
     unsigned minp = std::min(m1Indices.size(), m2Indices.size());
     const VecDeriv& restVector = this->restVector.getValue();
-    std::vector<Deriv> dPrimefree;
 
     if (!merge.getValue())
     {
-        dPrimefree.resize(minp);
+        auto pos1 = this->getMState1()->readPositions();
+        auto pos2 = this->getMState2()->readPositions();
 
-        for (unsigned pid=0; pid<minp; pid++)
+        const SReal dt = this->getContext()->getDt();
+        const SReal invDt = SReal(1.0) / dt;
+
+        for (unsigned pid=0; pid<minp; ++pid)
         {
-            dPrimefree[pid] = v2[m2Indices[pid]] - v1[m1Indices[pid]];
-            if (pid < restVector.size())
-                dPrimefree[pid] -= restVector[pid];
 
-            v->set(cid[pid]  , dPrimefree[pid][0]);
-            v->set(cid[pid]+1, dPrimefree[pid][1]);
-            v->set(cid[pid]+2, dPrimefree[pid][2]);
+            Deriv dPos = (pos2[m2Indices[pid]] - pos1[m1Indices[pid]]);
+            if (pid < restVector.size())
+            {
+                dPos -= -restVector[pid];
+            }
+            dPos *= invDt;
+            const Deriv dVfree = v2[m2Indices[pid]] - v1[m1Indices[pid]];
+
+            v->set(cid[pid]  , dVfree[0] + dPos[0] );
+            v->set(cid[pid]+1, dVfree[1] + dPos[1] );
+            v->set(cid[pid]+2, dVfree[2] + dPos[2] );
         }
     }
     else
     {
-
+        VecDeriv dPrimefree;
         dPrimefree.resize(minp);
         dfree.resize(minp);
 
@@ -358,13 +418,11 @@ void BilateralInteractionConstraint<DataTypes>::getVelocityViolation(defaulttype
             {
                 if(squareXYZ[i])
                 {
-                    //std::cout<<" vel viol:"<<2*dPrimefree[pid][i]*dfree[pid][i]<<std::endl;
                     v->add(cid[pid]+i  , 2*dPrimefree[pid][i]*dfree[pid][i]);
                 }
                 else
                 {
-                    //std::cout<<" vel viol:"<<dPrimefree[pid][i]*sign(dfree[pid][i] )<<std::endl;
-                    v->add(cid[pid]+i  , dPrimefree[pid][i]*sign(dfree[pid][i] ) );
+                    v->add(cid[pid]+i  , dPrimefree[pid][i]*sofa::helper::sign(dfree[pid][i] ) );
                 }
             }
 
@@ -374,7 +432,9 @@ void BilateralInteractionConstraint<DataTypes>::getVelocityViolation(defaulttype
 
 
 template<class DataTypes>
-void BilateralInteractionConstraint<DataTypes>::getConstraintResolution(const core::ConstraintParams* cParams, std::vector<core::behavior::ConstraintResolution*>& resTab, unsigned int& offset)
+void BilateralInteractionConstraint<DataTypes>::getConstraintResolution(const ConstraintParams* cParams,
+                                                                        std::vector<ConstraintResolution*>& resTab,
+                                                                        unsigned int& offset)
 {
     SOFA_UNUSED(cParams);
     unsigned minp=std::min(m1.getValue().size(),m2.getValue().size());
@@ -397,19 +457,101 @@ void BilateralInteractionConstraint<DataTypes>::getConstraintResolution(const co
 }
 
 template<class DataTypes>
-void BilateralInteractionConstraint<DataTypes>::handleEvent(sofa::core::objectmodel::Event *event)
+void BilateralInteractionConstraint<DataTypes>::addContact(Deriv /*norm*/, Coord P, Coord Q,
+                                                           Real /*contactDistance*/, int m1, int m2,
+                                                           Coord /*Pfree*/, Coord /*Qfree*/,
+                                                           long /*id*/, PersistentID /*localid*/)
 {
-    if (sofa::core::objectmodel::KeypressedEvent::checkEventType(event))
-    {
-        sofa::core::objectmodel::KeypressedEvent *ev = static_cast<sofa::core::objectmodel::KeypressedEvent *>(event);
+    WriteAccessor<Data<helper::vector<int> > > wm1 = this->m1;
+    WriteAccessor<Data<helper::vector<int> > > wm2 = this->m2;
+    WriteAccessor<Data<VecDeriv > > wrest = this->restVector;
+    wm1.push_back(m1);
+    wm2.push_back(m2);
+    wrest.push_back(Q-P);
+}
 
-        //std::cout << "key pressed " << std::endl;
+
+template<class DataTypes>
+void BilateralInteractionConstraint<DataTypes>::addContact(Deriv norm, Coord P, Coord Q, Real
+                                                           contactDistance, int m1, int m2,
+                                                           long id, PersistentID localid)
+{
+   addContact(norm, P, Q, contactDistance, m1, m2,
+               this->getMState2()->read(ConstVecCoordId::freePosition())->getValue()[m2],
+               this->getMState1()->read(ConstVecCoordId::freePosition())->getValue()[m1],
+               id, localid);
+}
+
+template<class DataTypes>
+void BilateralInteractionConstraint<DataTypes>::addContact(Deriv norm, Real contactDistance,
+                                                           int m1, int m2, long id, PersistentID localid)
+{
+    addContact(norm,
+               this->getMState2()->read(ConstVecCoordId::position())->getValue()[m2],
+               this->getMState1()->read(ConstVecCoordId::position())->getValue()[m1],
+               contactDistance, m1, m2,
+               this->getMState2()->read(ConstVecCoordId::freePosition())->getValue()[m2],
+               this->getMState1()->read(ConstVecCoordId::freePosition())->getValue()[m1],
+               id, localid);
+}
+
+
+template<class DataTypes>
+void BilateralInteractionConstraint<DataTypes>::clear(int reserve)
+{
+    WriteAccessor<Data<helper::vector<int> > > wm1 = this->m1;
+    WriteAccessor<Data<helper::vector<int> > > wm2 = this->m2;
+    WriteAccessor<Data<VecDeriv > > wrest = this->restVector;
+    wm1.clear();
+    wm2.clear();
+    wrest.clear();
+    if (reserve)
+    {
+        wm1.reserve(reserve);
+        wm2.reserve(reserve);
+        wrest.reserve(reserve);
+    }
+}
+
+template<class DataTypes>
+void BilateralInteractionConstraint<DataTypes>::draw(const core::visual::VisualParams* vparams)
+{
+    if (!vparams->displayFlags().getShowInteractionForceFields()) return;
+
+    vparams->drawTool()->saveLastState();
+    vparams->drawTool()->disableLighting();
+
+    sofa::defaulttype::RGBAColor colorActive = sofa::defaulttype::RGBAColor::magenta();
+    sofa::defaulttype::RGBAColor colorNotActive = sofa::defaulttype::RGBAColor::green();
+    std::vector< sofa::defaulttype::Vector3 > vertices;
+
+    unsigned minp = std::min(m1.getValue().size(),m2.getValue().size());
+    for (unsigned i=0; i<minp; i++)
+    {
+        vertices.push_back(DataTypes::getCPos(this->mstate1->read(ConstVecCoordId::position())->getValue()[m1.getValue()[i]]));
+        vertices.push_back(DataTypes::getCPos(this->mstate2->read(ConstVecCoordId::position())->getValue()[m1.getValue()[i]]));
+    }
+
+    vparams->drawTool()->drawPoints(vertices, 10, (activated) ? colorActive : colorNotActive);
+
+    vparams->drawTool()->restoreLastState();
+}
+
+//TODO(dmarchal): implementing keyboard interaction behavior directly in a component is not a valid
+//design for a component. Interaction should be defered to an independent Component implemented in the SofaInteraction
+//a second possibility is to implement this behavir using script.
+template<class DataTypes>
+void BilateralInteractionConstraint<DataTypes>::handleEvent(Event *event)
+{
+    if (KeypressedEvent::checkEventType(event))
+    {
+        KeypressedEvent *ev = static_cast<KeypressedEvent *>(event);
         switch(ev->getKey())
         {
 
         case 'A':
         case 'a':
-            std::cout << "Activating constraint" << std::endl;
+            msg_info() << "Activating constraint" ;
             activated = true;
             break;
         }
@@ -421,48 +563,14 @@ void BilateralInteractionConstraint<DataTypes>::handleEvent(sofa::core::objectmo
         ++iteration;
         if (!activated && activateAtIteration.getValue() >= 0 && activateAtIteration.getValue() <= iteration)
         {
-            std::cout << "Activating constraint" << std::endl;
+            msg_info() << "Activating constraint" ;
             activated = true;
         }
     }
 }
 
-template<class DataTypes>
-void BilateralInteractionConstraint<DataTypes>::addContact(Deriv /*norm*/, Coord P, Coord Q, Real /*contactDistance*/, int m1, int m2, Coord /*Pfree*/, Coord /*Qfree*/, long /*id*/, PersistentID /*localid*/)
-{
-    helper::WriteAccessor<Data<helper::vector<int> > > wm1 = this->m1;
-    helper::WriteAccessor<Data<helper::vector<int> > > wm2 = this->m2;
-    helper::WriteAccessor<Data<VecDeriv > > wrest = this->restVector;
-    wm1.push_back(m1);
-    wm2.push_back(m2);
-    wrest.push_back(Q-P);
-}
 
-
-template<class DataTypes>
-void BilateralInteractionConstraint<DataTypes>::draw(const core::visual::VisualParams* vparams)
-{
-#ifndef SOFA_NO_OPENGL
-    if (!vparams->displayFlags().getShowInteractionForceFields()) return;
-
-    glDisable(GL_LIGHTING);
-    glPointSize(10);
-    if (activated)
-        glColor4f(1,0,1,1);
-    else
-        glColor4f(0,1,0,1);
-    glBegin(GL_POINTS);
-
-    unsigned minp = std::min(m1.getValue().size(),m2.getValue().size());
-    for (unsigned i=0; i<minp; i++)
-    {
-        helper::gl::glVertexT(this->mstate1->read(core::ConstVecCoordId::position())->getValue()[m1.getValue()[i]]);
-        helper::gl::glVertexT(this->mstate2->read(core::ConstVecCoordId::position())->getValue()[m2.getValue()[i]]);
-    }
-    glEnd();
-    glPointSize(1);
-#endif /* SOFA_NO_OPENGL */
-}
+} // namespace bilateralinteractionconstraint
 
 } // namespace constraintset
 

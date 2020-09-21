@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -79,27 +76,27 @@ public:
 
     PersistentContactRigidMapping();
 
-    virtual ~PersistentContactRigidMapping() {}
+    ~PersistentContactRigidMapping() override {}
 
-    void beginAddContactPoint();
+    void beginAddContactPoint() override;
 
     int addContactPointFromInputMapping(const sofa::defaulttype::Vector3& pos, std::vector< std::pair<int, double> > & baryCoords);
 
-    int keepContactPointFromInputMapping(const int index);
+    int keepContactPointFromInputMapping(const int index) override;
 
-    void init();
+    void init() override;
 
-    void bwdInit();
+    void bwdInit() override;
 
-    void reset();
+    void reset() override;
 
-    void handleEvent(sofa::core::objectmodel::Event*);
+    void handleEvent(sofa::core::objectmodel::Event*) override;
 
     void storeFreePositionAndDx();
 
     void applyLinearizedPosition();
 
-    void applyPositionAndFreePosition();
+    void applyPositionAndFreePosition() override;
 
     void applyJT(const core::ConstraintParams *cparams  /* PARAMS FIRST */, Data<InMatrixDeriv>& out, const Data<OutMatrixDeriv>& in)
     {
@@ -122,27 +119,9 @@ protected:
     void setDefaultValues();
 };
 
-
-
-
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_MAPPING_PERSISTENTCONTACTRIGIDMAPPING_CPP)
-#ifndef SOFA_FLOAT
-extern template class SOFA_PERSISTENTCONTACT_API PersistentContactRigidMapping< defaulttype::Rigid3dTypes, defaulttype::Vec3dTypes >;
-extern template class SOFA_PERSISTENTCONTACT_API PersistentContactRigidMapping< defaulttype::Rigid2dTypes, defaulttype::Vec2dTypes >;
-#endif
-#ifndef SOFA_DOUBLE
-extern template class SOFA_PERSISTENTCONTACT_API PersistentContactRigidMapping< defaulttype::Rigid3fTypes, defaulttype::Vec3fTypes >;
-extern template class SOFA_PERSISTENTCONTACT_API PersistentContactRigidMapping< defaulttype::Rigid2fTypes, defaulttype::Vec2fTypes >;
-#endif
-
-//#ifndef SOFA_FLOAT
-//#ifndef SOFA_DOUBLE
-//extern template class SOFA_PERSISTENTCONTACT_API PersistentContactRigidMapping< Rigid3dTypes, Vec3fTypes >;
-//extern template class SOFA_PERSISTENTCONTACT_API PersistentContactRigidMapping< Rigid3fTypes, Vec3dTypes >;
-//extern template class SOFA_PERSISTENTCONTACT_API PersistentContactRigidMapping< Rigid2dTypes, Vec2fTypes >;
-//extern template class SOFA_PERSISTENTCONTACT_API PersistentContactRigidMapping< Rigid2fTypes, Vec2dTypes >;
-//#endif
-//#endif
+#if  !defined(SOFA_COMPONENT_MAPPING_PERSISTENTCONTACTRIGIDMAPPING_CPP)
+extern template class SOFA_PERSISTENTCONTACT_API PersistentContactRigidMapping< defaulttype::Rigid3Types, defaulttype::Vec3Types >;
+extern template class SOFA_PERSISTENTCONTACT_API PersistentContactRigidMapping< defaulttype::Rigid2Types, defaulttype::Vec2Types >;
 #endif
 
 } // namespace mapping

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -30,7 +27,7 @@
 #include <sofa/core/behavior/BaseMass.h>
 #include <sofa/core/VecId.h>
 
-#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
 
 namespace sofa
@@ -87,34 +84,34 @@ public:
     typedef Data<OutMatrixDeriv> OutDataMatrixDeriv;
 
 
-    virtual void apply(
+    void apply(
         const core::MechanicalParams* mparams, const helper::vector<OutDataVecCoord*>& dataVecOutPos,
         const helper::vector<const In1DataVecCoord*>& dataVecIn1Pos ,
-        const helper::vector<const In2DataVecCoord*>& dataVecIn2Pos);
-    virtual void applyJ(
+        const helper::vector<const In2DataVecCoord*>& dataVecIn2Pos) override;
+    void applyJ(
         const core::MechanicalParams* mparams, const helper::vector< OutDataVecDeriv*>& dataVecOutVel,
         const helper::vector<const In1DataVecDeriv*>& dataVecIn1Vel,
-        const helper::vector<const In2DataVecDeriv*>& dataVecIn2Vel);
-    virtual void applyJT(
+        const helper::vector<const In2DataVecDeriv*>& dataVecIn2Vel) override;
+    void applyJT(
         const core::MechanicalParams* mparams, const helper::vector< In1DataVecDeriv*>& dataVecOut1Force,
         const helper::vector< In2DataVecDeriv*>& dataVecOut2Force,
-        const helper::vector<const OutDataVecDeriv*>& dataVecInForce);
-    virtual void applyJT(
+        const helper::vector<const OutDataVecDeriv*>& dataVecInForce) override;
+    void applyJT(
         const core::ConstraintParams* /*cparams*/, const helper::vector< In1DataMatrixDeriv*>& /* dataMatOut1Const */ ,
         const helper::vector< In2DataMatrixDeriv*>&  /*dataMatOut2Const*/ ,
-        const helper::vector<const OutDataMatrixDeriv*>& /*dataMatInConst*/)
+        const helper::vector<const OutDataMatrixDeriv*>& /*dataMatInConst*/) override
     {
-        serr << "applyJT(constraint) not implemented" << sendl;
+        msg_warning() << "This object only support Direct Solving but an Indirect Solver in the scene is calling method applyJT(constraint) which is not implemented. This will produce un-expected behavior.";
     }
 
 
     //virtual void apply(const vecOutVecCoord& outPos, const vecConstIn1VecCoord& inPos1 , const vecConstIn2VecCoord& inPos2 );
     //virtual void applyJ(const helper::vector< OutVecDeriv*>& outDeriv, const helper::vector<const In1VecDeriv*>& inDeriv1, const helper::vector<const In2VecDeriv*>& inDeriv2);
     //virtual void applyJT( const helper::vector<In1VecDeriv*>& outDeriv1 ,const helper::vector<In2VecDeriv*>& outDeriv2 , const helper::vector<const OutVecDeriv*>& inDeriv );
-    virtual void applyDJT(const core::MechanicalParams* /*mparams*/, core::MultiVecDerivId /*inForce*/, core::ConstMultiVecDerivId /*outForce*/) {}
+    void applyDJT(const core::MechanicalParams* /*mparams*/, core::MultiVecDerivId /*inForce*/, core::ConstMultiVecDerivId /*outForce*/) override {}
 
-    virtual void init();
-    void draw(const core::visual::VisualParams* vparams);
+    void init() override;
+    void draw(const core::visual::VisualParams* vparams) override;
 
 protected:
 
@@ -138,13 +135,9 @@ protected:
     double invTotalMass;
 };
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_MAPPING_CENTEROFMASSMULTI2MAPPING_CPP)
-#ifndef SOFA_FLOAT
-extern template class SOFA_MISC_MAPPING_API CenterOfMassMulti2Mapping< defaulttype::Vec3dTypes, defaulttype::Rigid3dTypes, defaulttype::Vec3dTypes >;
-#endif
-#ifndef SOFA_DOUBLE
-extern template class SOFA_MISC_MAPPING_API CenterOfMassMulti2Mapping< defaulttype::Vec3fTypes, defaulttype::Rigid3fTypes, defaulttype::Vec3fTypes >;
-#endif
+#if  !defined(SOFA_COMPONENT_MAPPING_CENTEROFMASSMULTI2MAPPING_CPP)
+extern template class SOFA_MISC_MAPPING_API CenterOfMassMulti2Mapping< defaulttype::Vec3Types, defaulttype::Rigid3Types, defaulttype::Vec3Types >;
+
 #endif
 
 } // namespace mapping

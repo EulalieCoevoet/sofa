@@ -64,7 +64,7 @@ struct DampedOscillator_test : public CompliantSolver_test
         DOF->writeVelocities()[0] = Vec1(v0);
 
         UniformMass1::SPtr Mass = addNew<UniformMass1>(oscillator,"mass");
-        Mass->mass.setValue( mass );
+        Mass->d_vertexMass.setValue( mass );
 
         compliance = addNew<UniformCompliance1>(oscillator,"compliance");
         compliance->isCompliance.setValue(false);
@@ -89,7 +89,7 @@ struct DampedOscillator_test : public CompliantSolver_test
         sofa::simulation::getSimulation()->init(node.get());
         //**************************************************
 
-        if(debug) simulation::getSimulation()->exportXML ( simulation::getSimulation()->GetRoot().get(), "/tmp/oscilator.scn" );
+        if(debug) simulation::getSimulation()->exportXML ( node.get(), "/tmp/oscilator.scn" );
 
 
         //**************************************************
@@ -172,8 +172,8 @@ TEST_F(DampedOscillator_test, explicitEuler )
     setup( 1.0, 1.0, 0.0, 1.0, 0.0 );// mass, stiffness, damping, x0, v0
 
     // === Numerical integrator
-    odesolver::EulerSolver::SPtr eulerSolver = addNew<odesolver::EulerSolver>(node);
-    eulerSolver->symplectic.setValue(false);
+    odesolver::EulerExplicitSolver::SPtr eulerExplicitSolver = addNew<odesolver::EulerExplicitSolver>(node);
+    eulerExplicitSolver->d_symplectic.setValue(false);
 
     // === Run the test
     SReal moreThanOneCycle = 7 * sqrt( 1.0/1.0 ); // 2*M_PI*sqrt(m/k)
@@ -188,8 +188,8 @@ TEST_F(DampedOscillator_test, symplecticEuler )
     setup( 1.0, 1.0, 0.0, 1.0, 0.0 );// mass, stiffness, damping, x0, v0
 
     // === Numerical integrator
-    odesolver::EulerSolver::SPtr eulerSolver = addNew<odesolver::EulerSolver>(node);
-    eulerSolver->symplectic.setValue(true);
+    odesolver::EulerExplicitSolver::SPtr eulerExplicitSolver = addNew<odesolver::EulerExplicitSolver>(node);
+    eulerExplicitSolver->d_symplectic.setValue(true);
 
     // === Run the test
     SReal moreThanOneCycle = 7 * sqrt( 1.0/1.0 ); // 2*M_PI*sqrt(m/k)
@@ -274,7 +274,7 @@ TEST_F(DampedOscillator_test, compliance_second_degree )
     DOF->writeVelocities()[0] = Vec1(v0);
 
     UniformMass1::SPtr Mass = addNew<UniformMass1>(oscillator,"mass");
-    Mass->mass.setValue( mass );
+    Mass->d_vertexMass.setValue( mass );
 
     simulation::Node::SPtr constraint = oscillator->createChild( "constraint" );
 

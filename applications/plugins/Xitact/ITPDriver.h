@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -34,12 +31,10 @@
 #include <sofa/core/behavior/BaseController.h>
 #include <SofaOpenglVisual/OglModel.h>
 #include <SofaUserInteraction/Controller.h>
-#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/Quat.h>
 #include "XiTrocarInterface.h"
 
-//#include <sofa/gui/PickHandler.h>
-//#include <sofa/gui/qt/SofaMouseManager.h>
 #include <SofaUserInteraction/RayModel.h>
 #include <Xitact/config.h>
 
@@ -86,11 +81,11 @@ class SOFA_XITACTPLUGIN_API ITPDriver : public sofa::component::controller::Cont
 public:
 
     SOFA_CLASS(ITPDriver,sofa::component::controller::Controller);
-    Data<double> Scale;
-    Data<bool> permanent;
-    Data <int> indexTool;
-    Data <sofa::defaulttype::Vec3d> direction;
-    Data <sofa::defaulttype::Vec3d> position;
+    Data<double> Scale; ///< Default scale applied to the Phantom Coordinates. 
+    Data<bool> permanent; ///< Apply the force feedback permanently
+    Data <int> indexTool; ///< index of the tool to simulate (if more than 1). Index 0 correspond to first tool.
+    Data <sofa::defaulttype::Vec3d> direction; ///< index of the tool to simulate (if more than 1). Index 0 correspond to first tool.
+    Data <sofa::defaulttype::Vec3d> position; ///< index of the tool to simulate (if more than 1). Index 0 correspond to first tool.
 
     XiToolDataITP	data;
 

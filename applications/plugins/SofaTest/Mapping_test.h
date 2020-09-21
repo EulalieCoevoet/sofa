@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -13,11 +13,8 @@
 * more details.                                                               *
 *                                                                             *
 * You should have received a copy of the GNU General Public License along     *
-* with this program; if not, write to the Free Software Foundation, Inc., 51  *
-* Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.                   *
+* with this program. If not, see <http://www.gnu.org/licenses/>.              *
 *******************************************************************************
-*                            SOFA :: Applications                             *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -33,11 +30,10 @@
 
 #include <SceneCreator/SceneCreator.h>
 
-#include <SofaComponentBase/initComponentBase.h>
-#include <SofaComponentCommon/initComponentCommon.h>
-#include <SofaComponentGeneral/initComponentGeneral.h>
-#include <SofaComponentAdvanced/initComponentAdvanced.h>
-#include <SofaComponentMisc/initComponentMisc.h>
+#include <SofaBase/initSofaBase.h>
+#include <SofaCommon/initSofaCommon.h>
+#include <SofaGeneral/initSofaGeneral.h>
+#include <SofaMisc/initSofaMisc.h>
 
 #include <SofaBaseLinearSolver/FullVector.h>
 #include <SofaEigen2Solver/EigenSparseMatrix.h>
@@ -46,6 +42,7 @@
 #include <SceneCreator/SceneCreator.h>
 
 #include <sofa/helper/logging/Messaging.h>
+#include <sofa/helper/ArgumentParser.h>
 
 namespace sofa {
 
@@ -134,11 +131,10 @@ struct Mapping_test: public Sofa_test<typename _Mapping::Real>
 
     Mapping_test():deltaRange(1,1000),errorMax(10),errorFactorDJ(1),flags(TEST_ASSEMBLY_API | TEST_GEOMETRIC_STIFFNESS)
     {
-        sofa::component::initComponentBase();
-        sofa::component::initComponentCommon();
-        sofa::component::initComponentGeneral();
-        sofa::component::initComponentAdvanced();
-        sofa::component::initComponentMisc();
+        sofa::component::initSofaBase();
+        sofa::component::initSofaCommon();
+        sofa::component::initSofaGeneral();
+        sofa::component::initSofaMisc();
         sofa::simulation::setSimulation(simulation = new sofa::simulation::graph::DAGSimulation());
 
         /// Parent node
@@ -148,22 +144,21 @@ struct Mapping_test: public Sofa_test<typename _Mapping::Real>
         /// Child node
         simulation::Node::SPtr childNode = root->createChild("childNode");
         outDofs = modeling::addNew<OutDOFs>(childNode);
-        mapping = modeling::addNew<Mapping>(root).get();
+        mapping = modeling::addNew<Mapping>(childNode).get();
         mapping->setModels(inDofs.get(),outDofs.get());
     }
 
     Mapping_test(std::string fileName):deltaRange(1,1000),errorMax(100),errorFactorDJ(1),flags(TEST_ASSEMBLY_API | TEST_GEOMETRIC_STIFFNESS)
     {
-        sofa::component::initComponentBase();
-        sofa::component::initComponentCommon();
-        sofa::component::initComponentGeneral();
-        sofa::component::initComponentAdvanced();
-        sofa::component::initComponentMisc();
+        sofa::component::initSofaBase();
+        sofa::component::initSofaCommon();
+        sofa::component::initSofaGeneral();
+        sofa::component::initSofaMisc();
         sofa::simulation::setSimulation(simulation = new sofa::simulation::graph::DAGSimulation());
 
         /// Load the scene
         root = simulation->createNewGraph("root");
-        root = down_cast<sofa::simulation::Node>( sofa::simulation::getSimulation()->load(fileName.c_str()).get() );
+        root = sofa::simulation::getSimulation()->load(fileName.c_str(), false, sofa::helper::ArgumentParser::extra_args());
 
         // InDofs
         inDofs = root->get<InDOFs>(root->SearchDown);
@@ -278,7 +273,7 @@ struct Mapping_test: public Sofa_test<typename _Mapping::Real>
         }
 
         /// test applyJ and everything related to Jacobians
-        const unsigned Np=inDofs->getSize(), Nc=outDofs->getSize();
+        size_t Np = inDofs->getSize(), Nc=outDofs->getSize();
 
         InVecCoord xp(Np),xp1(Np);
         InVecDeriv vp(Np),fp(Np),dfp(Np),fp2(Np);
@@ -319,7 +314,7 @@ struct Mapping_test: public Sofa_test<typename _Mapping::Real>
         WriteInVecDeriv vin = inDofs->writeVelocities();
         copyToData( vin, vp );
         mapping->applyJ( &mparams, core::VecDerivId::velocity(), core::VecDerivId::velocity() );
-        WriteOutVecDeriv vout = outDofs->writeVelocities();
+        ReadOutVecDeriv vout = outDofs->readVelocities();
         copyFromData( vc, vout);
         //          cout<<"child velocity vc = " << vc << endl;
 
@@ -370,11 +365,11 @@ struct Mapping_test: public Sofa_test<typename _Mapping::Real>
             // then compare results
 
 //            OutMatrixDeriv outMatrices(  ); // how to build that, what size?
-//            /*WriteInMatrixDeriv min = */inDofs->write( MatrixDerivId::holonomicC() );
-//            WriteOutMatrixDeriv mout = outDofs->write( MatrixDerivId::holonomicC() );
+//            /*WriteInMatrixDeriv min = */inDofs->write( MatrixDerivId::constraintJacobian() );
+//            WriteOutMatrixDeriv mout = outDofs->write( MatrixDerivId::constraintJacobian() );
 //            copyToData(mout,outMatrices);
 
-//            mapping->applyJt(  ConstraintParams*, MatrixDerivId::holonomicC(), MatrixDerivId::holonomicC() );
+//            mapping->applyJt(  ConstraintParams*, MatrixDerivId::constraintJacobian(), MatrixDerivId::constraintJacobian() );
 
 
         }
@@ -397,7 +392,7 @@ struct Mapping_test: public Sofa_test<typename _Mapping::Real>
         copyToData( pin, xp1 );
         //            cout<<"new parent positions xp1 = " << xp1 << endl;
         mapping->apply ( &mparams, core::VecCoordId::position(), core::VecCoordId::position() );
-        WriteOutVecCoord pout = outDofs->writePositions();
+        ReadOutVecCoord pout = outDofs->readPositions();
         copyFromData( xc1, pout );
         //            cout<<"old child positions xc = " << xc << endl;
         //            cout<<"new child positions xc1 = " << xc1 << endl;
@@ -454,11 +449,11 @@ struct Mapping_test: public Sofa_test<typename _Mapping::Real>
             // K can be null or empty for linear mappings
             // still performing the test with a null Kv vector to check if the mapping is really linear
 
-            if( bk != NULL ){
+            if( bk != nullptr ){
 
                 typedef component::linearsolver::EigenSparseMatrix<In,In> EigenSparseKMatrix;
                 const EigenSparseKMatrix* K = dynamic_cast<const EigenSparseKMatrix*>(bk);
-                if( K == NULL ){
+                if( K == nullptr ){
                     succeed = false;
                     ADD_FAILURE() << "getK returns a matrix of non-EigenSparseMatrix type";
                     // TODO perform a slow conversion with a big warning rather than a failure?
@@ -475,6 +470,28 @@ struct Mapping_test: public Sofa_test<typename _Mapping::Real>
                               << "dfp = " << fp12 << std::endl;
             }
         }
+
+
+        // =================== test updateForceMask
+        // propagate forces coming from all child, each parent receiving a force should be in the mask
+        EXPECT_EQ( inDofs->forceMask.size(), inDofs->getSize() );
+        EXPECT_EQ( outDofs->forceMask.size(), outDofs->getSize() );
+        inDofs->forceMask.assign(inDofs->getSize(),false);
+        outDofs->forceMask.assign(outDofs->getSize(),true);
+        mapping->apply(&mparams, core::VecCoordId::position(), core::VecCoordId::position()); // to force mask update at the next applyJ
+        copyToData( fin, fp2 );  // reset parent forces before accumulating child forces
+        for( unsigned i=0; i<Nc; i++ ) Out::set( fout[i], 1,1,1 ); // every child forces are non-nul
+        mapping->applyJT( &mparams, core::VecDerivId::force(), core::VecDerivId::force() );
+        copyFromData( fp, inDofs->readForces() );
+        for( unsigned i=0; i<Np; i++ ) {
+            if( fp[i] != InDeriv() && !inDofs->forceMask.getEntry(i) ){
+                succeed = false;
+                ADD_FAILURE() << "updateForceMask did not propagate mask to every influencing parents" << std::endl;
+                break;
+            }
+        }
+
+
 
         if(!succeed)
         { ADD_FAILURE() << "Failed Seed number = " << BaseSofa_test::seed << std::endl;}
@@ -502,7 +519,7 @@ struct Mapping_test: public Sofa_test<typename _Mapping::Real>
 
     virtual ~Mapping_test()
     {
-        if (root!=NULL)
+        if (root!=nullptr)
             sofa::simulation::getSimulation()->unload(root);
     }
 
@@ -513,13 +530,13 @@ protected:
     static EigenSparseMatrixType* getMatrix(const helper::vector<sofa::defaulttype::BaseMatrix*>* matrices)
     {
         if( !matrices ){
-            ADD_FAILURE()<< "Matrix list is NULL (API for assembly is not implemented)";
+            ADD_FAILURE()<< "Matrix list is nullptr (API for assembly is not implemented)";
         }
         if( matrices->size() != 1 ){
             ADD_FAILURE()<< "Matrix list should have size == 1 in simple mappings";
         }
         EigenSparseMatrixType* ei = dynamic_cast<EigenSparseMatrixType*>((*matrices)[0] );
-        if( ei == NULL ){
+        if( ei == nullptr ){
             ADD_FAILURE() << "getJs returns a matrix of non-EigenSparseMatrix type";
             // TODO perform a slow conversion with a big warning rather than a failure?
         }

@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -13,17 +13,16 @@
 * more details.                                                               *
 *                                                                             *
 * You should have received a copy of the GNU General Public License along     *
-* with this program; if not, write to the Free Software Foundation, Inc., 51  *
-* Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.                   *
+* with this program. If not, see <http://www.gnu.org/licenses/>.              *
 *******************************************************************************
-*                            SOFA :: Applications                             *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #ifndef OPTITRACKNATNETCLIENT_H
 #define OPTITRACKNATNETCLIENT_H
+
+#include <OptiTrackNatNet/config.h>
 
 #include <boost/asio.hpp>
 #include <boost/array.hpp>
@@ -33,6 +32,7 @@
 //#include <sofa/core/behavior/BaseController.h>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/defaulttype/Quat.h>
+#include <SofaUserInteraction/Controller.h>
 
 namespace SofaOptiTrackNatNet
 {
@@ -46,10 +46,10 @@ struct ModelDef;
 /// decoded frame of tracked data
 struct FrameData;
 
-class OptiTrackNatNetDataReceiver : public virtual sofa::core::objectmodel::BaseObject
+class OptiTrackNatNetDataReceiver : public sofa::component::controller::Controller
 {
 public:
-    SOFA_ABSTRACT_CLASS(OptiTrackNatNetDataReceiver, sofa::core::objectmodel::BaseObject);
+    SOFA_ABSTRACT_CLASS(OptiTrackNatNetDataReceiver, sofa::component::controller::Controller);
 protected:
     virtual ~OptiTrackNatNetDataReceiver() {}
 public:
@@ -64,32 +64,32 @@ public:
 
 protected:
     bool connect();
-    void handleEvent(sofa::core::objectmodel::Event *);
+    void handleEvent(sofa::core::objectmodel::Event *) override;
 
     virtual void update();
 
 public:
-    sofa::core::objectmodel::Data<std::string> serverName;
-    sofa::core::objectmodel::Data<std::string> clientName;
-    sofa::core::objectmodel::Data<double> scale;
+    sofa::core::objectmodel::Data<std::string> serverName; ///< NatNet server address (default to localhost)
+    sofa::core::objectmodel::Data<std::string> clientName; ///< IP to bind this client to (default to localhost)
+    sofa::core::objectmodel::Data<double> scale; ///< Scale factor to apply to coordinates (using the global frame as fixed point)
 
-    sofa::core::objectmodel::Data<sofa::helper::vector<sofa::defaulttype::Vec3f> > trackedMarkers;
-    sofa::core::objectmodel::Data<sofa::helper::vector<sofa::defaulttype::Vec3f> > otherMarkers;
+    sofa::core::objectmodel::Data<sofa::helper::vector<sofa::defaulttype::Vec3f> > trackedMarkers; ///< Position of received known markers
+    sofa::core::objectmodel::Data<sofa::helper::vector<sofa::defaulttype::Vec3f> > otherMarkers; ///< Position of received unknown markers
 
     sofa::core::objectmodel::MultiLink<OptiTrackNatNetClient, OptiTrackNatNetDataReceiver, 0> natNetReceivers;
 
     OptiTrackNatNetClient();
     virtual ~OptiTrackNatNetClient();
 
-    virtual void init();
-    virtual void reinit();
+    virtual void init() override;
+    virtual void reinit() override;
 
-    virtual void draw(const sofa::core::visual::VisualParams* vparams);
+    virtual void draw(const sofa::core::visual::VisualParams* vparams) override;
 
-    sofa::core::objectmodel::Data<float> drawTrackedMarkersSize;
-    sofa::core::objectmodel::Data<sofa::defaulttype::Vec4f> drawTrackedMarkersColor;
-    sofa::core::objectmodel::Data<float> drawOtherMarkersSize;
-    sofa::core::objectmodel::Data<sofa::defaulttype::Vec4f> drawOtherMarkersColor;
+    sofa::core::objectmodel::Data<float> drawTrackedMarkersSize; ///< Size of displayed markers
+    sofa::core::objectmodel::Data<sofa::defaulttype::Vec4f> drawTrackedMarkersColor; ///< Color of displayed markers
+    sofa::core::objectmodel::Data<float> drawOtherMarkersSize; ///< Size of displayed unknown markers
+    sofa::core::objectmodel::Data<sofa::defaulttype::Vec4f> drawOtherMarkersColor; ///< Color of displayed unknown markers
 
 public:
 

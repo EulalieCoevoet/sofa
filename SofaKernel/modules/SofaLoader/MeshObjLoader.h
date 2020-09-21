@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -28,6 +25,8 @@
 
 #include <sofa/core/loader/MeshLoader.h>
 #include <sofa/helper/SVector.h>
+#include <sofa/helper/types/Material.h>
+
 namespace sofa
 {
 
@@ -45,38 +44,42 @@ public:
     SOFA_CLASS(MeshObjLoader,sofa::core::loader::MeshLoader);
 protected:
     MeshObjLoader();
-    virtual ~MeshObjLoader();
-public:
-    virtual bool load();
+    ~MeshObjLoader() override;
 
-    template <class T>
-    static bool canCreate ( T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg )
-    {
-        return BaseLoader::canCreate (obj, context, arg);
-    }
+public:
+    bool load() override;
 
 protected:
     bool readOBJ (std::ifstream &file, const char* filename);
-//    bool readMTL (const char* filename, helper::vector <sofa::core::loader::Material>& materials);
-//    void addGroup (const sofa::core::loader::PrimitiveGroup& g);
+    bool readMTL (const char* filename, helper::vector <sofa::helper::types::Material>& d_materials);
+    void addGroup (const sofa::core::loader::PrimitiveGroup& g);
 
-//    sofa::core::loader::Material material;
-//    Data<bool> loadMaterial;
-//    std::string textureName;
-//    FaceType faceType;
+    std::string textureName;
+    FaceType faceType;
 
 public:
-//    Data <helper::vector <sofa::core::loader::Material> > materials;
-//    Data <helper::SVector <helper::SVector <int> > > faceList;
-//    Data <helper::SVector <helper::SVector <int> > > texIndexList;
-//    Data< helper::vector<sofa::defaulttype::Vector2> > texCoordsList;
-//    Data <helper::SVector<helper::SVector<int> > > normalsIndexList;
-//    Data <helper::vector<sofa::defaulttype::Vector3> > normalsList;
-//    Data< helper::vector<sofa::defaulttype::Vector2> > texCoords;
-//    Data< bool > computeMaterialFaces;
-//    helper::vector< Data <helper::vector <unsigned int> >* > subsets_indices;
+    Data<bool> d_handleSeams;
+    Data<bool> d_loadMaterial;
+    Data<sofa::helper::types::Material> d_material;
+    Data <helper::vector <sofa::helper::types::Material> > d_materials;
+    Data <helper::SVector <helper::SVector <int> > > d_faceList;
+    Data <helper::SVector <helper::SVector <int> > > d_texIndexList;
+    Data <helper::vector<sofa::defaulttype::Vector3> > d_positionsList;
+    Data< helper::vector<sofa::defaulttype::Vector2> > d_texCoordsList;
+    Data <helper::SVector<helper::SVector<int> > > d_normalsIndexList;
+    Data <helper::vector<sofa::defaulttype::Vector3> > d_normalsList;
+    Data< helper::vector<sofa::defaulttype::Vector2> > d_texCoords;
+    Data< bool > d_computeMaterialFaces;
+    helper::vector< Data <helper::vector <unsigned int> >* > d_subsets_indices;
 
-    Data< bool > d_storeGroups; ///< should sub-groups be stored?
+    /// If vertices have multiple normals/texcoords, then we need to separate them
+    /// This vector store which input position is used for each vertex
+    /// If it is empty then each vertex correspond to one position
+    Data< helper::vector<int> > d_vertPosIdx;
+
+    /// Similarly this vector store which input normal is used for each vertex
+    /// If it is empty then each vertex correspond to one normal
+    Data< helper::vector<int> > d_vertNormIdx;
 
     virtual std::string type() { return "The format of this mesh is OBJ."; }
 };

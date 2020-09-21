@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -32,9 +29,10 @@
 #include <sofa/simulation/UpdateBoundingBoxVisitor.h>
 #include <sofa/simulation/PropagateEventVisitor.h>
 #include <sofa/simulation/BehaviorUpdatePositionVisitor.h>
+#include <sofa/simulation/UpdateInternalDataVisitor.h>
 #include <sofa/simulation/UpdateContextVisitor.h>
 #include <sofa/simulation/UpdateMappingVisitor.h>
-#include <math.h>
+#include <cmath>
 #include <iostream>
 
 
@@ -53,8 +51,6 @@ int MultiStepAnimationLoopClass = core::RegisterObject("Multi steps animation lo
         .add< MultiStepAnimationLoop >()
         .addAlias("MultiStepMasterSolver")
         ;
-
-SOFA_DECL_CLASS(MultiStepAnimationLoop);
 
 MultiStepAnimationLoop::MultiStepAnimationLoop(simulation::Node* gnode)
     : Inherit(gnode)
@@ -89,14 +85,22 @@ void MultiStepAnimationLoop::step(const sofa::core::ExecParams* params, SReal dt
     BehaviorUpdatePositionVisitor beh(params , dt);
     this->gnode->execute ( beh );
 
+    UpdateInternalDataVisitor uid(params);
+    gnode->execute ( uid );
+
     const int ncollis = collisionSteps.getValue();
     const int ninteg = integrationSteps.getValue();
 
     SReal stepDt = dt / (ncollis * ninteg);
+
+    // initialize a constraint params object with default MultiVecId for 
+    // constraint jacobian, free positions, free velocity vectors
+    sofa::core::ConstraintParams cparams(*params); 
+
     for (int c = 0; c < ncollis; ++c)
     {
         // First we reset the constraints
-        sofa::simulation::MechanicalResetConstraintVisitor(params).execute(this->getContext());
+        sofa::simulation::MechanicalResetConstraintVisitor(&cparams).execute(this->getContext());
         // Then do collision detection and response creation
         sout << "collision" << sendl;
         computeCollision(params);
@@ -129,11 +133,12 @@ void MultiStepAnimationLoop::step(const sofa::core::ExecParams* params, SReal dt
     }
     sofa::helper::AdvancedTimer::stepEnd("UpdateMapping");
 
-#ifndef SOFA_NO_UPDATE_BBOX
-    sofa::helper::AdvancedTimer::stepBegin("UpdateBBox");
-    this->gnode->execute<UpdateBoundingBoxVisitor>(params);
-    sofa::helper::AdvancedTimer::stepEnd("UpdateBBox");
-#endif
+    if (!SOFA_NO_UPDATE_BBOX)
+    {
+        sofa::helper::AdvancedTimer::stepBegin("UpdateBBox");
+        this->gnode->execute<UpdateBoundingBoxVisitor>(params);
+        sofa::helper::AdvancedTimer::stepEnd("UpdateBBox");
+    }
 #ifdef SOFA_DUMP_VISITOR_INFO
     simulation::Visitor::printCloseNode("Step");
 #endif

@@ -1,39 +1,48 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #define SOFA_COMPONENT_COLLISION_DISCRETEINTERSECTION_CPP
-#include <sofa/helper/system/config.h>
-#include <sofa/helper/FnDispatcher.inl>
+
 #include <SofaBaseCollision/DiscreteIntersection.h>
 #include <sofa/core/ObjectFactory.h>
 #include <sofa/core/collision/Intersection.inl>
-#include <sofa/helper/proximity.h>
-#include <iostream>
-#include <algorithm>
+
+#include <SofaBaseCollision/SphereModel.h>
+#include <SofaBaseCollision/CubeModel.h>
+#include <SofaBaseCollision/CapsuleModel.h>
+#include <SofaBaseCollision/OBBModel.h>
+#include <SofaBaseCollision/BaseIntTool.h>
+#include <SofaBaseCollision/RigidCapsuleModel.h>
 
 namespace sofa
 {
+
+namespace core
+{
+    namespace collision
+    {
+        template class SOFA_BASE_COLLISION_API IntersectorFactory<component::collision::DiscreteIntersection>;
+    }
+}
+
 
 namespace component
 {
@@ -44,8 +53,6 @@ namespace collision
 using namespace sofa::defaulttype;
 using namespace sofa::core::collision;
 
-SOFA_DECL_CLASS(DiscreteIntersection)
-
 int DiscreteIntersectionClass = core::RegisterObject("TODO-DiscreteIntersectionClass")
         .add< DiscreteIntersection >()
         ;
@@ -53,32 +60,32 @@ int DiscreteIntersectionClass = core::RegisterObject("TODO-DiscreteIntersectionC
 
 DiscreteIntersection::DiscreteIntersection()
 {
-    intersectors.add<CubeModel,       CubeModel,         DiscreteIntersection> (this);
+    intersectors.add<CubeCollisionModel,       CubeCollisionModel,         DiscreteIntersection> (this);
 
-    intersectors.add<SphereModel,     SphereModel,       DiscreteIntersection> (this);
+    intersectors.add<SphereCollisionModel<sofa::defaulttype::Vec3Types>,     SphereCollisionModel<sofa::defaulttype::Vec3Types>,       DiscreteIntersection> (this);
 
-    intersectors.add<CapsuleModel,CapsuleModel, DiscreteIntersection> (this);
-    intersectors.add<CapsuleModel,SphereModel, DiscreteIntersection> (this);
+    intersectors.add<CapsuleCollisionModel<sofa::defaulttype::Vec3Types>,CapsuleCollisionModel<sofa::defaulttype::Vec3Types>, DiscreteIntersection> (this);
+    intersectors.add<CapsuleCollisionModel<sofa::defaulttype::Vec3Types>,SphereCollisionModel<sofa::defaulttype::Vec3Types>, DiscreteIntersection> (this);
 
-    intersectors.add<OBBModel,OBBModel,DiscreteIntersection>(this);
-    intersectors.add<SphereModel,OBBModel, DiscreteIntersection> (this);
-    intersectors.add<CapsuleModel,OBBModel,DiscreteIntersection>(this);
+    intersectors.add<OBBCollisionModel<sofa::defaulttype::Rigid3Types>,OBBCollisionModel<sofa::defaulttype::Rigid3Types>,DiscreteIntersection>(this);
+    intersectors.add<SphereCollisionModel<sofa::defaulttype::Vec3Types>,OBBCollisionModel<sofa::defaulttype::Rigid3Types>, DiscreteIntersection> (this);
+    intersectors.add<CapsuleCollisionModel<sofa::defaulttype::Vec3Types>,OBBCollisionModel<sofa::defaulttype::Rigid3Types>,DiscreteIntersection>(this);
 
     intersectors.add<RigidSphereModel,RigidSphereModel,DiscreteIntersection>(this);
-    intersectors.add<SphereModel,RigidSphereModel, DiscreteIntersection> (this);
-    intersectors.add<CapsuleModel,RigidSphereModel,DiscreteIntersection>(this);
-    intersectors.add<RigidSphereModel,OBBModel,DiscreteIntersection>(this);
+    intersectors.add<SphereCollisionModel<sofa::defaulttype::Vec3Types>,RigidSphereModel, DiscreteIntersection> (this);
+    intersectors.add<CapsuleCollisionModel<sofa::defaulttype::Vec3Types>,RigidSphereModel,DiscreteIntersection>(this);
+    intersectors.add<RigidSphereModel,OBBCollisionModel<sofa::defaulttype::Rigid3Types>,DiscreteIntersection>(this);
 
-    intersectors.add<CapsuleModel,RigidCapsuleModel, DiscreteIntersection> (this);
-    intersectors.add<RigidCapsuleModel,RigidCapsuleModel, DiscreteIntersection> (this);
-    intersectors.add<RigidCapsuleModel,SphereModel, DiscreteIntersection> (this);
-    intersectors.add<RigidCapsuleModel,OBBModel,DiscreteIntersection>(this);
-    intersectors.add<RigidCapsuleModel,RigidSphereModel,DiscreteIntersection>(this);
+    intersectors.add<CapsuleCollisionModel<sofa::defaulttype::Vec3Types>,CapsuleCollisionModel<sofa::defaulttype::Rigid3Types>, DiscreteIntersection> (this);
+    intersectors.add<CapsuleCollisionModel<sofa::defaulttype::Rigid3Types>,CapsuleCollisionModel<sofa::defaulttype::Rigid3Types>, DiscreteIntersection> (this);
+    intersectors.add<CapsuleCollisionModel<sofa::defaulttype::Rigid3Types>,SphereCollisionModel<sofa::defaulttype::Vec3Types>, DiscreteIntersection> (this);
+    intersectors.add<CapsuleCollisionModel<sofa::defaulttype::Rigid3Types>,OBBCollisionModel<sofa::defaulttype::Rigid3Types>,DiscreteIntersection>(this);
+    intersectors.add<CapsuleCollisionModel<sofa::defaulttype::Rigid3Types>,RigidSphereModel,DiscreteIntersection>(this);
 
-    IntersectorFactory::getInstance()->addIntersectors(this);
+	IntersectorFactory::getInstance()->addIntersectors(this);
 }
 
-/// Return the intersector class handling the given pair of collision models, or NULL if not supported.
+/// Return the intersector class handling the given pair of collision models, or nullptr if not supported.
 ElementIntersector* DiscreteIntersection::findIntersector(core::CollisionModel* object1, core::CollisionModel* object2, bool& swapModels)
 {
     return intersectors.get(object1, object2, swapModels);
@@ -88,14 +95,6 @@ ElementIntersector* DiscreteIntersection::findIntersector(core::CollisionModel* 
 } // namespace collision
 
 } // namespace component
-
-namespace core
-{
-namespace collision
-{
-template class SOFA_BASE_COLLISION_API IntersectorFactory<component::collision::DiscreteIntersection>;
-}
-}
 
 } // namespace sofa
 

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -95,25 +92,25 @@ public:
     int nbElementPerVertex;                 // max number of elements connected to a vertex
 
     // Material properties
-    Data<Real> poissonRatio;
-    Data<Real> youngModulus;
+    Data<Real> poissonRatio; ///< Poisson ratio in Hooke's law
+    Data<Real> youngModulus; ///< Young modulus in Hooke's law
     float Lambda, Mu;                       // Lame coefficients
 
     // TLED configuration
-    Data<Real> timestep;                    // time step of the simulation
-    Data<unsigned int> isViscoelastic;      // flag = 1 to enable viscoelasticity
-    Data<unsigned int> isAnisotropic;       // flag = 1 to enable transverse isotropy
-    Data<Vec3f> preferredDirection;         // uniform preferred direction for transverse isotropy
+    Data<Real> timestep;                    ///< time step of the simulation
+    Data<unsigned int> isViscoelastic;      ///< flag = 1 to enable viscoelasticity
+    Data<unsigned int> isAnisotropic;       ///< flag = 1 to enable transverse isotropy
+    Data<Vec3f> preferredDirection;         ///< uniform preferred direction for transverse isotropy
 
     CudaHexahedronTLEDForceField();
     virtual ~CudaHexahedronTLEDForceField();
-    void init();
-    void reinit();
+    void init() override;
+    void reinit() override;
 //    void addForce (VecDeriv& f, const VecCoord& x, const VecDeriv& /*v*/);
-    virtual void addForce(const sofa::core::MechanicalParams* /*mparams*/, DataVecDeriv& dataF, const DataVecCoord& dataX, const DataVecDeriv& /*dataV*/ ) ;
+    virtual void addForce(const sofa::core::MechanicalParams* /*mparams*/, DataVecDeriv& dataF, const DataVecCoord& dataX, const DataVecDeriv& /*dataV*/ ) override;
 //    void addDForce (VecDeriv& /*df*/, const VecDeriv& /*dx*/);
-    virtual void addDForce(const sofa::core::MechanicalParams* /*mparams*/, DataVecDeriv& datadF, const DataVecDeriv& datadX ) ;
-    SReal getPotentialEnergy(const sofa::core::MechanicalParams* , const DataVecCoord&) const { return 0.0; }
+    virtual void addDForce(const sofa::core::MechanicalParams* /*mparams*/, DataVecDeriv& datadF, const DataVecDeriv& datadX ) override;
+    SReal getPotentialEnergy(const sofa::core::MechanicalParams* , const DataVecCoord&) const override { return 0.0; }
 
     // Computes lambda and mu based on Young's modulus and Poisson ratio
     void updateLameCoefficients();

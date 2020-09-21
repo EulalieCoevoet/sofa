@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -25,12 +22,9 @@
 #ifndef SOFA_COMPONENT_ENGINE_TEXTUREINTERPOLATION_INL
 #define SOFA_COMPONENT_ENGINE_TEXTUREINTERPOLATION_INL
 
-#if !defined(__GNUC__) || (__GNUC__ > 3 || (_GNUC__ == 3 && __GNUC_MINOR__ > 3))
-#pragma once
-#endif
-
 #include <SofaGeneralEngine/TextureInterpolation.h>
 #include <sofa/core/visual/VisualParams.h>
+#include <sofa/helper/system/gl.h>
 #include <sofa/simulation/Node.h>
 #include <sofa/simulation/Simulation.h>
 
@@ -88,16 +82,14 @@ void TextureInterpolation<DataTypes>::reinit()
 
 
 template <class DataTypes>
-void TextureInterpolation<DataTypes>::update()
+void TextureInterpolation<DataTypes>::doUpdate()
 {
     if (!_inputField.isSet())
         return;
 
     const sofa::helper::vector <Coord>& realInputs = _inputField.getValue();
 
-    cleanDirty();
-
-    ResizableExtVector2D& outputs = *(_outputCoord.beginWriteOnly());
+    VecCoord2D& outputs = *(_outputCoord.beginWriteOnly());
     outputs.resize (realInputs.size());
 
     if (realInputs.size() == 0)
@@ -132,13 +124,13 @@ void TextureInterpolation<DataTypes>::update()
     // Check min and max values:
     if(_changeScale.getValue())
     {
-        if( _minVal.getValue() < _maxVal.getValue() )
+        if (_minVal.getValue() < _maxVal.getValue())
         {
             minVal = _minVal.getValue();
             maxVal = _maxVal.getValue();
         }
         else
-            serr << "Error: in scale for TextureInterpolation, min_value is not smaller than max_value." << sendl;
+            msg_error() << "In scale for TextureInterpolation, min_value is not smaller than max_value.";
     }
     else
     {
@@ -206,7 +198,7 @@ template <class DataTypes>
 void TextureInterpolation<DataTypes>::standardLinearInterpolation()
 {
     const VecCoord3D& coords = _inputCoords.getValue();
-    ResizableExtVector2D& outputs = *(_outputCoord.beginEdit());
+    VecCoord2D& outputs = *(_outputCoord.beginEdit());
 
     outputs.clear();
     outputs.resize(coords.size());
@@ -297,7 +289,7 @@ void TextureInterpolation<DataTypes>::draw(const core::visual::VisualParams* vpa
 
         if(potentiels.size() != coords.size())
         {
-            std::cout << "Error: vector sizes differ" << std::endl;
+            msg_error() << "Vector sizes differ." ;
             return;
         }
         unsigned int nbr = potentiels.size();

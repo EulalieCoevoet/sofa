@@ -1,29 +1,28 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #ifndef SOFA_COMPONENT_MAPPING_BaseDeformationImpl_INL
 #define SOFA_COMPONENT_MAPPING_BaseDeformationImpl_INL
+
+#include <sofa/helper/system/gl.h>
 
 // NB: These implementations have been factored from BaseDeformationMapping.inl and BaseDeformationMultiMapping.inl
 // so that LinearMapping.h and LinearMultiMapping.h can be included together.
@@ -58,8 +57,11 @@ void drawEllipsoid(const defaulttype::Mat<3,matdim,Real> & F, const defaulttype:
         for(size_t i=0; i<3; i++)  transformMatrix[8+i]=(double)w[i]*scale*0.01; // arbitrarily small thickness
     }
 
-    for(size_t i=0; i<3; i++)  transformMatrix[i+12]=p[i];
-    for(size_t i=0; i<3; i++)  transformMatrix[4*i+3]=0; transformMatrix[15] = 1;
+    for(unsigned i=0; i<3; i++)
+        transformMatrix[i+12]=p[i];
+    for(unsigned i=0; i<3; i++)
+        transformMatrix[4*i+3]=0;
+    transformMatrix[15] = 1;
     glMultMatrixd(transformMatrix);
 
     GLUquadricObj* ellipsoid = gluNewQuadric();

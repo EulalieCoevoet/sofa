@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -41,6 +38,8 @@
 #include <boost/thread.hpp>
 #endif
 
+#include <thread>
+#include <chrono>
 //sensable namespace
 
 using std::cout;
@@ -226,7 +225,6 @@ HDCallbackCode HDCALLBACK stateCallback(void * userData)
         /// COMPUTATION OF THE vituralTool 6D POSITION IN THE World COORDINATES
         sofa::defaulttype::SolidTypes<double>::Transform baseOmni_H_endOmni((autreOmniDriver[i]->data.servoDeviceData.pos)* autreOmniDriver[i]->data.scale, autreOmniDriver[i]->data.servoDeviceData.quat);
 
-        Vec3d world_pos_tool = positionDevs[i].getCenter();
         Quat world_quat_tool = positionDevs[i].getOrientation();
 
         // we compute its value in the current Tool frame:
@@ -239,20 +237,6 @@ HDCallbackCode HDCALLBACK stateCallback(void * userData)
         autreOmniDriver[i]->data.currentForce[0] = Wrench_endOmni_inBaseOmni.getForce()[0] * autreOmniDriver[i]->data.forceScale;
         autreOmniDriver[i]->data.currentForce[1] = Wrench_endOmni_inBaseOmni.getForce()[1] * autreOmniDriver[i]->data.forceScale;
         autreOmniDriver[i]->data.currentForce[2] = Wrench_endOmni_inBaseOmni.getForce()[2] * autreOmniDriver[i]->data.forceScale;
-
-        //cout<<currentForce[0]<<currentForce[1]<<currentForce[2]<<endl;
-
-        //	if((autreOmniDriver[i]->data.servoDeviceData.m_buttonState & HD_DEVICE_BUTTON_1) || autreOmniDriver[i]->data.permanent_feedback)
-        //{
-        //	if(currentForce[0]>0.1)
-        //		cout<<currentForce[0]<<" "<<currentForce[1]<<" "<<currentForce[2]<<endl;
-        //	HHD hapticHD = hHDVector[i];
-        //	hdMakeCurrentDevice(hapticHD);
-        //	hdBeginFrame(hapticHD);
-        //	//hdSetDoublev(HD_CURRENT_FORCE, autreOmniDriver[i]->data.currentForce);
-        //	hdEndFrame(hapticHD);
-        //}
-
         autreOmniDriver[i]->data.servoDeviceData.nupdates++;
     }
 
@@ -372,7 +356,10 @@ int NewOmniDriver::initDevice()
 
             if (HD_DEVICE_ERROR(error = hdGetError()))
             {
-                std::cout<<"[NewOmni] Failed to initialize the device "<<autreOmniDriver[i]->deviceName.getValue()<<std::endl;
+              std::string m = "[NewOmni] Failed to initialize the device " + autreOmniDriver[i]->deviceName.getValue();
+              printError(&error, m.c_str());
+              autreOmniDriver[i]->isInitialized = false;
+              return -1;
             }
             else
             {
@@ -474,10 +461,10 @@ void NewOmniDriver::setForceFeedback(ForceFeedback* ff)
 //executed once at the start of Sofa, initialization of all variables excepts haptics-related ones
 void NewOmniDriver::init()
 {
+    sofa::simulation::Node::SPtr rootContext = static_cast<simulation::Node*>(this->getContext()->getRootContext());
     if(firstDevice)
     {
-        simulation::Node *context = dynamic_cast<simulation::Node*>(this->getContext()->getRootContext());
-        context->getTreeObjects<NewOmniDriver>(&autreOmniDriver);
+        rootContext->getTreeObjects<NewOmniDriver>(&autreOmniDriver);
         sout<<"Detected NewOmniDriver:"<<sendl;
         for(unsigned int i=0; i<autreOmniDriver.size(); i++)
         {
@@ -541,13 +528,7 @@ void NewOmniDriver::init()
         visualNode[i].mapping = NULL;
     }
 
-    parent = dynamic_cast<simulation::Node*>(this->getContext());
-
-    sofa::simulation::tree::GNode *parentRoot = dynamic_cast<sofa::simulation::tree::GNode*>(this->getContext());
-    if (parentRoot->parent())
-        parentRoot = parentRoot->parent();
-
-    nodePrincipal= parentRoot->createChild("omniVisu "+deviceName.getValue());
+    nodePrincipal = rootContext->createChild("omniVisu "+deviceName.getValue());
     nodePrincipal->updateContext();
 
     DOFs=NULL;
@@ -593,15 +574,13 @@ void NewOmniDriver::init()
                 visualNode[i].visu->updateVisual();
 
                 // create the visual mapping and at it to the graph //
-                visualNode[i].mapping = sofa::core::objectmodel::New< sofa::component::mapping::RigidMapping< Rigid3dTypes, ExtVec3fTypes > > ();
+                visualNode[i].mapping = sofa::core::objectmodel::New< sofa::component::mapping::RigidMapping< Rigid3Types, Vec3Types > >();
                 visualNode[i].node->addObject(visualNode[i].mapping);
                 visualNode[i].mapping->setModels(rigidDOF.get(), visualNode[i].visu.get());
                 visualNode[i].mapping->name.setValue("RigidMapping");
                 visualNode[i].mapping->f_mapConstraints.setValue(false);
                 visualNode[i].mapping->f_mapForces.setValue(false);
                 visualNode[i].mapping->f_mapMasses.setValue(false);
-                //visualNode[i].mapping->m_inputObject.setValue("@../RigidDOF");
-                //visualNode[i].mapping->m_outputObject.setValue("@VisualParticles");
                 visualNode[i].mapping->index.setValue(i+1);
                 visualNode[i].mapping->init();
             }
@@ -622,7 +601,7 @@ void NewOmniDriver::init()
 
         for(int j=0; j<=VN_X; j++)
         {
-            sofa::defaulttype::ResizableExtVector< sofa::defaulttype::Vec<3,float> > &scaleMapping = *(visualNode[j].mapping->points.beginEdit());
+            sofa::helper::vector< sofa::defaulttype::Vec<3, SReal> > &scaleMapping = *(visualNode[j].mapping->points.beginEdit());
             for(unsigned int i=0; i<scaleMapping.size(); i++)
                 scaleMapping[i] *= (float)(1.0*scale.getValue()/100.0);
             visualNode[j].mapping->points.endEdit();
@@ -672,7 +651,10 @@ void NewOmniDriver::bwdInit()
         }
         else
         {
-            autreOmniDriver[this->deviceIndex.getValue()]->DOFs = DOFs;
+          sofa::helper::WriteAccessor<sofa::core::objectmodel::Data<VecCoord> > xfree = *DOFs->write(this->setRestShape.getValue() ? sofa::core::VecCoordId::restPosition() : sofa::core::VecCoordId::freePosition());
+          if (xfree.size() == 0)
+            xfree.resize(1);
+          autreOmniDriver[this->deviceIndex.getValue()]->DOFs = DOFs;
         }
 }
 
@@ -713,7 +695,8 @@ void NewOmniDriver::reinit()
 }
 
 void NewOmniDriver::draw(const core::visual::VisualParams* vparam){
-	draw();
+    SOFA_UNUSED(vparam);
+    draw();
 }
 
 // setup omni device visualization
@@ -740,14 +723,7 @@ void NewOmniDriver::draw()
             posDOF[i].getCenter() = posD[i].getCenter();
             posDOF[i].getOrientation() = posD[i].getOrientation();
         }
-        //for(int i=0;i<NVISUALNODE;i++)
-        //{
-        //	if(omniVisu.getValue() || i>6)
-        //	{
-        //		visualNode[i].visu->drawVisual();
-        //		visualNode[i].mapping->draw();
-        //	}
-        //}
+
         rigidDOF->x.endEdit();
         posDevice.endEdit();
 
@@ -758,7 +734,7 @@ void NewOmniDriver::draw()
             float rapport=((float)data.scale)/oldScale;
             for(int j = 0; j<NVISUALNODE ; j++)
             {
-                sofa::defaulttype::ResizableExtVector< sofa::defaulttype::Vec<3,float> > &scaleMapping = *(visualNode[j].mapping->points.beginEdit());
+                sofa::helper::vector< sofa::defaulttype::Vec<3,SReal> > &scaleMapping = *(visualNode[j].mapping->points.beginEdit());
                 for(unsigned int i=0; i<scaleMapping.size(); i++)
                     scaleMapping[i]*=rapport;
                 visualNode[j].mapping->points.endEdit();
@@ -781,7 +757,6 @@ void NewOmniDriver::draw()
 
 void NewOmniDriver::onKeyPressedEvent(core::objectmodel::KeypressedEvent *kpe)
 {
-    //cout<<kpe->getKey()<<" "<<int(kpe->getKey())<<std::endl;
     if(axesActif && omniVisu.getValue())
     {
         if ((kpe->getKey()=='X' || kpe->getKey()=='x') && !modX )
@@ -916,7 +891,7 @@ void NewOmniDriver::onAnimateBeginEvent()
 #ifdef SOFA_HAVE_BOOST
 			boost::thread::yield();
 #else
-			sofa::helper::system::thread::CTime::sleep(0);
+                        std::this_thread::sleep_for(std::chrono::milliseconds(0));
 #endif
 		}
 	}
@@ -1036,7 +1011,7 @@ void NewOmniDriver::onAnimateBeginEvent()
             sofa::simulation::Node *node = dynamic_cast<sofa::simulation::Node*> (this->getContext());
             if (node)
             {
-                sofa::simulation::MechanicalPropagatePositionAndVelocityVisitor mechaVisitor(sofa::core::MechanicalParams::defaultInstance()); mechaVisitor.execute(node);
+                sofa::simulation::MechanicalPropagateOnlyPositionAndVelocityVisitor mechaVisitor(sofa::core::MechanicalParams::defaultInstance()); mechaVisitor.execute(node);
                 sofa::simulation::UpdateMappingVisitor updateVisitor(sofa::core::ExecParams::defaultInstance()); updateVisitor.execute(node);
             }
         }
@@ -1092,8 +1067,6 @@ int NewOmniDriverClass = core::RegisterObject("Solver to test compliance computa
         .add< NewOmniDriver >()
         .addAlias("DefaultHapticsDevice")
         ;
-
-SOFA_DECL_CLASS(NewOmniDriver)
 
 } // namespace controller
 

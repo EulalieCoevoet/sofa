@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -35,7 +32,6 @@
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/helper/vector.h>
-#include <sofa/helper/gl/template.h>
 #include <sofa/helper/accessor.h>
 #include <iostream>
 
@@ -48,6 +44,30 @@ namespace component
 
 namespace constraintset
 {
+
+
+template <class DataTypes>
+DistanceLMContactConstraint<DataTypes>::DistanceLMContactConstraint()
+    : DistanceLMContactConstraint(nullptr, nullptr)
+{
+}
+
+template <class DataTypes>
+DistanceLMContactConstraint<DataTypes>::DistanceLMContactConstraint( MechanicalState *dof)
+    : DistanceLMContactConstraint(dof, dof)
+{
+}
+
+template <class DataTypes>
+DistanceLMContactConstraint<DataTypes>::DistanceLMContactConstraint( MechanicalState *dof1, MechanicalState * dof2)
+    : core::behavior::LMConstraint<DataTypes,DataTypes>(dof1,dof2)
+    , pointPairs(sofa::core::objectmodel::Base::initData(&pointPairs, "pointPairs", "List of the edges to constrain"))
+    , contactFriction(sofa::core::objectmodel::Base::initData(&contactFriction, "contactFriction", "Coulomb friction coefficient (same for all)"))
+    , intersection(0)
+{
+    initColorContactState();
+}
+
 
 template <class DataTypes>
 double DistanceLMContactConstraint<DataTypes>::lengthEdge(const Edge &e, const VecCoord &x1, const VecCoord &x2) const
@@ -105,8 +125,6 @@ void DistanceLMContactConstraint<DataTypes>::buildConstraintMatrix(const core::C
 
     const SeqEdges &edges =  pointPairs.getValue();
 
-    //if (this->l0.size() != edges.size()) updateRestLength();
-
     scalarConstraintsIndices.clear();
     constraintGroupToContact.clear();
     edgeToContact.clear();
@@ -126,7 +144,6 @@ void DistanceLMContactConstraint<DataTypes>::buildConstraintMatrix(const core::C
 
         Deriv tgt1, tgt2;
         computeTangentVectors(tgt1,tgt2,normal);
-        //                    cerr<<"DistanceLMContactConstraint<DataTypes>::buildJacobian, tgt1 = "<<tgt1<<", tgt2 = "<<tgt2<<endl;
 
         MatrixDerivRowIterator c1_t1 = c1->writeLine(cIndex);
         c1_t1.addCol(idx1,tgt1);
@@ -153,9 +170,7 @@ void DistanceLMContactConstraint<DataTypes>::writeConstraintEquations(unsigned i
 {
     using namespace core;
     using namespace core::objectmodel;
-    //                cerr<<"DistanceLMContactConstraint<DataTypes>::writeConstraintEquations, scalarConstraintsIndices.size() = "<<scalarConstraintsIndices.size()<<endl;
     const SeqEdges &edges =  pointPairs.getValue();
-
 
     if (scalarConstraintsIndices.empty()) return;
     unsigned scalarConstraintIndex = 0;
@@ -185,7 +200,6 @@ void DistanceLMContactConstraint<DataTypes>::writeConstraintEquations(unsigned i
             correction+= this->simulatedObject1->getConstraintJacobianTimesVecDeriv(scalarConstraintsIndices[scalarConstraintIndex],v1);
             correction+= this->simulatedObject2->getConstraintJacobianTimesVecDeriv(scalarConstraintsIndices[scalarConstraintIndex],v2);
             constraintGroup->addConstraint( lineNumber, scalarConstraintsIndices[scalarConstraintIndex++], -correction);
-            //                            cerr<<"DistanceLMContactConstraint<DataTypes>::writeConstraintEquations, constraint inserted "<<endl;
             break;
         }
         case core::ConstraintParams::POS :
@@ -197,9 +211,9 @@ void DistanceLMContactConstraint<DataTypes>::writeConstraintEquations(unsigned i
                 this->getContext()->get(intersection);
 
             if (intersection)
-                minDistance=intersection->getContactDistance();
+                minDistance = intersection->getContactDistance();
             else
-                serr << "No intersection component found!!" << sendl;
+                msg_error() << "No intersection component found!!";
 
             const VecCoord &x1 = this->constrainedObject1->read(core::ConstVecCoordId(id.getId(this->constrainedObject1)))->getValue();
             const VecCoord &x2 = this->constrainedObject2->read(core::ConstVecCoordId(id.getId(this->constrainedObject2)))->getValue();
@@ -232,13 +246,12 @@ void DistanceLMContactConstraint<DataTypes>::LagrangeMultiplierEvaluation(const 
         Contact &out=*(this->constraintGroupToContact[group]);
         ContactDescription &contact=this->getContactDescription(group);
 
-        //                        //The force cannot be attractive!
+        //The force cannot be attractive!
         if (Lambda[0] <= 0)
         {
             contact.state=VANISHING;
             group->setActive(false);
             out.contactForce=Deriv();
-            //                            std::cerr<<"DistanceLMContactConstraint<DataTypes>::LagrangeMultiplierEvaluation, deactivate attractive force"<<std::endl;
             return;
         }
 
@@ -273,7 +286,7 @@ void DistanceLMContactConstraint<DataTypes>::LagrangeMultiplierEvaluation(const 
 
             if (value == 0)
             {
-                serr << "ERROR DIVISION BY ZERO AVOIDED: w=[" << W[0]  << "," << W[1] << "," << W[2]  << "] " << " DIRECTION CONE: " << directionCone << " BARY COEFF: " << contact.coeff[0] << ", " <<  contact.coeff[1] << ", " <<  contact.coeff[2] << std::endl;
+                msg_error() << "DIVISION BY ZERO AVOIDED: w=[" << W[0] << "," << W[1] << "," << W[2] << "] " << " DIRECTION CONE: " << directionCone << " BARY COEFF: " << contact.coeff[0] << ", " << contact.coeff[1] << ", " << contact.coeff[2];
                 group->setActive(false);
                 out.contactForce=Deriv();
                 return;
@@ -284,9 +297,6 @@ void DistanceLMContactConstraint<DataTypes>::LagrangeMultiplierEvaluation(const 
             Lambda[0]=out.contactForce*out.n;
             Lambda[1]=out.contactForce*out.t1;
             Lambda[2]=out.contactForce*out.t2;
-
-            //                                std::cerr<<"DistanceLMContactConstraint<DataTypes>::LagrangeMultiplierEvaluation, , friction = "<<contactFriction.getValue()<<std::endl<<", cut excessive friction force, bounded Lambda = "<<std::endl<<Lambda<<std::endl;
-
         }
         else contact.state=STICKING;
 
@@ -330,10 +340,10 @@ bool DistanceLMContactConstraint<DataTypes>::isCorrectionComputedWithSimulatedDO
 template <class DataTypes>
 void DistanceLMContactConstraint<DataTypes>::draw(const core::visual::VisualParams* vparams)
 {
-    //if (this->l0.size() != pointPairs.getValue().size()) updateRestLength();
-
     if (vparams->displayFlags().getShowBehaviorModels())
     {
+        vparams->drawTool()->saveLastState();
+
         const VecCoord &x1= this->constrainedObject1->read(core::ConstVecCoordId::position())->getValue();
         const VecCoord &x2= this->constrainedObject2->read(core::ConstVecCoordId::position())->getValue();
 
@@ -374,6 +384,7 @@ void DistanceLMContactConstraint<DataTypes>::draw(const core::visual::VisualPara
 
         vparams->drawTool()->drawLines(slidingConstraints, 1, colorsContactState.back());
 
+        vparams->drawTool()->restoreLastState();
 
     }
 }

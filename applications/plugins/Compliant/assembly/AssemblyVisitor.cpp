@@ -25,8 +25,8 @@ using namespace core::behavior;
 AssemblyVisitor::AssemblyVisitor(const core::MechanicalParams* mparams)
 	: base( mparams ),
       mparams( mparams ),
-	  start_node(0),
-	  _processed(0)
+	  start_node(nullptr),
+	  _processed(nullptr)
 {
     mparamsWithoutStiffness = *mparams;
     mparamsWithoutStiffness.setKFactor(0);
@@ -349,6 +349,9 @@ void AssemblyVisitor::fill_prefix(simulation::Node* node) {
 
         // compliance
 		c.C = compliance( node );
+        assert(!c.C || c.C->rows() == int(c.size));
+        assert(!c.C || c.C->cols() == int(c.size));
+
         if( notempty(c.C) ) {
 			c.mechanical = true;
 		}
@@ -530,8 +533,8 @@ AssemblyVisitor::process_type* AssemblyVisitor::process() const {
             if( itoff != offsets.end() ) Jp1 = shift_right<rmat>( itoff->second, it->ff->getMechModel2()->getMatrixSize(), size_m);
         }
 
-        if( !empty(Jp0) ) add( it->J, shift_left<rmat>( 0, it->ff->getMechModel1()->getMatrixSize(), it->H.rows() ) * Jp0 );
-        if( !empty(Jp1) ) add( it->J, shift_left<rmat>( it->ff->getMechModel1()->getMatrixSize(), it->ff->getMechModel2()->getMatrixSize(), it->H.rows() ) * Jp1 );
+        if( !empty(Jp0) ) add( it->J, rmat(shift_left<rmat>( 0, it->ff->getMechModel1()->getMatrixSize(), it->H.rows() ) * Jp0) );
+        if( !empty(Jp1) ) add( it->J, rmat(shift_left<rmat>( it->ff->getMechModel1()->getMatrixSize(), it->ff->getMechModel2()->getMatrixSize(), it->H.rows() ) * Jp1) );
     }
 
 	return res;
@@ -715,7 +718,7 @@ void AssemblyVisitor::assemble(system_type& res) const {
         if( !c.mechanical || c.master() || !c.Ktilde ) continue;
 
         // Note this is a pointer (no copy for matrices that are already in the right type i.e. EigenBaseSparseMatrix<SReal>)
-        MySPtr<rmat> Ktilde( convertSPtr<rmat>( c.Ktilde ) );
+        helper::OwnershipSPtr<rmat> Ktilde( convertSPtr<rmat>( c.Ktilde ) );
 
         if( zero( *Ktilde ) ) continue;
 
@@ -814,8 +817,9 @@ void AssemblyVisitor::assemble(system_type& res) const {
 				assert( !zero(Jc) );
 
                 // Note this is a pointer (no copy for matrices that are already in the right type i.e. EigenBaseSparseMatrix<SReal>)
-                MySPtr<rmat> C( convertSPtr<rmat>( c.C ) );
-
+                helper::OwnershipSPtr<rmat> C( convertSPtr<rmat>( c.C ) );
+                
+                    
                 // fetch projector and constraint value if any
                 AssembledSystem::constraint_type constraint;
                 constraint.projector = c.dofs->getContext()->get<component::linearsolver::Constraint>( core::objectmodel::BaseContext::Local );
@@ -840,7 +844,9 @@ void AssemblyVisitor::assemble(system_type& res) const {
 				res.J.middleRows(off_c, c.size) = Jc;
 
                 // compliance
-                if( !zero( *C ) ) add_C(*C, off_c, c_factor);
+                if( !zero( *C ) ) {
+                    add_C(*C, off_c, c_factor);
+                }
                 
 				off_c += c.size;
 			}
@@ -914,7 +920,7 @@ void AssemblyVisitor::processNodeBottomUp(simulation::Node* node) {
 		// non-mechanical nodes in the graph, in order to avoid unneeded
 		// mapping concatenations, then rebuild the prefix order
 
-		start_node = 0;
+		start_node = nullptr;
 	}
 }
 

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -68,15 +65,19 @@ class RazerHydraDriver : public Controller
 
 public:
     SOFA_CLASS(RazerHydraDriver, Controller);	
-	Data<double> scale;
-	Data<Vec3d> positionBase;
-    Data<Quat> orientationBase;
-    Data<Vec3d> positionFirstTool, positionSecondTool;
-    Data<Quat> orientationFirstTool, orientationSecondTool;
-	Data< bool > triggerJustPressedFirstTool, triggerJustPressedSecondTool;
-	Data< float > triggerValueFirstTool, triggerValueSecondTool;
-	Data< bool > useBothTools;
-	Data< bool > displayTools;
+	Data<double> scale; ///< Default scale applied to the Leap Motion Coordinates. 
+	Data<Vec3d> positionBase; ///< Position of the interface base in the scene world coordinates
+    Data<Quat> orientationBase; ///< Orientation of the interface base in the scene world coordinates
+    Data<Vec3d> positionFirstTool; ///< Position of the first tool
+    Data<Vec3d> positionSecondTool; ///< Position of the second tool
+    Data<Quat> orientationFirstTool; ///< Orientation of the first tool
+    Data<Quat> orientationSecondTool; ///< Orientation of the second tool
+	Data< bool > triggerJustPressedFirstTool; ///< Boolean passing to true when the trigger of the first tool is pressed
+	Data< bool > triggerJustPressedSecondTool; ///< Boolean passing to true when the trigger of the second tool is pressed
+	Data< float > triggerValueFirstTool; ///< Trigger value of the first tool (between 0 and 1.0)
+	Data< float > triggerValueSecondTool; ///< Trigger value of the second tool (between 0 and 1.0)
+	Data< bool > useBothTools; ///< If true, the two controllers are used, otherwise only one controller is used
+	Data< bool > displayTools; ///< display the Razer Hydra Controller joysticks as tools
 
     RazerHydraDriver();
     virtual ~RazerHydraDriver();

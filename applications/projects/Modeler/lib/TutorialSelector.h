@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -13,11 +13,8 @@
 * more details.                                                               *
 *                                                                             *
 * You should have received a copy of the GNU General Public License along     *
-* with this program; if not, write to the Free Software Foundation, Inc., 51  *
-* Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.                   *
+* with this program. If not, see <http://www.gnu.org/licenses/>.              *
 *******************************************************************************
-*                            SOFA :: Applications                             *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -32,7 +29,9 @@
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/helper/system/SetDirectory.h>
 
-#include <tinyxml.h>
+// Forward declarations
+class TiXmlNode;
+class TiXmlElement;
 
 #include <map>
 
@@ -85,11 +84,11 @@ class TutorialSelector : public QTreeWidget
 
     Q_OBJECT
 public:
-    TutorialSelector( QWidget* parent = 0);
+    TutorialSelector( QWidget* parent = nullptr);
     void init();
 
 
-    void keyPressEvent ( QKeyEvent * e );
+    void keyPressEvent ( QKeyEvent * e ) override;
     void usingScene(const std::string &filename);
     std::list< std::string > getCategories() const;
 public  slots:
@@ -107,7 +106,7 @@ protected:
     void openTutorial(const Tutorial&);
 
     void loadTutorials(const std::string &fileTutorials);
-    void openNode(TiXmlNode* node, QTreeWidgetItem *parent=NULL, bool isRoot=false);
+    void openNode(TiXmlNode* node, QTreeWidgetItem *parent=nullptr, bool isRoot=false);
     void openAttribute(TiXmlElement* element,  QTreeWidgetItem *item);
 
     std::map< QTreeWidgetItem *, Category> itemToCategory;

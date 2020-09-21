@@ -1,36 +1,32 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
-* Authors: The SOFA Team and external contributor (see Authors.txt)          *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 
 #include "LeapMotionDriver.h"
-#ifdef SOFA_HAVE_BOOST
-#include <boost/thread/thread.hpp>
-#endif
-#include <SofaBaseVisual/VisualTransform.h>
+#include <SofaGeneralVisual/VisualTransform.h>
 #include <sofa/core/objectmodel/KeypressedEvent.h>
 #include <sofa/core/objectmodel/MouseEvent.h>
 
+#include <chrono>
+#include <thread>
 
 namespace sofa
 {
@@ -78,7 +74,7 @@ LeapMotionDriver::~LeapMotionDriver() {
 
 void LeapMotionDriver::cleanup()
 {
-    sout << "LeapMotionDriver::cleanup()" << sendl;
+    msg_info() << "LeapMotionDriver::cleanup()";
 }
 
 
@@ -93,7 +89,7 @@ void LeapMotionDriver::init()
             for (unsigned int n=0; n<15 && !leapConnected; n++)
             {
                 std::cout << ".";
-                sofa::helper::system::thread::CTime::sleep(0.1);
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 leapConnected = getLeapController()->isConnected();
             }
             std::cout << "." << std::endl;
@@ -141,13 +137,13 @@ void LeapMotionDriver::init()
 
 void LeapMotionDriver::bwdInit()
 {
-    sout<<"LeapMotionDriver::bwdInit()"<<sendl;
+    msg_info() <<"LeapMotionDriver::bwdInit()";
 }
 
 
 void LeapMotionDriver::reset()
 {
-    sout<<"LeapMotionDriver::reset()" << sendl;
+    msg_info() <<"LeapMotionDriver::reset()";
     scrollDirection.setValue(0);
     this->reinit();
 }
@@ -736,9 +732,6 @@ void LeapMotionDriver::handleEvent(core::objectmodel::Event *event)
 
 int LeapMotionDriverClass = core::RegisterObject("LeapMotion device driver")
 .add< LeapMotionDriver >();
-
-SOFA_DECL_CLASS(LeapMotionDriver)
-
 
 } // namespace controller
 

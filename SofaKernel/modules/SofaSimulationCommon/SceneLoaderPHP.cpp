@@ -1,24 +1,21 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                              SOFA :: Framework                              *
-*                                                                             *
-* Authors: The SOFA Team (see Authors.txt)                                    *
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
@@ -27,6 +24,7 @@
 #include <SofaSimulationCommon/SceneLoaderXML.h>
 #include <sofa/helper/system/PipeProcess.h>
 #include <SofaSimulationCommon/xml/NodeElement.h>
+#include <sofa/helper/system/FileRepository.h>
 
 namespace sofa
 {
@@ -62,11 +60,12 @@ void SceneLoaderPHP::getExtensionList(ExtensionList* list)
 }
 
 
-sofa::simulation::Node::SPtr SceneLoaderPHP::load(const char *filename)
+sofa::simulation::Node::SPtr SceneLoaderPHP::doLoad(const std::string& filename, const std::vector<std::string>& sceneArgs)
 {
+    SOFA_UNUSED(sceneArgs);
     sofa::simulation::Node::SPtr root;
 
-    if (!canLoadFileName(filename))
+    if (!canLoadFileName(filename.c_str()))
         return 0;
 
     std::string out="",error="";
@@ -88,19 +87,19 @@ sofa::simulation::Node::SPtr SceneLoaderPHP::load(const char *filename)
 #endif
     if (!fp.findFile(command,""))
     {
-        std::cerr << "Simulation : Error : php not found in your PATH environment" << std::endl;
-        return NULL;
+        msg_error("SceneLoaderPHP") << "Php not found in your PATH environment." ;
+        return nullptr;
     }
 
     sofa::helper::system::PipeProcess::executeProcess(command.c_str(), args,  newFilename, out, error);
 
     if(error != "")
     {
-        std::cerr << "Simulation : load : "<< error << std::endl;
+        msg_error("SceneLoaderPHP") << error ;
         if (out == "")
-            return NULL;
+            return nullptr;
     }
-    root = SceneLoaderXML::loadFromMemory(filename, out.c_str(), (unsigned int)out.size());
+    root = SceneLoaderXML::loadFromMemory(filename.c_str(), out.c_str(), (unsigned int)out.size());
 
     return root;
 }

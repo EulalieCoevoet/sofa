@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -90,16 +87,13 @@ public:
     Data< OutImageTypes > outputImage;
     Data< TransformType > outputTransform;
 
-	Data< Vector3 > trackedPosition;
+	Data< Vector3 > trackedPosition; ///< Position de test pour la collision
 
 	// ------ Parameters ---------------------
 	raImagei* in;
 	raTransform* inT;
 	waImageo* out;
 	waTransform* outT;
-
-    virtual std::string getTemplateName() const    { return templateName(this);    }
-    static std::string templateName(const CollisionToCarvingEngine<InImageTypes,OutImageTypes>* = NULL) { return InImageTypes::Name()+std::string(",")+OutImageTypes::Name(); }
 
     CollisionToCarvingEngine()    :   Inherited()
 		, inputImage(initData(&inputImage,InImageTypes(),"inputImage",""))
@@ -118,7 +112,7 @@ public:
 		outT=NULL;
     }
 
-    virtual ~CollisionToCarvingEngine()
+    ~CollisionToCarvingEngine() override
     {
 		delete in;
 		delete inT;
@@ -126,7 +120,7 @@ public:
 		delete outT;
     }
 
-    virtual void init()
+    void init() override
     {
 		//cout<<"init"<<endl;
 		addInput(&inputImage);
@@ -136,22 +130,20 @@ public:
 		setDirtyValue();
     }
 
-    virtual void reinit() { update(); }
+    void reinit() override { update(); }
 
 protected:
 	
-    virtual void update()
+    void doUpdate() override
     {
-		
-		bool updateImage = this->inputImage.isDirty();	// change of input image -> update output image
-        bool updateTransform = this->inputTransform.isDirty();	// change of input transform -> update output transform
+        bool updateImage = m_dataTracker.hasChanged(this->inputImage);	// change of input image -> update output image
+        bool updateTransform = m_dataTracker.hasChanged(this->inputTransform);	// change of input transform -> update output transform
 		
 		if(in==NULL){in = new raImagei(this->inputImage);}
 		if(inT==NULL){inT = new raTransform(this->inputTransform);}
 		if(out==NULL){out = new waImageo(this->outputImage);}
 		if(outT==NULL){outT = new waTransform(this->outputTransform);}
 
-		cleanDirty();
 	
 		if((*in)->isEmpty()) return;
 
@@ -182,12 +174,12 @@ protected:
 			}
 		}
 		else{
-			//cout<< "La collision dans une image rotationné n'est pas encore prise en compte" <<endl;
+			//cout<< "La collision dans une image rotationnÃ© n'est pas encore prise en compte" <<endl;
 		}
 		if (updateTransform) (*outT)->update(); // update internal data
     }
 
-    void handleEvent(sofa::core::objectmodel::Event *event)
+    void handleEvent(sofa::core::objectmodel::Event *event) override
     {
 		
         if ( simulation::AnimateBeginEvent::checkEventType(event) )
@@ -197,7 +189,7 @@ protected:
 		}
     }
 
-    virtual void draw(const core::visual::VisualParams* /*vparams*/)
+    void draw(const core::visual::VisualParams* /*vparams*/) override
     {
 
     }

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -27,10 +24,9 @@
 
 #include <SofaGeneralObjectInteraction/InteractionEllipsoidForceField.h>
 #include <sofa/core/visual/VisualParams.h>
-#include <sofa/helper/gl/template.h>
-#include <sofa/helper/system/config.h>
+#include <sofa/defaulttype/RGBAColor.h>
 #include <sofa/helper/rmath.h>
-#include <assert.h>
+#include <cassert>
 #include <iostream>
 
 namespace sofa
@@ -191,7 +187,6 @@ void InteractionEllipsoidForceField<DataTypes1, DataTypes2>::addForce(
 
     sofa::defaulttype::Quat Cq = vars.pos6D.getOrientation();
     sofa::defaulttype::Vec3d Cx = (Coord1) vars.pos6D.getCenter();
-    //std::cout << "Cx= " << Cx << "    Cq= " << Cq << std::endl;
     Deriv2 V6D = v2[object2_dof_index.getValue()];
     sofa::defaulttype::Vec3d Cv = (sofa::defaulttype::Vec3d) getVCenter(V6D);
     Cv.clear();
@@ -227,25 +222,25 @@ void InteractionEllipsoidForceField<DataTypes1, DataTypes2>::addForce(
             contacts->push_back(c);
             /*
             printf("\n contactForce : %f %f %f, bras_Levier : %f %f %f, f2 = %f %f %f - %f %f %f",
-            	contactForce.x(), contactForce.y(), contactForce.z(),
-            	c.bras_levier.x(), c.bras_levier.y(), c.bras_levier.z(),
-            	f2.getVCenter().x(), f2.getVCenter().y(), f2.getVCenter().z(),
-            	f2.getVOrientation().x(), f2.getVOrientation().y(), f2.getVOrientation().z());
+                contactForce.x(), contactForce.y(), contactForce.z(),
+                c.bras_levier.x(), c.bras_levier.y(), c.bras_levier.z(),
+                f2.getVCenter().x(), f2.getVCenter().y(), f2.getVCenter().z(),
+                f2.getVOrientation().x(), f2.getVOrientation().y(), f2.getVOrientation().z());
              */
 
         }
     }
     /*
     printf("\n f2 = %f %f %f - %f %f %f",
-    	f2.getVCenter().x(), f2.getVCenter().y(), f2.getVCenter().z(),
-    	f2.getVOrientation().x(), f2.getVOrientation().y(), f2.getVOrientation().z());
+        f2.getVCenter().x(), f2.getVCenter().y(), f2.getVCenter().z(),
+        f2.getVOrientation().x(), f2.getVOrientation().y(), f2.getVOrientation().z());
      */
     /*
     printf("\n verify addForce2 : ");
     addForce2(f1, f2, p1, p2, v1, v2);
     printf("\n f2 = %f %f %f - %f %f %f",
-    	f2.getVCenter().x(), f2.getVCenter().y(), f2.getVCenter().z(),
-    	f2.getVOrientation().x(), f2.getVOrientation().y(), f2.getVOrientation().z());
+        f2.getVCenter().x(), f2.getVCenter().y(), f2.getVCenter().z(),
+        f2.getVOrientation().x(), f2.getVOrientation().y(), f2.getVOrientation().z());
      */
 
     if (object2_forces.getValue())
@@ -358,18 +353,23 @@ void InteractionEllipsoidForceField<DataTypes1, DataTypes2>::addDForce(
 template <class DataTypes1, class DataTypes2>
 SReal InteractionEllipsoidForceField<DataTypes1, DataTypes2>::getPotentialEnergy(const sofa::core::MechanicalParams* /*mparams*/, const DataVecCoord1& /*x1*/, const DataVecCoord2& /*x2*/) const
 {
-    serr<<"InteractionEllipsoidForceField::getPotentialEnergy-not-implemented !!!"<<sendl;
+    msg_error() << "InteractionEllipsoidForceField::getPotentialEnergy-not-implemented !!!";
     return 0;
 }
 
 template<class DataTypes1, class DataTypes2>
 void InteractionEllipsoidForceField<DataTypes1, DataTypes2>::draw(const core::visual::VisualParams* vparams)
 {
-#ifndef SOFA_NO_OPENGL
-    if (!vparams->displayFlags().getShowInteractionForceFields()) return;
-    if (!bDraw.getValue()) return;
-    Real1 cx2=0, cy2=0, cz2=0;
+    if (!vparams->displayFlags().getShowInteractionForceFields())
+        return;
 
+    if (!bDraw.getValue()) return;
+
+    vparams->drawTool()->saveLastState();
+    sofa::defaulttype::RGBAColor colorValue;
+    std::vector<sofa::defaulttype::Vector3> vertices;
+
+    Real1 cx2=0, cy2=0, cz2=0;
     cx2=(Real1)vars.pos6D.getCenter()[0];
     cy2=(Real1)vars.pos6D.getCenter()[1];
     cz2=(Real1)vars.pos6D.getCenter()[2];
@@ -382,66 +382,41 @@ void InteractionEllipsoidForceField<DataTypes1, DataTypes2>::draw(const core::vi
 
         Real1 rx=1, ry=1, rz=1;
         DataTypes1::get(rx, ry, rz, vars.vr[e]);
-        glEnable(GL_CULL_FACE);
-        glEnable(GL_LIGHTING);
-        glEnable(GL_COLOR_MATERIAL);
-        glColor3f(color.getValue()[0],color.getValue()[1],color.getValue()[2]);
+        vparams->drawTool()->enableLighting();
+        colorValue = color.getValue();
 
         sofa::defaulttype::Quat q=vars.pos6D.getOrientation();
-#ifdef SOFA_FLOAT
-        GLfloat R[4][4];
-#elif PS3
-		double R[4][4];
-#else
-        GLdouble R[4][4];
-#endif
+        double R[4][4];
 
-        glPushMatrix();
-        //if(!object2_invert.getValue())
-        {
-            sofa::defaulttype::Quat q1=q.inverse();
-            q1.buildRotationMatrix(R);
-            helper::gl::glTranslate(cx2, cy2, cz2);
-            helper::gl::glMultMatrix( &(R[0][0]) );
-        }
-		sofa::defaulttype::Vector3 center(cx1, cy1, cz1);
-		sofa::defaulttype::Vector3 radii(rx, ry, (stiffness.getValue()>0 ? rz : -rz));
-		
-		vparams->drawTool()->drawEllipsoid(center, radii);
+        vparams->drawTool()->pushMatrix();
 
-        glTranslated(-cx2, -cy2, -cz2);
+        sofa::defaulttype::Quat q1=q.inverse();
+        q1.buildRotationMatrix(R);
+        vparams->drawTool()->translate(cx2, cy2, cz2);
+        vparams->drawTool()->multMatrix((float*)(&R[0][0]));
 
-        glPopMatrix();
-        glDisable(GL_CULL_FACE);
-        glDisable(GL_LIGHTING);
-        glDisable(GL_COLOR_MATERIAL);
+        sofa::defaulttype::Vector3 center(cx1, cy1, cz1);
+        sofa::defaulttype::Vector3 radii(rx, ry, (stiffness.getValue()>0 ? rz : -rz));
 
-        /*if(object2_invert.getValue())
-        {
-            glPushMatrix();
-            q.buildRotationMatrix(R);
-            helper::gl::glMultMatrix( &(R[0][0]) );
-            helper::gl::glTranslate(-cx2, -cy2, -cz2);
-        }*/
+        vparams->drawTool()->drawEllipsoid(center, radii);
+        vparams->drawTool()->translate(-cx2, -cy2, -cz2);
+        vparams->drawTool()->popMatrix();
+        vparams->drawTool()->disableLighting();
 
         const sofa::helper::vector<Contact>& contacts = this->contacts.getValue();
         const double fscale = 1000.0f/this->stiffness.getValue();
-        glColor4f (1,0.5f,0.5f,1);
-        glBegin (GL_LINES);
+
         for (unsigned int i=0; i<contacts.size(); i++)
         {
-            glVertex3d(contacts[i].pos[0],contacts[i].pos[1],contacts[i].pos[2] );
-            glVertex3d(contacts[i].pos[0]+contacts[i].force[0]*fscale,
+            vertices.push_back(sofa::defaulttype::Vector3(contacts[i].pos[0],contacts[i].pos[1],contacts[i].pos[2] ));
+            vertices.push_back(sofa::defaulttype::Vector3(contacts[i].pos[0]+contacts[i].force[0]*fscale,
                     contacts[i].pos[1]+contacts[i].force[1]*fscale,
-                    contacts[i].pos[2]+contacts[i].force[2]*fscale );
+                    contacts[i].pos[2]+contacts[i].force[2]*fscale ));
         }
-        glEnd();
-        /*if(object2_invert.getValue())
-        {
-            glPopMatrix();
-        }*/
     }
-#endif /* SOFA_NO_OPENGL */
+    vparams->drawTool()->drawLines(vertices,1,colorValue);
+
+    vparams->drawTool()->restoreLastState();
 }
 
 

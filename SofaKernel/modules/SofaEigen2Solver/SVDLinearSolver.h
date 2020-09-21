@@ -1,35 +1,32 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #ifndef SOFA_COMPONENT_LINEARSOLVER_SVDLinearSOLVER_H
 #define SOFA_COMPONENT_LINEARSOLVER_SVDLinearSOLVER_H
-#include "config.h"
+#include <SofaEigen2Solver/config.h>
 
 #include <sofa/core/behavior/LinearSolver.h>
 #include <SofaBaseLinearSolver/MatrixLinearSolver.h>
 #include <sofa/helper/map.h>
-#include <math.h>
+#include <cmath>
 
 namespace sofa
 {
@@ -58,18 +55,15 @@ public:
     typedef typename TVector::Real Real;
     typedef sofa::component::linearsolver::MatrixLinearSolver<TMatrix,TVector> Inherit;
 
-    Data<bool> f_verbose;
-    Data<Real> f_minSingularValue;
+    Data<bool> f_verbose; ///< Dump system state at each iteration
+    Data<Real> f_minSingularValue; ///< Thershold under which a singular value is set to 0, for the stabilization of ill-conditioned system.
 protected:
     SVDLinearSolver();
 public:
     /// Solve Mx=b
-    void solve (Matrix& M, Vector& x, Vector& b);
+    void solve (Matrix& M, Vector& x, Vector& b) override;
     Data<Real> f_conditionNumber; ///< Condition number of the matrix: ratio between the largest and smallest singular values. Computed in method solve.
 
-#ifdef DISPLAY_TIME
-    double timeStamp;
-#endif
 };
 
 } // namespace linearsolver

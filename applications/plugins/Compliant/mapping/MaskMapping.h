@@ -1,7 +1,7 @@
 #ifndef COMPLIANT_MAPPING_FILTERMAPPING_H
 #define COMPLIANT_MAPPING_FILTERMAPPING_H
 
-#include "AssembledMapping.h"
+#include "ConstantAssembledMapping.h"
 #include <Compliant/config.h>
 #include "../utils/map.h"
 
@@ -23,9 +23,9 @@ namespace mapping {
 */
 
 template <class TIn, class TOut >
-class MaskMapping : public AssembledMapping<TIn, TOut> {
+class MaskMapping : public ConstantAssembledMapping<TIn, TOut> {
 public:
-	SOFA_CLASS(SOFA_TEMPLATE2(MaskMapping,TIn,TOut), SOFA_TEMPLATE2(AssembledMapping,TIn,TOut));
+    SOFA_CLASS(SOFA_TEMPLATE2(MaskMapping,TIn,TOut), SOFA_TEMPLATE2(ConstantAssembledMapping,TIn,TOut));
 	
 	typedef typename TIn::Real in_real;
 	typedef typename TOut::Real out_real;
@@ -34,7 +34,7 @@ public:
     typedef helper::vector< typename TIn::Coord > dofs_type;
 	Data< dofs_type > dofs;
 
-	typedef AssembledMapping<TIn, TOut> base;
+    typedef ConstantAssembledMapping<TIn, TOut> base;
 	typedef MaskMapping self;
 
 	MaskMapping()
@@ -49,7 +49,7 @@ protected:
 	
 	std::vector< std::pair<unsigned, unsigned> > index;
 	
-	virtual void assemble( const typename self::in_pos_type& in) {
+    virtual void assemble( const typename self::in_pos_type& in) override {
 		// note: index is filled in @apply
 		
 //		const dofs_type& d = dofs.getValue();
@@ -73,20 +73,22 @@ protected:
 	}
 	
 	virtual void apply(typename self::out_pos_type& out, 
-					   const typename self::in_pos_type& in ) {
+                       const typename self::in_pos_type& in ) override {
 		const dofs_type& d = dofs.getValue();
 
 		// build array of (dof index, coeff index)
 		index.clear();
 
-		for(unsigned i = 0, n = d.size(); i < n; ++i) {
-			for( unsigned j = 0; j < self::Nin; ++j) {
-				if( d[i][j] ) {
-					index.push_back( std::make_pair(i, j) );
-				}
-			}
-		}
-		
+
+        for(size_t i = 0, n = in.size(); i < n; ++i) {
+            const typename TIn::Coord& di = d[std::min(d.size()-1,i)];
+            for( unsigned j = 0; j < self::Nin; ++j) {
+                if( di[j] ) {
+                    index.push_back( std::make_pair(i, j) );
+                }
+            }
+        }
+
 		// automatic output resize yo !
 		this->getToModel()->resize( index.size() );
 		

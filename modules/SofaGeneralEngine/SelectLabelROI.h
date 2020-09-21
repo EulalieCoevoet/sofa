@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -26,9 +23,7 @@
 #define SelectLabelROI_H_
 #include "config.h"
 
-#if !defined(__GNUC__) || (__GNUC__ > 3 || (_GNUC__ == 3 && __GNUC_MINOR__ > 3))
-#pragma once
-#endif
+
 
 #include <sofa/core/DataEngine.h>
 #include <SofaBaseMechanics/MechanicalObject.h>
@@ -58,16 +53,18 @@ public:
     typedef unsigned int Index;
 
     //Input
-    Data<helper::vector<helper::SVector<T> > > d_labels;
-    Data<helper::vector<T> > d_selectLabels;
+    Data<helper::vector<helper::SVector<T> > > d_labels; ///< lists of labels associated to each point/cell
+    Data<helper::vector<T> > d_selectLabels; ///< list of selected labels
 
     //Output
-    Data<helper::vector<Index> > d_indices;
+    Data<helper::vector<Index> > d_indices; ///< selected point/cell indices
 
-    virtual std::string getTemplateName() const    {        return templateName(this);    }
-    static std::string templateName(const SelectLabelROI* = NULL)    {       return sofa::defaulttype::DataTypeName<T>::name();    }
+    /// Returns the sofa template name. By default the name of the c++ class signature is exposed...
+    /// so we need to override that by implementing GetCustomTemplateName() function
+    /// More details on the name customization infrastructure is in NameDecoder.h
+    static const std::string GetCustomTemplateName(){  return sofa::defaulttype::DataTypeName<T>::name();    }
 
-    virtual void init()
+    void init() override
     {
         addInput(&d_labels);
         addInput(&d_selectLabels);
@@ -75,7 +72,7 @@ public:
         setDirtyValue();
     }
 
-    virtual void reinit()
+    void reinit() override
     {
         update();
     }
@@ -89,9 +86,9 @@ protected:
     {
     }
 
-    virtual ~SelectLabelROI() {}
+    ~SelectLabelROI() override {}
 
-    virtual void update()
+    void doUpdate() override
     {
         helper::ReadAccessor< Data< helper::vector<T>  > > selectLabels = d_selectLabels;
         // convert to set for efficient look-up
@@ -111,8 +108,6 @@ protected:
                     break;
                 }
         }
-
-        cleanDirty();
     }
 
 };

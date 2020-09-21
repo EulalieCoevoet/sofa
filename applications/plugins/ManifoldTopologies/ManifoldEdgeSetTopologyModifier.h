@@ -1,33 +1,28 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFA_COMPONENT_TOPOLOGY_MANIFOLDEDGESETTOPOLOGYMODIFIER_H
-#define SOFA_COMPONENT_TOPOLOGY_MANIFOLDEDGESETTOPOLOGYMODIFIER_H
-#include <ManifoldTopologies/config.h>
+#ifndef SOFA_MANIFOLD_TOPOLOGY_EDGESETTOPOLOGYMODIFIER_H
+#define SOFA_MANIFOLD_TOPOLOGY_EDGESETTOPOLOGYMODIFIER_H
 
 #include <ManifoldTopologies/config.h>
-
 #include <SofaBaseTopology/EdgeSetTopologyModifier.h>
 
 namespace sofa
@@ -58,9 +53,9 @@ public:
         : EdgeSetTopologyModifier()
     {}
 
-    virtual ~ManifoldEdgeSetTopologyModifier() {}
+    ~ManifoldEdgeSetTopologyModifier() override {}
 
-    virtual void init();
+    void init() override;
 
     /** \brief Add an edge.
     */
@@ -70,7 +65,7 @@ public:
     *
     * \sa addEdgesWarning
     */
-    virtual void addEdgesProcess(const sofa::helper::vector< Edge > &edges);
+    virtual void addEdgesProcess(const sofa::helper::vector< Edge > &edges) override;
 
     /** \brief Effectively Remove a subset of edges. Eventually remove isolated vertices
     *
@@ -83,7 +78,7 @@ public:
     *
     * @param removeIsolatedItems if true isolated vertices are also removed
     */
-    virtual void removeEdgesProcess(const sofa::helper::vector<unsigned int> &indices, const bool removeIsolatedItems = false);
+    virtual void removeEdgesProcess(const sofa::helper::vector<unsigned int> &indices, const bool removeIsolatedItems = false) override;
 
     using EdgeSetTopologyModifier::removeEdges;
     /** \brief Remove a set  of edges
@@ -102,13 +97,13 @@ public:
     /** \brief Generic method for points renumbering
     */
     virtual void renumberPoints( const sofa::helper::vector<unsigned int> & index,
-            const sofa::helper::vector<unsigned int> & inv_index);
+            const sofa::helper::vector<unsigned int> & inv_index) override;
 
     /** \brief add a set  of edges
     @param edges an array of pair of vertex indices describing the edge to be created
     *
     */
-    virtual void addEdges(const sofa::helper::vector< Edge >& edges) ;
+    virtual void addEdges(const sofa::helper::vector< Edge >& edges) override;
 
     /** \brief add a set  of edges
     @param edges an array of pair of vertex indices describing the edge to be created
@@ -118,18 +113,18 @@ public:
     */
     virtual void addEdges(const sofa::helper::vector< Edge >& edges,
             const sofa::helper::vector< sofa::helper::vector< unsigned int > > & ancestors,
-            const sofa::helper::vector< sofa::helper::vector< double > >& baryCoefs) ;
+            const sofa::helper::vector< sofa::helper::vector< double > >& baryCoefs) override;
 
     /** \brief Swap a list of pair edges, replacing each edge pair ((p11, p12), (p21, p22)) by the edge pair ((p11, p21), (p12, p22))
     *
     */
-    virtual void swapEdges(const sofa::helper::vector< sofa::helper::vector< unsigned int > >& edgesPairs);
+    virtual void swapEdges(const sofa::helper::vector< sofa::helper::vector< unsigned int > >& edgesPairs) override;
 
     /** \brief Fuse a list of pair edges, replacing each edge pair ((p11, p12), (p21, p22)) by one edge (p11, p22)
     *
     * @param removeIsolatedPoints if true isolated vertices are also removed
     */
-    virtual void fuseEdges(const sofa::helper::vector< sofa::helper::vector< unsigned int > >& edgesPairs, const bool removeIsolatedPoints = true);
+    virtual void fuseEdges(const sofa::helper::vector< sofa::helper::vector< unsigned int > >& edgesPairs, const bool removeIsolatedPoints = true) override;
 
     /** \brief Split an array of edges, replacing each edge (p1, p2) by two edges (p1, p3) and (p3, p2) where p3 is the new vertex
     * On each edge, a vertex is created based on its barycentric coordinates
@@ -137,7 +132,7 @@ public:
     * @param removeIsolatedPoints if true isolated vertices are also removed
     */
     virtual void splitEdges( sofa::helper::vector<unsigned int> &indices,
-            const bool removeIsolatedPoints = true);
+            const bool removeIsolatedPoints = true) override;
 
     /** \brief Split an array of edges, replacing each edge (p1, p2) by two edges (p1, p3) and (p3, p2) where p3 is the new vertex
     * On each edge, a vertex is created based on its barycentric coordinates
@@ -146,7 +141,7 @@ public:
     */
     virtual void splitEdges( sofa::helper::vector<unsigned int> &indices,
             const sofa::helper::vector< sofa::helper::vector< double > >& baryCoefs,
-            const bool removeIsolatedPoints = true);
+            const bool removeIsolatedPoints = true) override;
 
 private:
     ManifoldEdgeSetTopologyContainer* 	m_container;
@@ -158,4 +153,4 @@ private:
 
 } // namespace sofa
 
-#endif
+#endif // SOFA_MANIFOLD_TOPOLOGY_EDGESETTOPOLOGYMODIFIER_H

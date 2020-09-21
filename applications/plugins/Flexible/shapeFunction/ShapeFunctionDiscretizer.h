@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -92,10 +89,6 @@ public:
     BaseShapeFunction* _shapeFunction;        ///< where the weights are computed
     //@}
 
-
-    virtual std::string getTemplateName() const    { return templateName(this);    }
-    static std::string templateName(const ShapeFunctionDiscretizer<ImageTypes>* = NULL) { return ImageTypes::Name(); }
-
     ShapeFunctionDiscretizer()    :   Inherited()
       , f_image(initData(&f_image,ImageTypes(),"image",""))
       , f_transform(initData(&f_transform,TransformType(),"transform",""))
@@ -107,9 +100,9 @@ public:
         f_transform.setReadOnly(true);
     }
 
-    virtual ~ShapeFunctionDiscretizer() {}
+    ~ShapeFunctionDiscretizer() override {}
 
-    virtual void init()
+    void init() override
     {
         if( !_shapeFunction ) this->getContext()->get(_shapeFunction,core::objectmodel::BaseContext::SearchUp);
         if ( !_shapeFunction ) serr << "ShapeFunction<"<<ShapeFunctionType::Name()<<"> component not found" << sendl;
@@ -121,11 +114,11 @@ public:
         setDirtyValue();
     }
 
-    virtual void reinit() { update(); }
+    void reinit() override { update(); }
 
 protected:
 
-    virtual void update()
+    void doUpdate() override
     {
         if( !_shapeFunction ) return;
 
@@ -134,8 +127,6 @@ protected:
         raTransform inT(this->f_transform);
         if(in->isEmpty())  { serr<<"Image not found"<<sendl; return; }
         const cimg_library::CImg<T>& inimg = in->getCImg(0);  // suppose time=0
-
-        cleanDirty();
 
         // init indices and weights images
         const unsigned int nbref=_shapeFunction->f_nbRef.getValue();
@@ -148,10 +139,7 @@ protected:
         waDist weightData(this->f_w);         weightData->setDimensions(dim);
         cimg_library::CImg<DistT>& weights = weightData->getCImg(); weights.fill(0);
 
-//        // fill indices and weights images
-//#ifdef _OPENMP
-//#pragma omp parallel for
-//#endif
+        // fill indices and weights images
         for(int z=0; z<inimg.depth(); z++)
             for(int y=0; y<inimg.height(); y++)
                 for(int x=0; x<inimg.width(); x++)

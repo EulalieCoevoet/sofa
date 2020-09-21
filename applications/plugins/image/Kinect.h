@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -85,7 +82,7 @@ public:
     typedef ImageTypes::imCoord imCoord;
     typedef helper::WriteAccessor<Data< ImageTypes > > waImage;
     typedef helper::ReadAccessor<Data< ImageTypes > > raImage;
-    Data< ImageTypes > image;
+    Data< ImageTypes > image; ///< image
 
     // transform data
     typedef SReal Real;
@@ -100,19 +97,19 @@ public:
     typedef DepthTypes::imCoord dCoord;
     typedef helper::WriteAccessor<Data< DepthTypes > > waDepth;
     typedef helper::ReadAccessor<Data< DepthTypes > > raDepth;
-    Data< DepthTypes > depthImage;
+    Data< DepthTypes > depthImage; ///< depth map
     Data< TransformType > depthTransform;
 
-    Data<unsigned int> deviceID;
-    Data<helper::OptionsGroup> resolution;
-    Data<helper::OptionsGroup> videoMode;
-    Data<helper::OptionsGroup> depthMode;
-    Data<helper::OptionsGroup> ledMode;
-    Data<int> tiltAngle;
-    Data<defaulttype::Vector3> accelerometer;
-    Data<bool> drawBB;
-    Data<bool> drawGravity;
-    Data<float> showArrowSize;
+    Data<unsigned int> deviceID; ///< device ID
+    Data<helper::OptionsGroup> resolution; ///< resolution
+    Data<helper::OptionsGroup> videoMode; ///< video mode
+    Data<helper::OptionsGroup> depthMode; ///< depth mode
+    Data<helper::OptionsGroup> ledMode; ///< led mode
+    Data<int> tiltAngle; ///< tilt angle in [-30,30]
+    Data<defaulttype::Vector3> accelerometer; ///< Accelerometer data
+    Data<bool> drawBB; ///< draw bounding box
+    Data<bool> drawGravity; ///< draw acceleration
+    Data<float> showArrowSize; ///< size of the axis
 
 
     virtual std::string getTemplateName() const	{ return templateName(this); }
@@ -500,11 +497,12 @@ protected:
                 if(bbmin[j]>c[i][j]) bbmin[j]=c[i][j];
                 if(bbmax[j]<c[i][j]) bbmax[j]=c[i][j];
             }
-        this->f_bbox.setValue(params,sofa::defaulttype::TBoundingBox<Real>(bbmin,bbmax));
+        this->f_bbox.setValue(sofa::defaulttype::TBoundingBox<Real>(bbmin,bbmax));
     }
 
     void draw(const core::visual::VisualParams* vparams)
     {
+#ifndef SOFA_NO_OPENGL
         // draw bounding box
 
         if (!vparams->displayFlags().getShowVisualModels()) return;
@@ -543,6 +541,7 @@ protected:
 
         glPopMatrix ();
         glPopAttrib();
+#endif //SOFA_NO_OPENGL
     }
 
 

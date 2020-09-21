@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -13,11 +13,8 @@
 * more details.                                                               *
 *                                                                             *
 * You should have received a copy of the GNU General Public License along     *
-* with this program; if not, write to the Free Software Foundation, Inc., 51  *
-* Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.                   *
+* with this program. If not, see <http://www.gnu.org/licenses/>.              *
 *******************************************************************************
-*                            SOFA :: Applications                             *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -75,7 +72,7 @@ class GraphModeler : public QTreeWidget
     Q_OBJECT
 public:
     GraphModeler( QWidget* parent=0, const char* name=0, Qt::WindowFlags f = 0 );
-    ~GraphModeler();
+    ~GraphModeler() override;
 
     /// Set the Sofa Resources: intern library to get the creators of the elements
     void setSofaLibrary( SofaLibrary *l) { sofaLibrary = l;}
@@ -99,7 +96,7 @@ public:
     std::string getFilename() {return filenameXML;}
 
     /// Keyboard Management
-    void keyPressEvent ( QKeyEvent * e );
+    void keyPressEvent ( QKeyEvent * e ) override;
 
     //void mouseReleaseEvent(QMouseEvent* event);
 
@@ -153,9 +150,9 @@ public:
     bool isRedoEnabled() {return historyManager->isRedoEnabled();}
 
     /// Drag & Drop Management
-    void dragEnterEvent( QDragEnterEvent* event);
-    void dragMoveEvent( QDragMoveEvent* event);
-    void dropEvent(QDropEvent* event);
+    void dragEnterEvent( QDragEnterEvent* event) override;
+    void dragMoveEvent( QDragMoveEvent* event) override;
+    void dropEvent(QDropEvent* event) override;
 
     /// collapse all the nodes below the current one
     void collapseNode(QTreeWidgetItem* item);

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -25,14 +22,9 @@
 #ifndef SOFA_COMPONENT_ENGINE_NormalsFromPoints_INL
 #define SOFA_COMPONENT_ENGINE_NormalsFromPoints_INL
 
-#if !defined(__GNUC__) || (__GNUC__ > 3 || (_GNUC__ == 3 && __GNUC_MINOR__ > 3))
-#pragma once
-#endif
-
 #include "NormalsFromPoints.h"
-#include <sofa/helper/gl/template.h>
 #include <iostream>
-#include <math.h>
+#include <cmath>
 
 namespace sofa
 {
@@ -45,7 +37,7 @@ namespace engine
 
 template <class DataTypes>
 NormalsFromPoints<DataTypes>::NormalsFromPoints()
-    :   position(initData(&position,"position","Vertices of the mesh"))
+    : position(initData(&position,"position","Vertices of the mesh"))
     , triangles(initData(&triangles,"triangles","Triangles of the mesh"))
     , quads(initData(&quads,"quads","Quads of the mesh"))
     , normals(initData(&normals,"normals","Computed vertex normals of the mesh"))
@@ -74,7 +66,7 @@ void NormalsFromPoints<DataTypes>::reinit()
 }
 
 template <class DataTypes>
-void NormalsFromPoints<DataTypes>::update()
+void NormalsFromPoints<DataTypes>::doUpdate()
 {
     helper::ReadAccessor<Data< VecCoord > > raPositions = position;
     helper::ReadAccessor<Data< helper::vector< helper::fixed_array <unsigned int,3> > > > raTriangles = triangles;
@@ -145,8 +137,6 @@ void NormalsFromPoints<DataTypes>::update()
 
     for (unsigned int i = 0; i < waNormals.size(); i++)
         waNormals[i].normalize();
-
-    cleanDirty();
 }
 
 } // namespace engine

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -115,8 +112,8 @@ protected:
     ~SceneColladaLoader();
 public:
 
-    virtual void init();
-    virtual bool load();
+    virtual void init() override;
+    virtual bool load() override;
 
     template <class T>
     static bool canCreate ( T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg )
@@ -148,19 +145,19 @@ private:
 
     Assimp::Importer importer;		// the Assimp importer used to easily load the Collada scene
 
-	Data<float> animationSpeed;
+	Data<float> animationSpeed; ///< animation speed
+	Data<bool> generateCollisionModels; ///< generate point/line/triangle collision models for imported meshes
 
-	Data<bool> generateCollisionModels;
     Data<float> collisionProximity;
     Data<float> collisionStiffness;
     Data<float> collisionFriction;
     Data<helper::set<int> > collisionGroup;
-#ifdef SOFA_HAVE_PLUGIN_FLEXIBLE
+#ifdef COLLADASCENELOADER_HAVE_FLEXIBLE
 	Data<bool> useFlexible;
 #endif
-#ifdef SOFA_HAVE_PLUGIN_IMAGE
-    Data<bool> generateShapeFunction;
-    Data<SReal> voxelSize;
+#if COLLADASCENELOADER_HAVE_IMAGE
+    Data<bool> generateShapeFunction; ///< Generate a shape function that could be used in another simulation
+    Data<SReal> voxelSize; ///< voxelSize used for shape function generation
 #endif
 
 };

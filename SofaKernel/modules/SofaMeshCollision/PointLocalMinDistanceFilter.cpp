@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -46,6 +43,10 @@ namespace component
 namespace collision
 {
 
+PointInfo::PointInfo(LocalMinDistanceFilter *lmdFilters)
+    : InfoFilter(lmdFilters)
+{
+}
 
 void PointInfo::buildFilter(unsigned int p_index)
 {
@@ -57,16 +58,12 @@ void PointInfo::buildFilter(unsigned int p_index)
     bool debug=false;
     if((int)p_index==-1)
         debug=true;
-    //std::cout<<"buildFilter for point"<<p_index;
+
     m_noLineModel = false;
-
-
 
     // get the positions:
     const sofa::helper::vector<sofa::defaulttype::Vector3>& x = *this->position_filtering;
     const sofa::defaulttype::Vector3 &pt = x[p_index];
-
-    //std::cout<<"  pt"<<pt<<std::endl;
 
     // get the topology
     BaseMeshTopology* bmt = this->base_mesh_topology;
@@ -75,8 +72,9 @@ void PointInfo::buildFilter(unsigned int p_index)
 
     if(edgesAroundVertex.size() ==0)
     {
-        std::cerr<<"WARNING no topology defined: no filtering"<<std::endl;
-        std::cout<<"Mesh Topology found :"<<bmt->getName()<<std::endl;
+        msg_warning("PointInfo")<<"no topology defined: no filtering"<<msgendl
+                                <<"Mesh Topology found :"<<bmt->getName() ;
+
         m_noLineModel = true;
         setValid();
         return;
@@ -100,8 +98,7 @@ void PointInfo::buildFilter(unsigned int p_index)
     // 2. if no triangle around the point: compute an other normal using edges
     if (trianglesAroundVertex.empty())
     {
-        if(debug)
-            std::cout<<" trianglesAroundVertex.empty !"<<std::endl;
+        msg_info_when(debug, "PointInfo") <<" trianglesAroundVertex.empty !";
         vector< unsigned int >::const_iterator edgeIt = edgesAroundVertex.begin();
         vector< unsigned int >::const_iterator edgeItEnd = edgesAroundVertex.end();
 
@@ -121,11 +118,10 @@ void PointInfo::buildFilter(unsigned int p_index)
         nMean.normalize();
     else
     {
-        std::cerr << "WARNING PointInfo m_nMean is null" << std::endl;
+        msg_warning("PointInfo") << "PointInfo m_nMean is null";
     }
 
-    if (debug)
-        std::cout<<"  nMean ="<<nMean<<std::endl;
+    msg_info_when(debug,"PointInfo")<<"  nMean ="<<nMean ;
 
 
     // Build the set of unit vector that are normal to the planes that defines the cone
@@ -149,12 +145,11 @@ void PointInfo::buildFilter(unsigned int p_index)
             computedAngleCone = 0.0;
 
         computedAngleCone += m_lmdFilters->getConeMinAngle();
-        //std::cout<<"  add filtration with l="<<l<<"    and angle="<<computedAngleCone<<std::endl;
         m_computedData.push_back(std::make_pair(l, computedAngleCone));
         ++edgeIt;
 
-        if (debug)
-            std::cout<<"  l ="<<l<<"computedAngleCone ="<< computedAngleCone<<"  for edge ["<<edge[0]<<"-"<<edge[1]<<"]"<<std::endl;
+        msg_info_when(debug, "PointInfo") << "  l ="<<l<<"computedAngleCone ="
+                                          << computedAngleCone<<"  for edge ["<<edge[0]<<"-"<<edge[1]<<"]" ;
 
     }
 
@@ -173,12 +168,11 @@ bool PointInfo::validate(const unsigned int p, const defaulttype::Vector3 &PQ)
 
     if (isValid())
     {
-        if(debug)
-            std::cout<<"Point "<<p<<" is valid"<<std::endl;
+        msg_info_when(debug, "PointInfo") << "Point "<<p<<" is valid";
 
         if (m_noLineModel)
         {
-            std::cout<<"Warning : No Line Model"<<std::endl;
+            msg_warning("PointInfo") << "No Line Model";
             return true;
         }
 
@@ -187,8 +181,8 @@ bool PointInfo::validate(const unsigned int p, const defaulttype::Vector3 &PQ)
 
         while (it != itEnd)
         {
-            if(debug)
-                std::cout<<" test avec direction : "<<it->first <<"   dot(it->first , PQ)="<<dot(it->first , PQ)<<"    (-it->second * PQ.norm()) ="<<(-it->second * PQ.norm())<<std::endl;
+            msg_warning_when(debug, "PointInfo") <<" test avec direction : "<<it->first <<"   dot(it->first , PQ)="
+                                                 <<dot(it->first , PQ)<<"    (-it->second * PQ.norm()) ="<<(-it->second * PQ.norm()) ;
             if (dot(it->first , PQ) <= (-it->second * PQ.norm()))
                 return false;
 
@@ -199,8 +193,7 @@ bool PointInfo::validate(const unsigned int p, const defaulttype::Vector3 &PQ)
     }
     else
     {
-        if(debug)
-            std::cout<<"Point "<<p<<" is not valid ------------ build"<<std::endl;
+        msg_info_when(debug, "PointInfo") <<"Point "<<p<<" is not valid ------------ build" ;
         buildFilter(p);
         return validate(p, PQ);
     }
@@ -209,8 +202,8 @@ bool PointInfo::validate(const unsigned int p, const defaulttype::Vector3 &PQ)
 
 PointLocalMinDistanceFilter::PointLocalMinDistanceFilter()
     : m_pointInfo(initData(&m_pointInfo, "pointInfo", "point filter data"))
-    , pointInfoHandler(NULL)
-    , bmt(NULL)
+    , pointInfoHandler(nullptr)
+    , bmt(nullptr)
 {
 }
 
@@ -223,7 +216,7 @@ void PointLocalMinDistanceFilter::init()
 {
     bmt = getContext()->getMeshTopology();
 
-    if (bmt != 0)
+    if (bmt != nullptr)
     {
         helper::vector< PointInfo >& pInfo = *(m_pointInfo.beginEdit());
         pInfo.resize(bmt->getNbPoints());
@@ -255,7 +248,7 @@ void PointLocalMinDistanceFilter::handleTopologyChange()
 {
     if(this->isRigid())
     {
-        serr<<"WARNING: filters optimization needed for topological change on rigid collision model"<<sendl;
+        msg_error() << "Filters optimization needed for topological change on rigid collision model";
         this->invalidate(); // all the filters will be recomputed, not only those involved in the topological change
     }
 
@@ -273,8 +266,6 @@ void PointLocalMinDistanceFilter::handleTopologyChange()
 
 void PointLocalMinDistanceFilter::PointInfoHandler::applyCreateFunction(unsigned int /*pointIndex*/, PointInfo &pInfo, const sofa::helper::vector< unsigned int > &, const sofa::helper::vector< double >&)
 {
-
-    std::cout<<" LMDFilterPointCreationFunction is called"<<std::endl;
     const PointLocalMinDistanceFilter *pLMDFilter = this->f;
     pInfo.setLMDFilters(pLMDFilter);
 
@@ -285,7 +276,7 @@ void PointLocalMinDistanceFilter::PointInfoHandler::applyCreateFunction(unsigned
     if(pLMDFilter->isRigid())
     {
         /////// TODO : template de la classe
-        if(mstateVec3d != NULL)
+        if(mstateVec3d != nullptr)
         {
             pInfo.setPositionFiltering(&(mstateVec3d->read(core::ConstVecCoordId::restPosition())->getValue()));
         }
@@ -294,7 +285,7 @@ void PointLocalMinDistanceFilter::PointInfoHandler::applyCreateFunction(unsigned
     else
     {
         /////// TODO : template de la classe
-        if(mstateVec3d != NULL)
+        if(mstateVec3d != nullptr)
         {
             pInfo.setPositionFiltering(&mstateVec3d->read(core::ConstVecCoordId::position())->getValue());
         }
@@ -303,8 +294,6 @@ void PointLocalMinDistanceFilter::PointInfoHandler::applyCreateFunction(unsigned
 }
 
 
-
-SOFA_DECL_CLASS(PointLocalMinDistanceFilter)
 
 int PointLocalMinDistanceFilterClass = core::RegisterObject("This class manages Point collision models cones filters computations and updates.")
         .add< PointLocalMinDistanceFilter >()

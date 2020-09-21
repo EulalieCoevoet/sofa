@@ -1,17 +1,29 @@
-add_subdirectory(extlibs/DiffusionSolver)
+cmake_minimum_required(VERSION 3.12)
+project(image VERSION 0.1)
 
-cmake_minimum_required(VERSION 2.8.12)
-project(image)
+find_package(SofaBase REQUIRED)
+find_package(SofaGeneral REQUIRED)
+sofa_find_package(SofaGui QUIET)
+sofa_find_package(CImgPlugin REQUIRED)
+sofa_find_package(Newmat REQUIRED)
+sofa_find_package(SofaPython QUIET)
+sofa_find_package(MultiThreading QUIET)
+sofa_find_package(ZLIB)
+sofa_find_package(Freenect QUIET)
+sofa_find_package(DiffusionSolver QUIET)
+if(NOT DiffusionSolver_FOUND)
+    # warning to remove at v19.12
+    message(SEND_ERROR "image: DiffusionSolver is now a plugin, make sure you activated the associated CMake option (PLUGIN_DIFFUSIONSOLVER)")
+endif()
 
-set(IMAGE_MAJOR_VERSION 0)
-set(IMAGE_MINOR_VERSION 1)
-set(IMAGE_VERSION ${IMAGE_MAJOR_VERSION}.${IMAGE_MINOR_VERSION})
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(SOURCE_FILES
     CollisionToCarvingEngine.cpp
     DepthMapToMeshEngine.cpp
     ImageAccumulator.cpp
     ImageContainer.cpp
+    GenerateImage.cpp
     ImageDataDisplay.cpp
     ImageExporter.cpp
     ImageFilter.cpp
@@ -22,21 +34,23 @@ set(SOURCE_FILES
     ImageTransformEngine.cpp
     ImageTypes.cpp
     ImageValuesFromPositions.cpp
+    ImageCoordValuesFromPositions.cpp
     MarchingCubesEngine.cpp
     MergeImages.cpp
     MeshToImageEngine.cpp
     TransferFunction.cpp
     VoronoiToMeshEngine.cpp
     initImage.cpp
-)
-
+    )
 set(HEADER_FILES
+    config.h.in
     CollisionToCarvingEngine.h
     Containers.h
     DepthMapToMeshEngine.h
     ImageAccumulator.h
     ImageAlgorithms.h
     ImageContainer.h
+    GenerateImage.h
     ImageDataDisplay.h
     ImageExporter.h
     ImageFilter.h
@@ -47,51 +61,44 @@ set(HEADER_FILES
     ImageTransformEngine.h
     ImageTypes.h
     ImageValuesFromPositions.h
+    ImageCoordValuesFromPositions.h
     MarchingCubesEngine.h
     MergeImages.h
     MeshToImageEngine.h
     TransferFunction.h
     VectorVis.h
     VoronoiToMeshEngine.h
-)
+    )
+set(README_FILES
+    image.txt
+    )
 
-set(PYTHON_FILES
-    python/SofaImage/API.py
-    python/SofaImage/__init__.py
-)
+if(SofaPython_FOUND)
+    set(PYTHON_FILES
+        python/SofaImage/API.py
+        python/SofaImage/__init__.py
+        )
+    list(APPEND SOURCE_FILES python/Binding_ImageData.cpp)
+    list(APPEND HEADER_FILES python/Binding_ImageData.h python/Binding_ImageData.inl)
 
-set(README_FILES image.txt)
-
-find_package(SofaBase REQUIRED)
-find_package(SofaGeneral REQUIRED)
-find_package(Newmat REQUIRED)
-find_package(CImg REQUIRED)
-
-
-configure_file(config.h.in "${CMAKE_BINARY_DIR}/include/image/config.h")
-install(FILES "${CMAKE_BINARY_DIR}/include/image/config.h" DESTINATION "include/image")
-
-# Config files and install rules for pythons scripts
-sofa_set_python_directory(${PROJECT_NAME} "python")
-
-if(NOT SOFA-NO_OPENGL)
-    list(APPEND HEADER_FILES ImageViewer.h)
-    list(APPEND SOURCE_FILES ImageViewer.cpp)
+    # Config files and install rules for pythons scripts
+    sofa_install_pythonscripts(PLUGIN_NAME ${PROJECT_NAME} PYTHONSCRIPTS_SOURCE_DIR "python")
 endif()
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
-find_package(Freenect QUIET)
+if(NOT ${SOFA_NO_OPENGL})
+    list(APPEND HEADER_FILES ImageViewer.h)
+    list(APPEND SOURCE_FILES ImageViewer.cpp)
 
-if(FREENECT_FOUND)
-    list(APPEND HEADER_FILES Kinect.h)
-    list(APPEND SOURCE_FILES Kinect.cpp)
-    message(STATUS "image: found the freenect library")
-else()
-    message(STATUS "image: could not find the freenect library, won't build the Kinect component")
+    if(FREENECT_FOUND)
+        list(APPEND HEADER_FILES Kinect.h)
+        list(APPEND SOURCE_FILES Kinect.cpp)
+        message(STATUS "image: found the freenect library")
+    else()
+        message(STATUS "image: could not find the freenect library, won't build the Kinect component")
+    endif()
 endif()
 
 # todo?
-
 # if(SOFA-EXTERNAL_OPENCV)
 # AddLinkerDependencies("ml")
 # AddLinkerDependencies("cvaux")
@@ -102,40 +109,35 @@ endif()
 
 # OpenMP is bugged in image, forcing it to be single threaded for now
 if(SOFA_OPENMP)
-     message( WARNING "image: deactivating OpenMP" )
-     string(REPLACE "${OpenMP_CXX_FLAGS}" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-     string(REPLACE "${OpenMP_CXX_FLAGS}" "" CMAKE_CXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS})
+    message( WARNING "image: deactivating OpenMP" )
+    string(REPLACE "${OpenMP_CXX_FLAGS}" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    string(REPLACE "${OpenMP_CXX_FLAGS}" "" CMAKE_CXX_LINK_FLAGS ${CMAKE_CXX_LINK_FLAGS})
 endif()
 
-
-
-
-
-find_package(DiffusionSolver CONFIG REQUIRED)
-
 add_library(${PROJECT_NAME} SHARED ${HEADER_FILES} ${SOURCE_FILES} ${README_FILES} ${PYTHON_FILES})
-target_link_libraries(${PROJECT_NAME} SofaCore SofaComponentBase SofaGeneralVisual)
+target_compile_definitions(${PROJECT_NAME} PRIVATE "-DSOFA_BUILD_IMAGE")
+target_link_libraries(${PROJECT_NAME} SofaCore SofaBase SofaGeneralVisual CImgPlugin)
 target_link_libraries(${PROJECT_NAME} DiffusionSolver)
 target_link_libraries(${PROJECT_NAME} newmat)
 
 if(FREENECT_FOUND)
-    target_link_libraries(${PROJECT_NAME} freenect)
-    target_link_libraries(${PROJECT_NAME} freenect_sync)
-endif()
-
-target_include_directories(${PROJECT_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>")
-target_include_directories(${PROJECT_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>")
-target_include_directories(${PROJECT_NAME} PUBLIC "$<BUILD_INTERFACE:${CImg_INCLUDE_DIRS}>")
-target_include_directories(${PROJECT_NAME} PUBLIC "$<INSTALL_INTERFACE:include>")
-if(FREENECT_FOUND)
+    target_link_libraries(${PROJECT_NAME} freenect freenect_sync)
     target_include_directories(${PROJECT_NAME} PUBLIC "${FREENECT_INCLUDE_DIR}")
 endif()
-set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${IMAGE_VERSION})
-set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-DSOFA_BUILD_IMAGE")
-set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${HEADER_FILES}")
 
-if(SOFA_HAVE_ZLIB)
-    target_link_libraries(${PROJECT_NAME} SofaFramework::ZLIB)
+if(ZLIB_FOUND)
+    target_link_libraries(${PROJECT_NAME} ZLIB::ZLIB)
+    if(CMAKE_SYSTEM_NAME STREQUAL Windows)
+        sofa_install_libraries(TARGETS ZLIB::ZLIB)
+    endif()
+endif()
+
+if(SofaPython_FOUND)
+    target_link_libraries(${PROJECT_NAME} SofaPython)    
+endif()
+
+if(MultiThreading_FOUND)
+    target_link_libraries(${PROJECT_NAME} MultiThreading)
 endif()
 
 if(SOFA_BUILD_TESTS)
@@ -145,13 +147,14 @@ if(SOFA_BUILD_TESTS)
     endif()
 endif()
 
-find_package(SofaGui QUIET)
-if(SofaGui_FOUND AND SOFA_GUI_QT)
+if(SofaGui_FOUND AND SOFAGUI_HAVE_SOFAGUIQT)
     add_subdirectory(image_gui)
 endif()
 
 ## Install rules for the library and headers; CMake package configurations files
-sofa_create_package(image ${IMAGE_VERSION} ${PROJECT_NAME} image)
-
-## Install rules for the resources
-install(DIRECTORY examples/ DESTINATION share/sofa/plugins/${PROJECT_NAME})
+sofa_generate_package(
+    NAME ${PROJECT_NAME}
+    TARGETS ${PROJECT_NAME}
+    VERSION ${PROJECT_VERSION}
+    RELOCATABLE "plugins"
+    )

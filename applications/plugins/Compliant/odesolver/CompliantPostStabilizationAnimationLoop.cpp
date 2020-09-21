@@ -10,6 +10,7 @@
 #include <sofa/simulation/UpdateBoundingBoxVisitor.h>
 #include <sofa/simulation/PropagateEventVisitor.h>
 #include <sofa/simulation/BehaviorUpdatePositionVisitor.h>
+#include <sofa/simulation/UpdateInternalDataVisitor.h>
 
 using namespace sofa::core::objectmodel;
 using namespace sofa::core::behavior;
@@ -88,6 +89,8 @@ void CompliantPostStabilizationAnimationLoop::step(const sofa::core::ExecParams*
     BehaviorUpdatePositionVisitor beh(params , dt);
     this->gnode->execute(&beh);
 
+    UpdateInternalDataVisitor uid(params);
+    this->gnode->execute(&uid);
 
     // compute collision using selected method (eg with friction) Holonomic contact should logically be used
     computeCollision();
@@ -99,7 +102,7 @@ void CompliantPostStabilizationAnimationLoop::step(const sofa::core::ExecParams*
     // solve the system with full contact
     m_solver->solve(params,dt,pos,vel);
 
-    sop.mop.propagateXAndV(pos,vel,false);
+    sop.mop.propagateXAndV(pos,vel);
 
 
     // replace the current ContactManager response by the one creating unilateral contacts for correction pass
@@ -146,9 +149,6 @@ void CompliantPostStabilizationAnimationLoop::step(const sofa::core::ExecParams*
 
 
 
-
-
-SOFA_DECL_CLASS(CompliantPostStabilizationAnimationLoop)
 
 
 int CompliantPostStabilizationAnimationLoopClass = core::RegisterObject("CompliantPostStabilizationAnimationLoop").add< CompliantPostStabilizationAnimationLoop >();

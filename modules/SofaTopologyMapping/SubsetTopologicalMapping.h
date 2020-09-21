@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -57,23 +54,29 @@ public:
 
 protected:
     SubsetTopologicalMapping();
-    virtual ~SubsetTopologicalMapping();
+    ~SubsetTopologicalMapping() override;
 public:
 
-    Data<bool> samePoints;
-    Data<bool> handleEdges;
-    Data<bool> handleTriangles;
-    Data<bool> handleQuads;
-    Data<bool> handleTetrahedra;
-    Data<bool> handleHexahedra;
-    Data<SetIndex> pointS2D, pointD2S;
-    Data<SetIndex> edgeS2D, edgeD2S;
-    Data<SetIndex> triangleS2D, triangleD2S;
-    Data<SetIndex> quadS2D, quadD2S;
-    Data<SetIndex> tetrahedronS2D, tetrahedronD2S;
-    Data<SetIndex> hexahedronS2D, hexahedronD2S;
+    Data<bool> samePoints; ///< True if the same set of points is used in both topologies
+    Data<bool> handleEdges; ///< True if edges events and mapping should be handled
+    Data<bool> handleTriangles; ///< True if triangles events and mapping should be handled
+    Data<bool> handleQuads; ///< True if quads events and mapping should be handled
+    Data<bool> handleTetrahedra; ///< True if tetrahedra events and mapping should be handled
+    Data<bool> handleHexahedra; ///< True if hexahedra events and mapping should be handled
+    Data<SetIndex> pointS2D; ///< Internal source -> destination topology points map
+    Data<SetIndex> pointD2S; ///< Internal destination -> source topology points map (link to SubsetMapping::indices to handle the mechanical-side of the mapping
+    Data<SetIndex> edgeS2D; ///< Internal source -> destination topology edges map
+    Data<SetIndex> edgeD2S; ///< Internal destination -> source topology edges map
+    Data<SetIndex> triangleS2D; ///< Internal source -> destination topology triangles map
+    Data<SetIndex> triangleD2S; ///< Internal destination -> source topology triangles map
+    Data<SetIndex> quadS2D; ///< Internal source -> destination topology quads map
+    Data<SetIndex> quadD2S; ///< Internal destination -> source topology quads map
+    Data<SetIndex> tetrahedronS2D; ///< Internal source -> destination topology tetrahedra map
+    Data<SetIndex> tetrahedronD2S; ///< Internal destination -> source topology tetrahedra map
+    Data<SetIndex> hexahedronS2D; ///< Internal source -> destination topology hexahedra map
+    Data<SetIndex> hexahedronD2S; ///< Internal destination -> source topology hexahedra map
 
-    virtual void init();
+    void init() override;
 
     /** \brief Translates the TopologyChange objects from the source to the target.
      *
@@ -81,11 +84,11 @@ public:
      * reflect the effects of the first topology changes on the second topology.
      *
      */
-    virtual void updateTopologicalMappingTopDown();
+    void updateTopologicalMappingTopDown() override;
 
-    virtual bool isTheOutputTopologySubdividingTheInputOne() { return true; }
-    virtual unsigned int getGlobIndex(unsigned int ind);
-    virtual unsigned int getFromIndex(unsigned int ind);
+    bool isTheOutputTopologySubdividingTheInputOne() override { return true; }
+    unsigned int getGlobIndex(unsigned int ind) override;
+    unsigned int getFromIndex(unsigned int ind) override;
 
 };
 

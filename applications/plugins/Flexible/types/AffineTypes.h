@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -105,7 +102,7 @@ public:
         /// Write the OpenGL transformation matrix
         void writeOpenGlMatrix ( float m[16] ) const
         {
-            BOOST_STATIC_ASSERT(_spatial_dimensions == 3);
+            static_assert(_spatial_dimensions == 3, "");
             m[0] = (float)getAffine()(0,0);
             m[4] = (float)getAffine()(0,1);
             m[8] = (float)getAffine()(0,2);
@@ -414,7 +411,6 @@ public:
 
 
 
-#ifndef SOFA_FLOAT
 typedef StdAffineTypes<3, double> Affine3dTypes;
 
 // Specialization of the defaulttype::DataTypeInfo type traits template
@@ -426,54 +422,18 @@ template<> struct DataTypeInfo< sofa::defaulttype::Affine3dTypes::Deriv > : publ
 {
     static std::string name() { std::ostringstream o; o << "AffineDeriv<" << sofa::defaulttype::Affine3dTypes::Deriv::total_size << "," << DataTypeName<sofa::defaulttype::Affine3dTypes::Real>::name() << ">"; return o.str(); }
 };
-#endif
-#ifndef SOFA_DOUBLE
-typedef StdAffineTypes<3, float> Affine3fTypes;
 
-// Specialization of the defaulttype::DataTypeInfo type traits template
-template<> struct DataTypeInfo< sofa::defaulttype::Affine3fTypes::Coord > : public FixedArrayTypeInfo< sofa::defaulttype::Affine3fTypes::Coord, sofa::defaulttype::Affine3fTypes::Coord::total_size >
-{
-    static std::string name() { std::ostringstream o; o << "AffineCoord<" << sofa::defaulttype::Affine3fTypes::Coord::total_size << "," << DataTypeName<sofa::defaulttype::Affine3fTypes::Real>::name() << ">"; return o.str(); }
-};
-template<> struct DataTypeInfo< sofa::defaulttype::Affine3fTypes::Deriv > : public FixedArrayTypeInfo< sofa::defaulttype::Affine3fTypes::Deriv, sofa::defaulttype::Affine3fTypes::Deriv::total_size >
-{
-    static std::string name() { std::ostringstream o; o << "AffineDeriv<" << sofa::defaulttype::Affine3fTypes::Deriv::total_size << "," << DataTypeName<sofa::defaulttype::Affine3fTypes::Real>::name() << ">"; return o.str(); }
-};
-#endif
+typedef Affine3dTypes Affine3Types;
 
 /// Note: Many scenes use Affine as template for 3D double-precision rigid type. Changing it to Affine3d would break backward compatibility.
-#ifdef SOFA_FLOAT
-template<> inline const char* Affine3fTypes::Name() { return "Affine"; }
-#else
 template<> inline const char* Affine3dTypes::Name() { return "Affine"; }
-#ifndef SOFA_DOUBLE
-template<> inline const char* Affine3fTypes::Name() { return "Affine3f"; }
-#endif
-#endif
-
-#ifdef SOFA_FLOAT
-typedef Affine3fTypes Affine3Types;
-#else
-typedef Affine3dTypes Affine3Types;
-#endif
-//typedef Affine3Types AffineTypes;
-
-
-
-
-
-
 
 // The next line hides all those methods from the doxygen documentation
 /// \cond TEMPLATE_OVERRIDES
 
 
-#ifndef SOFA_FLOAT
 template<> struct DataTypeName< defaulttype::Affine3dTypes::Coord > { static const char* name() { return "Affine3dTypes::Coord"; } };
-#endif
-#ifndef SOFA_DOUBLE
-template<> struct DataTypeName< defaulttype::Affine3fTypes::Coord > { static const char* name() { return "Affine3fTypes::Coord"; } };
-#endif
+
 
 
 /// \endcond
@@ -485,31 +445,15 @@ template<> struct DataTypeName< defaulttype::Affine3fTypes::Coord > { static con
 // AffineMass
 
 
-#ifndef SOFA_FLOAT
 typedef DeformableFrameMass<3, StdAffineTypes<3,double>::deriv_total_size, double> Affine3dMass;
-#endif
-#ifndef SOFA_DOUBLE
 typedef DeformableFrameMass<3, StdAffineTypes<3,float>::deriv_total_size, float> Affine3fMass;
-#endif
-
-#ifdef SOFA_FLOAT
-typedef Affine3fMass Affine3Mass;
-#else
-typedef Affine3dMass Affine3Mass;
-#endif
-
+typedef DeformableFrameMass<3, StdAffineTypes<3,SReal>::deriv_total_size,SReal> Affine3Mass;
 
 
 // The next line hides all those methods from the doxygen documentation
 /// \cond TEMPLATE_OVERRIDES
-
-#ifndef SOFA_FLOAT
 template<> struct DataTypeName< defaulttype::Affine3dMass > { static const char* name() { return "Affine3dMass"; } };
-#endif
-#ifndef SOFA_DOUBLE
 template<> struct DataTypeName< defaulttype::Affine3fMass > { static const char* name() { return "Affine3fMass"; } };
-#endif
-
 /// \endcond
 
 

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -190,11 +187,8 @@ void BarycentricMapperSparseGridTopology<CudaVec3f1Types,CudaVec3fTypes>::applyJ
                 unsigned indexIn = colIt.index();
                 InDeriv data = (InDeriv) Out::getDPos(colIt.val());
 
-#ifdef SOFA_NEW_HEXA
-                const topology::SparseGridTopology::Hexa cube = this->fromTopology->getHexahedron ( map[indexIn].in_index );
-#else
-                const topology::SparseGridTopology::Cube cube = this->fromTopology->getCube ( map[indexIn].in_index );
-#endif
+                const topology::SparseGridTopology::Hexa cube = this->m_fromTopology->getHexahedron ( map[indexIn].in_index );
+
                 const OutReal fx = ( OutReal ) map[indexIn].baryCoords[0];
                 const OutReal fy = ( OutReal ) map[indexIn].baryCoords[1];
                 const OutReal fz = ( OutReal ) map[indexIn].baryCoords[2];
@@ -208,40 +202,23 @@ void BarycentricMapperSparseGridTopology<CudaVec3f1Types,CudaVec3fTypes>::applyJ
                 f = ( ( fx ) * oneMinusFy * oneMinusFz );
                 o.addCol ( cube[1],  ( data * f ) );
 
-#ifdef SOFA_NEW_HEXA
                 f = ( oneMinusFx * ( fy ) * oneMinusFz );
                 o.addCol ( cube[3],  ( data * f ) );
 
                 f = ( ( fx ) * ( fy ) * oneMinusFz );
                 o.addCol ( cube[2],  ( data * f ) );
 
-#else
-                f = ( oneMinusFx * ( fy ) * oneMinusFz );
-                o.addCol ( cube[2],  ( data * f ) );
-
-                f = ( ( fx ) * ( fy ) * oneMinusFz );
-                o.addCol ( cube[3],  ( data * f ) );
-
-#endif
                 f = ( oneMinusFx * oneMinusFy * ( fz ) );
                 o.addCol ( cube[4],  ( data * f ) );
 
                 f = ( ( fx ) * oneMinusFy * ( fz ) );
                 o.addCol ( cube[5],  ( data * f ) );
 
-#ifdef SOFA_NEW_HEXA
                 f = ( oneMinusFx * ( fy ) * ( fz ) );
                 o.addCol ( cube[7],  ( data * f ) );
 
                 f = ( ( fx ) * ( fy ) * ( fz ) );
                 o.addCol ( cube[6],  ( data * f ) );
-#else
-                f = ( oneMinusFx * ( fy ) * ( fz ) );
-                o.addCol ( cube[6],  ( data * f ) );
-
-                f = ( ( fx ) * ( fy ) * ( fz ) );
-                o.addCol ( cube[7],  ( data * f ) );
-#endif
             }
         }
     }
@@ -303,11 +280,8 @@ void BarycentricMapperSparseGridTopology<CudaVec3fTypes,CudaVec3f1Types>::applyJ
                 unsigned indexIn = colIt.index();
                 InDeriv data = (InDeriv) Out::getDPos(colIt.val());
 
-#ifdef SOFA_NEW_HEXA
-                const topology::SparseGridTopology::Hexa cube = this->fromTopology->getHexahedron ( map[indexIn].in_index );
-#else
-                const topology::SparseGridTopology::Cube cube = this->fromTopology->getCube ( map[indexIn].in_index );
-#endif
+                const topology::SparseGridTopology::Hexa cube = this->m_fromTopology->getHexahedron ( map[indexIn].in_index );
+
                 const OutReal fx = ( OutReal ) map[indexIn].baryCoords[0];
                 const OutReal fy = ( OutReal ) map[indexIn].baryCoords[1];
                 const OutReal fz = ( OutReal ) map[indexIn].baryCoords[2];
@@ -321,40 +295,23 @@ void BarycentricMapperSparseGridTopology<CudaVec3fTypes,CudaVec3f1Types>::applyJ
                 f = ( ( fx ) * oneMinusFy * oneMinusFz );
                 o.addCol ( cube[1],  ( data * f ) );
 
-#ifdef SOFA_NEW_HEXA
                 f = ( oneMinusFx * ( fy ) * oneMinusFz );
                 o.addCol ( cube[3],  ( data * f ) );
 
                 f = ( ( fx ) * ( fy ) * oneMinusFz );
                 o.addCol ( cube[2],  ( data * f ) );
 
-#else
-                f = ( oneMinusFx * ( fy ) * oneMinusFz );
-                o.addCol ( cube[2],  ( data * f ) );
-
-                f = ( ( fx ) * ( fy ) * oneMinusFz );
-                o.addCol ( cube[3],  ( data * f ) );
-
-#endif
                 f = ( oneMinusFx * oneMinusFy * ( fz ) );
                 o.addCol ( cube[4],  ( data * f ) );
 
                 f = ( ( fx ) * oneMinusFy * ( fz ) );
                 o.addCol ( cube[5],  ( data * f ) );
 
-#ifdef SOFA_NEW_HEXA
                 f = ( oneMinusFx * ( fy ) * ( fz ) );
                 o.addCol ( cube[7],  ( data * f ) );
 
                 f = ( ( fx ) * ( fy ) * ( fz ) );
                 o.addCol ( cube[6],  ( data * f ) );
-#else
-                f = ( oneMinusFx * ( fy ) * ( fz ) );
-                o.addCol ( cube[6],  ( data * f ) );
-
-                f = ( ( fx ) * ( fy ) * ( fz ) );
-                o.addCol ( cube[7],  ( data * f ) );
-#endif
             }
         }
     }
@@ -461,8 +418,8 @@ void BarycentricMapperMeshTopology<CudaVec3fTypes,CudaVec3f1Types>::resize( core
 
 // instanciations involving CudaVec3f1Types with CudaVec3fTypes
 
-template class BarycentricMapping< CudaVec3f1Types, CudaVec3fTypes>;
-template class BarycentricMapping< CudaVec3fTypes, CudaVec3f1Types>;
+template class SOFA_GPU_CUDA_API BarycentricMapping< CudaVec3f1Types, CudaVec3fTypes>;
+template class SOFA_GPU_CUDA_API BarycentricMapping< CudaVec3fTypes, CudaVec3f1Types>;
 
 
 
@@ -480,8 +437,6 @@ using namespace sofa::defaulttype;
 using namespace sofa::core;
 using namespace sofa::core::behavior;
 using namespace sofa::component::mapping;
-
-SOFA_DECL_CLASS(CudaBarycentricMapping_3f1_3f)
 
 int BarycentricMappingCudaClass_3f1_3f = core::RegisterObject("Supports GPU-side computations using CUDA")
         .add< BarycentricMapping< CudaVec3f1Types, CudaVec3fTypes> >()

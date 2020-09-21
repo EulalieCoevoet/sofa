@@ -10,7 +10,6 @@ namespace component {
 namespace odesolver {
 
 
-SOFA_DECL_CLASS(VelocityConstraintValue)
 int VelocityConstraintValueClass = core::RegisterObject("Enforce the velocities to the given values").add< VelocityConstraintValue >();
 
 
@@ -35,7 +34,7 @@ void VelocityConstraintValue::dynamics(SReal* dst, unsigned n, unsigned dim, boo
     assert( d_velocities.getValue().size() == size );
 
 	using namespace utils;
-    map(dst, size) = map( &d_velocities.getValue()[0], size );
+    map(dst, size) = map( d_velocities.getValue().data(), size );
 }
 
 

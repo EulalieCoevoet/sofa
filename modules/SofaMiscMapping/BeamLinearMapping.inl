@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -27,11 +24,8 @@
 
 #include <SofaMiscMapping/BeamLinearMapping.h>
 #include <sofa/core/visual/VisualParams.h>
-
-#include <sofa/helper/io/MassSpringLoader.h>
 #include <sofa/helper/io/SphereLoader.h>
 #include <sofa/helper/io/Mesh.h>
-#include <sofa/helper/gl/template.h>
 
 #include <sofa/simulation/Simulation.h>
 
@@ -80,7 +74,7 @@ template <class TIn, class TOut>
 void BeamLinearMapping<TIn, TOut>::init()
 {
     bool local = localCoord.getValue();
-    if (this->points.empty() && this->toModel!=NULL)
+    if (this->points.empty() && this->toModel!=nullptr)
     {
         const typename In::VecCoord& xfrom = this->fromModel->read(core::ConstVecCoordId::position())->getValue();
         beamLength.resize(xfrom.size());
@@ -94,7 +88,7 @@ void BeamLinearMapping<TIn, TOut>::init()
             beamLength[xfrom.size()-1] = beamLength[xfrom.size()-2];
 
         const VecCoord& x = this->toModel->read(core::ConstVecCoordId::position())->getValue();
-        sout << "BeamLinearMapping: init "<<x.size()<<" points."<<sendl;
+        msg_info() << "BeamLinearMapping: init "<<x.size()<<" points.";
         points.resize(x.size());
 
         if (local)
@@ -276,6 +270,7 @@ template <class TIn, class TOut>
 void BeamLinearMapping<TIn, TOut>::draw(const core::visual::VisualParams* vparams)
 {
     if (!vparams->displayFlags().getShowMappings()) return;
+    vparams->drawTool()->saveLastState();
     std::vector< sofa::defaulttype::Vector3 > points;
     sofa::defaulttype::Vector3 point;
 
@@ -287,6 +282,7 @@ void BeamLinearMapping<TIn, TOut>::draw(const core::visual::VisualParams* vparam
     }
 
     vparams->drawTool()->drawPoints(points, 7, sofa::defaulttype::Vec<4,float>(1,1,0,1));
+    vparams->drawTool()->restoreLastState();
 }
 
 

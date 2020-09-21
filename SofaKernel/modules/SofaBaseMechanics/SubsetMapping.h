@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -35,7 +32,7 @@
 #include <sofa/helper/vector.h>
 #include <sofa/core/topology/BaseMeshTopology.h>
 
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 
 #include <SofaEigen2Solver/EigenSparseMatrix.h>
 
@@ -98,13 +95,17 @@ public:
     typedef sofa::component::topology::PointSubsetData< IndexArray > SetIndex;
     SetIndex f_indices;
 
-    Data < int > f_first;
-    Data < int > f_last;
-    Data < Real > f_radius;
-    Data < bool > f_handleTopologyChange;
-    Data < bool > f_ignoreNotFound;
+    Data < int > f_first; ///< first index (use if indices are sequential)
+    Data < int > f_last; ///< last index (use if indices are sequential)
+    Data < Real > f_radius; ///< search radius to find corresponding points in case no indices are given
+    Data < bool > f_handleTopologyChange; ///< Enable support of topological changes for indices (disable if it is linked from SubsetTopologicalMapping::pointD2S)
+    Data < bool > f_ignoreNotFound; ///< True to ignore points that are not found in the input model, they will be treated as fixed points
+    Data < bool > f_resizeToModel; ///< True to resize the output MechanicalState to match the size of indices
     SubsetMappingInternalData<In, Out> data;
     void postInit();
+    /// Link to be set to the topology container in the component graph. 
+    SingleLink<SubsetMapping<In, Out>, sofa::core::topology::BaseMeshTopology, BaseLink::FLAG_STOREPATH | BaseLink::FLAG_STRONGLINK> l_topology;
+
 protected:
     SubsetMapping();
 public:
@@ -112,26 +113,23 @@ public:
 
     int addPoint(int index);
 
-    void init();
-
-    // handle topology changes depending on the topology
-    //void handleTopologyChange(core::topology::Topology* t);
+    void init() override;
 
     virtual ~SubsetMapping();
 
-    virtual void apply ( const core::MechanicalParams* mparams, OutDataVecCoord& dOut, const InDataVecCoord& dIn );
+    void apply ( const core::MechanicalParams* mparams, OutDataVecCoord& dOut, const InDataVecCoord& dIn ) override;
 
-    virtual void applyJ( const core::MechanicalParams* mparams, OutDataVecDeriv& dOut, const InDataVecDeriv& dIn );
+    void applyJ( const core::MechanicalParams* mparams, OutDataVecDeriv& dOut, const InDataVecDeriv& dIn ) override;
 
-    virtual void applyJT ( const core::MechanicalParams* mparams, InDataVecDeriv& dOut, const OutDataVecDeriv& dIn );
+    void applyJT ( const core::MechanicalParams* mparams, InDataVecDeriv& dOut, const OutDataVecDeriv& dIn ) override;
 
-    virtual void applyJT ( const core::ConstraintParams* /*cparams*/, InDataMatrixDeriv& dOut, const OutDataMatrixDeriv& dIn);
+    void applyJT ( const core::ConstraintParams* /*cparams*/, InDataMatrixDeriv& dOut, const OutDataMatrixDeriv& dIn) override;
 
-    const sofa::defaulttype::BaseMatrix* getJ();
+    const sofa::defaulttype::BaseMatrix* getJ() override;
 
 public:
     typedef helper::vector< defaulttype::BaseMatrix* > js_type;
-    virtual const js_type* getJs();
+    const js_type* getJs() override;
 
 protected:
     typedef linearsolver::EigenSparseMatrix<In, Out> eigen_type;
@@ -140,38 +138,18 @@ protected:
 public:
 
 protected:
-    boost::scoped_ptr<MatrixType> matrixJ;
+    std::unique_ptr<MatrixType> matrixJ;
     bool updateJ;
-
-    /// Pointer to the current topology
-    sofa::core::topology::BaseMeshTopology* topology;
 };
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_MAPPING_SUBSETMAPPING_CPP)
+#if  !defined(SOFA_COMPONENT_MAPPING_SUBSETMAPPING_CPP)
 
-#ifndef SOFA_FLOAT
 extern template class SOFA_BASE_MECHANICS_API SubsetMapping< sofa::defaulttype::Vec3dTypes, sofa::defaulttype::Vec3dTypes >;
-extern template class SOFA_BASE_MECHANICS_API SubsetMapping< sofa::defaulttype::Vec1dTypes, sofa::defaulttype::Vec1dTypes >;
-extern template class SOFA_BASE_MECHANICS_API SubsetMapping< sofa::defaulttype::Vec3dTypes, sofa::defaulttype::ExtVec3fTypes >;
-extern template class SOFA_BASE_MECHANICS_API SubsetMapping< sofa::defaulttype::Rigid3dTypes, sofa::defaulttype::Rigid3dTypes >;
-#endif
-#ifndef SOFA_DOUBLE
-extern template class SOFA_BASE_MECHANICS_API SubsetMapping< sofa::defaulttype::Vec3fTypes, sofa::defaulttype::Vec3fTypes >;
-extern template class SOFA_BASE_MECHANICS_API SubsetMapping< sofa::defaulttype::Vec1fTypes, sofa::defaulttype::Vec1fTypes >;
-extern template class SOFA_BASE_MECHANICS_API SubsetMapping< sofa::defaulttype::Vec3fTypes, sofa::defaulttype::ExtVec3fTypes >;
-extern template class SOFA_BASE_MECHANICS_API SubsetMapping< sofa::defaulttype::Rigid3fTypes, sofa::defaulttype::Rigid3fTypes >;
-#endif
+extern template class SOFA_BASE_MECHANICS_API SubsetMapping< sofa::defaulttype::Vec1Types, sofa::defaulttype::Vec1Types >;
+extern template class SOFA_BASE_MECHANICS_API SubsetMapping< sofa::defaulttype::Rigid3Types, sofa::defaulttype::Rigid3Types >;
 
-#ifndef SOFA_FLOAT
-#ifndef SOFA_DOUBLE
-extern template class SOFA_BASE_MECHANICS_API SubsetMapping< sofa::defaulttype::Vec3dTypes, sofa::defaulttype::Vec3fTypes >;
-extern template class SOFA_BASE_MECHANICS_API SubsetMapping< sofa::defaulttype::Vec3fTypes, sofa::defaulttype::Vec3dTypes >;
-extern template class SOFA_BASE_MECHANICS_API SubsetMapping< sofa::defaulttype::Vec1dTypes, sofa::defaulttype::Vec1fTypes >;
-extern template class SOFA_BASE_MECHANICS_API SubsetMapping< sofa::defaulttype::Vec1fTypes, sofa::defaulttype::Vec1dTypes >;
-extern template class SOFA_BASE_MECHANICS_API SubsetMapping< sofa::defaulttype::Rigid3dTypes, sofa::defaulttype::Rigid3fTypes >;
-extern template class SOFA_BASE_MECHANICS_API SubsetMapping< sofa::defaulttype::Rigid3fTypes, sofa::defaulttype::Rigid3dTypes >;
-#endif
-#endif
+
+
 
 #endif
 

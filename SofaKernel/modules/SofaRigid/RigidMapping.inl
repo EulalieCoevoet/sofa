@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -34,15 +31,16 @@
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
 
-#include <sofa/helper/io/MassSpringLoader.h>
+#include <sofa/helper/io/XspLoader.h>
 #include <sofa/helper/io/SphereLoader.h>
 #include <sofa/helper/io/Mesh.h>
-#include <sofa/helper/gl/template.h>
 #include <sofa/helper/decompose.h>
 
 #include <sofa/simulation/Simulation.h>
 
-#include <string.h>
+#include <Eigen/Dense>
+
+#include <cstring>
 #include <iostream>
 #include <cassert>
 #include <numeric>
@@ -60,8 +58,9 @@ namespace mapping
 
 
 template <class TIn, class TOut>
-class RigidMapping<TIn, TOut>::Loader : public helper::io::MassSpringLoader,
-        public helper::io::SphereLoader
+class RigidMapping<TIn, TOut>::Loader :
+        public helper::io::XspLoaderDataHook,
+        public helper::io::SphereLoaderDataHook
 {
 public:
 
@@ -73,14 +72,14 @@ public:
         points(dest->points)
     {
     }
-    virtual void addMass(SReal px, SReal py, SReal pz, SReal, SReal, SReal,
-                         SReal, SReal, bool, bool)
+    void addMass(SReal px, SReal py, SReal pz, SReal, SReal, SReal,
+                         SReal, SReal, bool, bool) override
     {
         Coord c;
         Out::set(c, px, py, pz);
         points.push_back(c); //Coord((Real)px,(Real)py,(Real)pz));
     }
-    virtual void addSphere(SReal px, SReal py, SReal pz, SReal)
+    void addSphere(SReal px, SReal py, SReal pz, SReal) override
     {
         Coord c;
         Out::set(c, px, py, pz);
@@ -98,19 +97,19 @@ void RigidMapping<TIn, TOut>::load(const char *filename)
             && !strcmp(filename + strlen(filename) - 4, ".xs3"))
     {
         Loader loader(this);
-        loader.helper::io::MassSpringLoader::load(filename);
+        helper::io::XspLoader::Load(filename, loader);
     }
     else if (strlen(filename) > 4
              && !strcmp(filename + strlen(filename) - 4, ".sph"))
     {
         Loader loader(this);
-        loader.helper::io::SphereLoader::load(filename);
+        helper::io::SphereLoader::Load(filename, loader);
     }
     else if (strlen(filename) > 0)
     {
         // Default to mesh loader
         helper::io::Mesh* mesh = helper::io::Mesh::Create(filename);
-        if (mesh != NULL)
+        if (mesh != nullptr)
         {
             helper::WriteAccessor<Data<VecCoord> > points = this->points;
 
@@ -133,7 +132,7 @@ RigidMapping<TIn, TOut>::RigidMapping()
     : Inherit()
     , points(initData(&points, "initialPoints", "Local Coordinates of the points"))
     , index(initData(&index, (unsigned)0, "index", "input DOF index"))
-    , fileRigidMapping(initData(&fileRigidMapping, "fileRigidMapping", "Filename"))
+    , fileRigidMapping(initData(&fileRigidMapping, "filename", "Xsp file where rigid mapping information can be loaded from."))
     , useX0(initData(&useX0, false, "useX0", "Use x0 instead of local copy of initial positions (to support topo changes)"))
     , indexFromEnd(initData(&indexFromEnd, false, "indexFromEnd", "input DOF index starts from the end of input DOFs vector"))
     , rigidIndexPerPoint(initData(&rigidIndexPerPoint, "rigidIndexPerPoint", "For each mapped point, the index of the Rigid it is mapped from"))
@@ -142,8 +141,7 @@ RigidMapping<TIn, TOut>::RigidMapping()
     , matrixJ()
     , updateJ(false)
 {
-    //std::cout << "RigidMapping Creation\n";
-    this->addAlias(&fileRigidMapping, "filename");
+    this->addAlias(&fileRigidMapping, "fileRigidMapping");
 }
 
 template <class TIn, class TOut>
@@ -192,18 +190,14 @@ int RigidMapping<TIn, TOut>::addPoint(const Coord& c, unsigned int indexFrom)
 template <class TIn, class TOut>
 void RigidMapping<TIn, TOut>::reinit()
 {
-    if (this->points.getValue().empty() && this->toModel != NULL && !useX0.getValue())
+    if (this->points.getValue().empty() && this->toModel != nullptr && !useX0.getValue())
     {
-//        serr<<"reinit(), from " << this->fromModel->getName() << " to " << this->toModel->getName() << sendl;
         const VecCoord& xTo =this->toModel->read(core::ConstVecCoordId::position())->getValue();
         helper::WriteOnlyAccessor<Data<VecCoord> > points = this->points;
         points.resize(xTo.size());
         unsigned int i = 0;
         if (globalToLocalCoords.getValue())
         {
-            //            cerr<<"globalToLocal is true, compute local coordinates"  << endl;
-//            const VecCoord& xTo =this->toModel->read(core::ConstVecCoordId::position())->getValue();
-//            points.resize(xTo.size());
             unsigned int i = 0;
             const InVecCoord& xFrom =this->fromModel->read(core::ConstVecCoordId::position())->getValue();
 
@@ -219,20 +213,13 @@ void RigidMapping<TIn, TOut>::reinit()
             {
                 points[i] = xTo[i];
             }
-            //            cerr<<"globalToLocal is false, points in local coordinates : " << points << endl;
         }
-    }
-    else
-    {
-        //        cerr << "RigidMapping<TIn, TOut>::init(), points not empty or toModel is null or useX0" << endl;
     }
 }
 
 template <class TIn, class TOut>
 void RigidMapping<TIn, TOut>::init()
 {
-    //    rigidMappingDummyFunction();
-
     if (!fileRigidMapping.getValue().empty())
         this->load(fileRigidMapping.getFullPath().c_str());
 
@@ -243,20 +230,6 @@ void RigidMapping<TIn, TOut>::init()
 
     this->Inherit::init();
 }
-
-/*
-template <class TIn, class TOut>
-void RigidMapping<TIn, TOut>::disable()
-{
- if (!this->points.getValue().empty() && this->toModel!=NULL)
- {
-  VecCoord& x =this->toModel->read(core::ConstVecCoordId::position())->getValue();
-  x.resize(points.getValue().size());
-  for (unsigned int i=0;i<points.getValue().size();i++)
-   x[i] = points.getValue()[i];
- }
-}
-*/
 
 template <class TIn, class TOut>
 void RigidMapping<TIn, TOut>::clear(int reserve)
@@ -272,7 +245,7 @@ void RigidMapping<TIn, TOut>::clear(int reserve)
 template <class TIn, class TOut>
 void RigidMapping<TIn, TOut>::setRepartition(unsigned int value)
 {
-    serr<<"setRepartition: deprecated function"<<sendl;
+    msg_deprecated()<<"setRepartition function. Fill rigidIndexPerPoint instead.";
 
     helper::vector<unsigned int>& rigidIndexPerPoint = *this->rigidIndexPerPoint.beginWriteOnly();
 
@@ -282,20 +255,22 @@ void RigidMapping<TIn, TOut>::setRepartition(unsigned int value)
 
     unsigned int idx = 0;
     for( size_t i=0 ; i<size ; )
+    {
          for( size_t j=0; j<value && i<size ; ++j, ++i )
+         {
             rigidIndexPerPoint[i] = idx;
+         }
          ++idx;
+    }
 
     this->rigidIndexPerPoint.endEdit();
-
-
 }
 
 template <class TIn, class TOut>
 void RigidMapping<TIn, TOut>::setRepartition(sofa::helper::vector<
                                              unsigned int> values)
 {
-    serr<<"setRepartition: deprecated function "<<sendl;
+    msg_deprecated()<<"setRepartition function. Fill rigidIndexPerPoint instead.";
 
     helper::vector<unsigned int>& rigidIndexPerPoint = *this->rigidIndexPerPoint.beginWriteOnly();
 
@@ -305,8 +280,12 @@ void RigidMapping<TIn, TOut>::setRepartition(sofa::helper::vector<
 
     size_t i = 0;
     for( unsigned int idx=0 ; idx<values.size() ; ++idx )
+    {
          for( size_t j=0, jend=values[idx]; j<jend ; ++j, ++i )
+         {
             rigidIndexPerPoint[i] = idx;
+         }
+    }
 
     this->rigidIndexPerPoint.endEdit();
 }
@@ -318,11 +297,13 @@ const typename RigidMapping<TIn, TOut>::VecCoord & RigidMapping<TIn, TOut>::getP
     {
         const Data<VecCoord>* v = this->toModel.get()->read(core::VecCoordId::restPosition());
         if (v)
+        {
             return v->getValue();
+        }
         else
-            serr
-                    << "RigidMapping: ERROR useX0 can only be used in MechanicalMappings."
-                    << sendl;
+        {
+            msg_error()<< "RigidMapping: ERROR useX0 can only be used in MechanicalMappings.";
+        }
     }
     return points.getValue();
 }
@@ -347,11 +328,6 @@ void RigidMapping<TIn, TOut>::apply(const core::MechanicalParams * /*mparams*/, 
         rotatedPoints[i] = in[rigidIndex].rotate( pts[i] );
         out[i] = in[rigidIndex].translate( rotatedPoints[i] );
     }
-
-    //    cerr<<"RigidMapping<TIn, TOut>::apply, " << this->getName() << endl;
-    //    cerr<<"RigidMapping<TIn, TOut>::apply, in = " << dIn << endl;
-    //    cerr<<"RigidMapping<TIn, TOut>::apply, points = " << pts << endl;
-    //    cerr<<"RigidMapping<TIn, TOut>::apply, out = " << dOut << endl;
 }
 
 template <class TIn, class TOut>
@@ -394,39 +370,6 @@ void RigidMapping<TIn, TOut>::applyJT(const core::MechanicalParams * /*mparams*/
 
 }
 
-//            using defaulttype::Vec;
-//
-//            /** Symmetric cross cross product.
-//              Let [a×(.×c)] be the linear operator such that: a×(b×c) = [a×(.×c)]b, where × denotes the cross product.
-//              This operator is not symmetric, and can mess up conjugate gradient solutions.
-//              This method computes sym([a×(.×c)])b , where sym(M) = (M+M^T)/2
-//              */
-//            template<class Rp, class Rc>  // p for parent, c for child
-//            Vec<3,Rp> symCrossCross( const Vec<3,Rc>& a,  const Vec<3,Rp>& b,  const Vec<3,Rc>& c  )
-//            {
-////                Rp m00 = a[1]*c[1]+a[2]*c[2], m01= -0.5*(a[1]*c[0]+a[0]*c[1]), m02 = -0.5*(a[2]*c[0]+a[0]*c[2]) ;
-////                Rp                            m11=  a[0]*c[0]+a[2]*c[2],       m12 = -0.5*(a[2]*c[1]+a[1]*c[2]) ;
-////                Rp                                                             m22=  a[0]*c[0]+a[1]*c[1];
-//                Rp m00 = a[1]*c[1]+a[2]*c[2], m01= 0, m02 = 0 ;
-//                Rp                            m11=  a[0]*c[0]+a[2]*c[2],       m12 = 0 ;
-//                Rp                                                             m22=  a[0]*c[0]+a[1]*c[1];
-//                return Vec<3,Rp>(
-//                        m00*b[0] + m01*b[1] + m02*b[2],
-//                        m01*b[0] + m11*b[1] + m12*b[2],
-//                        m02*b[0] + m12*b[1] + m22*b[2]
-//                        );
-//            }
-//
-//            /** Symmetric cross cross product in 2D (see doc in 3D)
-//              In 2D, this operator is a scalar so it is symmetric.
-//              */
-//            template<class Rp, class Rc> // p for parent, c for child
-//            Rp symCrossCross( const Vec<2,Rc>& a,  const Rp& b,  const Vec<2,Rc>& c  )
-//            {
-//                return (a*c)*b;
-//            }
-
-
 template <class TIn, class TOut>
 void RigidMapping<TIn, TOut>::applyDJT(const core::MechanicalParams* mparams, core::MultiVecDerivId parentForceChangeId, core::ConstMultiVecDerivId childForceId)
 {
@@ -457,11 +400,7 @@ void RigidMapping<TIn, TOut>::applyDJT(const core::MechanicalParams* mparams, co
             helper::ReadAccessor<Data<VecDeriv> > childForces (*mparams->readF(this->toModel));
             helper::WriteAccessor<Data<InVecDeriv> > parentForces (*parentForceChangeId[this->fromModel.get(mparams)].write());
             helper::ReadAccessor<Data<InVecDeriv> > parentDisplacements (*mparams->readDx(this->fromModel));
-            //    cerr<<"RigidMapping<TIn, TOut>::applyDJT, parent displacements = "<< parentDisplacements << endl;
-            //    cerr<<"RigidMapping<TIn, TOut>::applyDJT, parent forces = "<< parentForces << endl;
-
             InReal kfactor = (InReal)mparams->kFactor();
-            //    cerr<<"RigidMapping<TIn, TOut>::applyDJT, kfactor = "<< kfactor << endl;
 
             for( size_t i=0 ; i<this->maskTo->size() ; ++i)
             {
@@ -471,7 +410,6 @@ void RigidMapping<TIn, TOut>::applyDJT(const core::MechanicalParams* mparams, co
 
                 typename TIn::AngularVector& parentTorque = getVOrientation(parentForces[rigidIndex]);
                 const typename TIn::AngularVector& parentRotation = getVOrientation(parentDisplacements[rigidIndex]);
-                //  const typename TIn::AngularVector& torqueDecrement = symCrossCross( childForces[i], parentRotation, rotatedPoints[i]) * kfactor;
                 const typename TIn::AngularVector& torqueDecrement = TIn::crosscross( childForces[i], parentRotation, rotatedPoints[i]) * kfactor;
                 parentTorque -=  torqueDecrement;
             }
@@ -493,17 +431,12 @@ void RigidMapping<TIn, TOut>::applyJT(const core::ConstraintParams * /*cparams*/
     InMatrixDeriv& out = *dOut.beginEdit();
     const OutMatrixDeriv& in = dIn.getValue();
 
-    if (this->f_printLog.getValue())
-    {
-        sout << "J on mapped DOFs == " << in << sendl;
-        sout << "J on input  DOFs == " << out << sendl;
-    }
+    dmsg_info() << "J on mapped DOFs == " << in << msgendl
+                << "J on input  DOFs == " << out ;
 
     const unsigned int numDofs = this->getFromModel()->getSize();
 
-
     // TODO the implementation on the new data structure could maybe be optimized
-
     typename Out::MatrixDeriv::RowConstIterator rowItEnd = in.end();
 
     for (typename Out::MatrixDeriv::RowConstIterator rowIt = in.begin(); rowIt != rowItEnd; ++rowIt)
@@ -544,11 +477,7 @@ void RigidMapping<TIn, TOut>::applyJT(const core::ConstraintParams * /*cparams*/
     }
 
 
-
-    if (this->f_printLog.getValue())
-    {
-        sout << "new J on input  DOFs = " << out << sendl;
-    }
+    dmsg_info() << "new J on input  DOFs = " << out ;
 
     dOut.endEdit();
 }
@@ -558,27 +487,27 @@ namespace impl {
 
 template<class U, class Coord>
 static void fill_block(Eigen::Matrix<U, 3, 6>& block, const Coord& v) {
-	U x = v[0];
-	U y = v[1];
-	U z = v[2];
-				
-	// note: this is -hat(v)
-	block.template rightCols<3>() <<
-					
-		0,   z,  -y,
-		-z,  0,   x,
-		y,  -x,   0;
+    U x = v[0];
+    U y = v[1];
+    U z = v[2];
+
+    // note: this is -hat(v)
+    block.template rightCols<3>() <<
+
+        0,   z,  -y,
+        -z,  0,   x,
+        y,  -x,   0;
 }
 
 template<class U, class Coord>
 void fill_block(Eigen::Matrix<U, 2, 3>& block, const Coord& v) {
-	U x = v[0];
-	U y = v[1];
-				
-	// note: this is -hat(v)
-	block.template rightCols<1>() <<
-		-y,
-		x;
+    U x = v[0];
+    U y = v[1];
+
+    // note: this is -hat(v)
+    block.template rightCols<1>() <<
+        -y,
+        x;
 }
 
 
@@ -587,23 +516,26 @@ void fill_block(Eigen::Matrix<U, 2, 3>& block, const Coord& v) {
 template <class TIn, class TOut>
 const helper::vector<sofa::defaulttype::BaseMatrix*>* RigidMapping<TIn, TOut>::getJs()
 {
-	const VecCoord& out =this->toModel->read(core::ConstVecCoordId::position())->getValue();
+    const VecCoord& out =this->toModel->read(core::ConstVecCoordId::position())->getValue();
     const InVecCoord& in =this->fromModel->read(core::ConstVecCoordId::position())->getValue();
 
-	typename SparseMatrixEigen::CompressedMatrix& J = eigenJacobian.compressedMatrix;
-	
-	if( updateJ || J.size() == 0 ) {
-		
-		J.resize(out.size() * NOut, in.size() * NIn);
-		J.setZero();
+    typename SparseMatrixEigen::CompressedMatrix& J = eigenJacobian.compressedMatrix;
 
-		// matrix chunk
-		typedef typename TOut::Real real;
-		typedef Eigen::Matrix<real, NOut, NIn> block_type;
-		block_type block;
-		
-		// translation part
-		block.template leftCols<NOut>().setIdentity();
+    if( updateJ || J.size() == 0 )
+    {
+
+        updateJ = false;
+
+        J.resize(out.size() * NOut, in.size() * NIn);
+        J.setZero();
+
+        // matrix chunk
+        typedef typename TOut::Real real;
+        typedef Eigen::Matrix<real, NOut, NIn> block_type;
+        block_type block;
+
+        // translation part
+        block.template leftCols<NOut>().setIdentity();
 
 
 
@@ -641,15 +573,13 @@ const helper::vector<sofa::defaulttype::BaseMatrix*>* RigidMapping<TIn, TOut>::g
                     if( block(i, j) != 0 ) {
 
                         J.insertBack(row, col) = block(i, j);
-
                     }
-
                 }
             }
         }
 
-		J.finalize();		
-	}
+        J.finalize();
+    }
 
     return &eigenJacobians;
 }
@@ -724,7 +654,7 @@ template <class TIn, class TOut>
 const sofa::defaulttype::BaseMatrix* RigidMapping<TIn, TOut>::getK()
 {
     if( geometricStiffnessMatrix.compressedMatrix.nonZeros() ) return &geometricStiffnessMatrix;
-    else return NULL;
+    else return nullptr;
 }
 
 
@@ -796,7 +726,6 @@ struct RigidMappingMatrixHelper<3, Real>
 template <class TIn, class TOut>
 void RigidMapping<TIn, TOut>::setJMatrixBlock(unsigned outIdx, unsigned inIdx)
 {
-    //    cerr<<"RigidMapping<TIn, TOut>::setJMatrixBlock, outIdx = " << outIdx << ", inIdx = " << inIdx << endl;
     MBloc& block = *matrixJ->wbloc(outIdx, inIdx, true);
     RigidMappingMatrixHelper<N, Real>::setMatrix(block, rotatedPoints[outIdx]);
 }
@@ -804,7 +733,7 @@ void RigidMapping<TIn, TOut>::setJMatrixBlock(unsigned outIdx, unsigned inIdx)
 template <class TIn, class TOut>
 void RigidMapping<TIn, TOut>::draw(const core::visual::VisualParams* vparams)
 {
-    if (!vparams->displayFlags().getShowMappings() || this->toModel==NULL )
+    if (!vparams->displayFlags().getShowMappings() || this->toModel==nullptr )
         return;
     std::vector<defaulttype::Vector3> points;
     defaulttype::Vector3 point;
@@ -828,7 +757,7 @@ void RigidMapping<TIn, TOut>::parse(core::objectmodel::BaseObjectDescription* ar
     const char* repartitionChar = arg->getAttribute("repartition");
     if( repartitionChar )
     {
-        serr<<"parse: You are using a deprecated Data 'repartition', please use the new structure data rigidIndexPerPoint"<<sendl;
+        msg_deprecated() << "parse: You are using a deprecated Data 'repartition', please use the new structure data rigidIndexPerPoint";
 
         helper::vector< unsigned int > repartition;
         std::istringstream ss( repartitionChar );

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -58,7 +55,7 @@ void FixParticlePerformer<DataTypes>::start()
 
     if (!mstateCollision || points.empty())
     {
-        std::cerr << "Model not supported!" << std::endl;
+        msg_error("FixParticlePerformer") << "Model not supported!" ;
         return;
     }
 
@@ -68,7 +65,6 @@ void FixParticlePerformer<DataTypes>::start()
 
     //Create the Container of points
     typename MouseContainer::SPtr mstateFixation = sofa::core::objectmodel::New< MouseContainer >();
-    mstateFixation->setIgnoreLoader(true);
 
     mstateFixation->resize(1);
     {
@@ -80,7 +76,7 @@ void FixParticlePerformer<DataTypes>::start()
 
     //Fix all the points
     typename projectiveconstraintset::FixedConstraint<DataTypes>::SPtr fixFixation = sofa::core::objectmodel::New< projectiveconstraintset::FixedConstraint<DataTypes> >();
-    fixFixation->f_fixAll.setValue(true);
+    fixFixation->d_fixAll.setValue(true);
     nodeFixation->addObject(fixFixation);
 
     //Add Interaction ForceField
@@ -133,13 +129,13 @@ sofa::component::container::MechanicalObject< DataTypes >* FixParticlePerformer<
     {
         collisionState = dynamic_cast<MouseContainer*>(b.body->getContext()->getMechanicalState());
 
-        if (SphereModel *sphere = dynamic_cast<SphereModel*>(b.body))
+        if (SphereCollisionModel<sofa::defaulttype::Vec3Types> *sphere = dynamic_cast<SphereCollisionModel<sofa::defaulttype::Vec3Types>*>(b.body))
         {
             Sphere s(sphere, idx);
             fixPoint = s.p();
             points.push_back(s.getIndex());
         }
-        else if(TriangleModel *triangle = dynamic_cast<TriangleModel*>(b.body))
+        else if(TriangleCollisionModel<sofa::defaulttype::Vec3Types> *triangle = dynamic_cast<TriangleCollisionModel<sofa::defaulttype::Vec3Types>*>(b.body))
         {
             Triangle t(triangle, idx);
             fixPoint = (t.p1()+t.p2()+t.p3())/3.0;
@@ -147,12 +143,12 @@ sofa::component::container::MechanicalObject< DataTypes >* FixParticlePerformer<
             points.push_back(t.p2Index());
             points.push_back(t.p3Index());
         }
-        else if(CapsuleModel *capsule = dynamic_cast<CapsuleModel*>(b.body)){
+        else if(CapsuleCollisionModel<sofa::defaulttype::Vec3Types> *capsule = dynamic_cast<CapsuleCollisionModel<sofa::defaulttype::Vec3Types>*>(b.body)){
             fixPoint = (capsule->point1(idx) + capsule->point2(idx))/2.0;
             points.push_back(capsule->point1Index(idx));
             points.push_back(capsule->point2Index(idx));
         }
-        else if(dynamic_cast<RigidSphereModel*>(b.body)||dynamic_cast<OBBModel*>(b.body)){
+        else if(dynamic_cast<SphereCollisionModel<sofa::defaulttype::Rigid3Types>*>(b.body)||dynamic_cast<OBBCollisionModel<sofa::defaulttype::Rigid3Types>*>(b.body)){
             collisionState = dynamic_cast<MouseContainer*>(b.mstate);
             fixPoint = (collisionState->read(core::ConstVecCoordId::position())->getValue())[idx];
             points.push_back(idx);

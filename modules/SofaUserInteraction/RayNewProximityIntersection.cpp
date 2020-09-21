@@ -1,29 +1,25 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 #include <SofaUserInteraction/RayNewProximityIntersection.h>
-#include <sofa/helper/system/config.h>
 #include <sofa/helper/FnDispatcher.inl>
 #include <sofa/core/collision/Intersection.inl>
 #include <sofa/helper/proximity.h>
@@ -47,8 +43,6 @@ using namespace sofa::defaulttype;
 using namespace sofa::core::collision;
 using sofa::helper::DistanceSegTri;
 
-SOFA_DECL_CLASS(RayNewProximityIntersection)
-
 IntersectorCreator<NewProximityIntersection, RayNewProximityIntersection> RayNewProximityIntersectors("Ray");
 
 RayNewProximityIntersection::RayNewProximityIntersection(NewProximityIntersection* object, bool addSelf)
@@ -56,13 +50,13 @@ RayNewProximityIntersection::RayNewProximityIntersection(NewProximityIntersectio
 {
     if (addSelf)
     {
-        intersection->intersectors.ignore<RayModel, PointModel>();
-        intersection->intersectors.ignore<RayModel, LineModel>();
+        intersection->intersectors.ignore<RayCollisionModel, PointCollisionModel<sofa::defaulttype::Vec3Types>>();
+        intersection->intersectors.ignore<RayCollisionModel, LineCollisionModel<sofa::defaulttype::Vec3Types>>();
 
         // why rigidsphere has a different collision detection compared to RayDiscreteIntersection?
-        intersection->intersectors.add<RayModel, RigidSphereModel, RayNewProximityIntersection>(this);
+        intersection->intersectors.add<RayCollisionModel, RigidSphereModel, RayNewProximityIntersection>(this);
 
-        intersection->intersectors.add<RayModel, TriangleModel, RayNewProximityIntersection>(this);
+        intersection->intersectors.add<RayCollisionModel, TriangleCollisionModel<sofa::defaulttype::Vec3Types>, RayNewProximityIntersection>(this);
     }
 }
 
@@ -83,7 +77,6 @@ bool RayNewProximityIntersection::testIntersection(Ray &t1,Triangle &t2)
 
     if (PQ.norm2() < alarmDist*alarmDist)
     {
-        //sout<<"Collision between Line - Triangle"<<sendl;
         return true;
     }
     else
@@ -117,7 +110,7 @@ int RayNewProximityIntersection::computeIntersection(Ray &t1, Triangle &t2, Outp
     detection->elem = std::pair<core::CollisionElementIterator, core::CollisionElementIterator>(t1, t2);
     detection->point[1]=P;
     detection->point[0]=Q;
-#ifdef DETECTIONOUTPUT_FREEMOTION
+#ifdef SOFA_DETECTIONOUTPUT_FREEMOTION
     detection->freePoint[1] = P;
     detection->freePoint[0] = Q;
 #endif

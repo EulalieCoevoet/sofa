@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -40,7 +37,11 @@ namespace collision
 
 template < class TCollisionModel1, class TCollisionModel2, class ResponseDataTypes >
 BarycentricPenalityContact<TCollisionModel1,TCollisionModel2,ResponseDataTypes>::BarycentricPenalityContact(CollisionModel1* _model1, CollisionModel2* _model2, Intersection* _intersectionMethod)
-    : model1(_model1), model2(_model2), intersectionMethod(_intersectionMethod), ff(NULL), parent(NULL)
+    : model1(_model1)
+    , model2(_model2)
+    , intersectionMethod(_intersectionMethod)
+    , ff(nullptr)
+    , parent(nullptr)
 {
     mapper1.setCollisionModel(model1);
     mapper2.setCollisionModel(model2);
@@ -55,13 +56,13 @@ BarycentricPenalityContact<TCollisionModel1,TCollisionModel2,ResponseDataTypes>:
 template < class TCollisionModel1, class TCollisionModel2, class ResponseDataTypes >
 void BarycentricPenalityContact<TCollisionModel1,TCollisionModel2,ResponseDataTypes>::cleanup()
 {
-    if (ff!=NULL)
+    if (ff!=nullptr)
     {
         ff->cleanup();
-        if (parent!=NULL) parent->removeObject(ff);
+        if (parent!=nullptr) parent->removeObject(ff);
         //delete ff;
-        parent = NULL;
-        ff = NULL;
+        parent = nullptr;
+        ff = nullptr;
         mapper1.cleanup();
         mapper2.cleanup();
     }
@@ -71,18 +72,14 @@ template < class TCollisionModel1, class TCollisionModel2, class ResponseDataTyp
 void BarycentricPenalityContact<TCollisionModel1,TCollisionModel2,ResponseDataTypes>::setDetectionOutputs(OutputVector* o)
 {
     TOutputVector& outputs = *static_cast<TOutputVector*>(o);
-    const bool printLog = this->f_printLog.getValue();
-    if (ff==NULL)
+    if (ff==nullptr)
     {
-        MechanicalState1* mstate1 = mapper1.createMapping(GenerateStirngID::generate().c_str());
-        MechanicalState2* mstate2 = mapper2.createMapping(GenerateStirngID::generate().c_str());
+        MechanicalState1* mstate1 = mapper1.createMapping(GenerateStringID::generate().c_str());
+        MechanicalState2* mstate2 = mapper2.createMapping(GenerateStringID::generate().c_str());
         ff = sofa::core::objectmodel::New<ResponseForceField>(mstate1,mstate2);
         ff->setName( getName() );
         setInteractionTags(mstate1, mstate2);
         ff->init();
-#ifdef SOFA_SMP
-        ff->setPartition(mstate1->getPartition());
-#endif
 
     }
 
@@ -124,7 +121,7 @@ void BarycentricPenalityContact<TCollisionModel1,TCollisionModel2,ResponseDataTy
             if (!index)
             {
                 ++nbnew;
-                if (printLog) sout << "BarycentricPenalityContact: New contact "<<o->id<<sendl;
+                dmsg_info() << " new contact "<<o->id ;
             }
         }
         index = -1-i; // save this index as a negative value in contactIndex map.
@@ -149,7 +146,7 @@ void BarycentricPenalityContact<TCollisionModel1,TCollisionModel2,ResponseDataTy
         int& index = it->second;
         if (index >= 0)
         {
-            if (printLog) sout << "BarycentricPenalityContact: Removed contact "<<it->first<<sendl;
+            dmsg_info() << " removed contact "<<it->first ;
             ContactIndexMap::iterator oldit = it;
             ++it;
             contactIndex.erase(oldit);
@@ -160,17 +157,12 @@ void BarycentricPenalityContact<TCollisionModel1,TCollisionModel2,ResponseDataTy
             ++it;
         }
     }
-    if (printLog) sout << "BarycentricPenalityContact: "<<insize<<" input contacts, "<<size<<" contacts used for response ("<<nbnew<<" new)."<<sendl;
+    dmsg_info() << " "<<insize<<" input contacts, "<<size<<" contacts used for response ("<<nbnew<<" new).";
 
-    //int size = contacts.size();
     ff->clear(size);
     mapper1.resize(size);
     mapper2.resize(size);
-    //int i = 0;
     const double d0 = intersectionMethod->getContactDistance() + model1->getProximity() + model2->getProximity(); // - 0.001;
-    //for (std::vector<DetectionOutput>::iterator it = outputs.begin(); it!=outputs.end(); it++)
-    //{
-    //    DetectionOutput* o = &*it;
     for (int i=0; i<insize; i++)
     {
         int index = oldIndex[i];
@@ -183,27 +175,8 @@ void BarycentricPenalityContact<TCollisionModel1,TCollisionModel2,ResponseDataTy
         typename DataTypes1::Real r1 = 0.0;
         typename DataTypes2::Real r2 = 0.0;
 
-        // Just make it work, some changes have been done in rev 10382 so that BarycentricPenaltyContact doesn't
-        // map well the contact points because o->baryCoords is used ant not initialized. It means that
-        // the mapped contact point is random ! So I replaced addPointB by addPoint to make it work.
-        // Create mapping for first point
-//        index1 = mapper1.addPointB(o->point[0], index1, r1
-//#ifdef DETECTIONOUTPUT_BARYCENTRICINFO
-//                , o->baryCoords[0]
-//#endif
-//                                  );
-
         index1 = mapper1.addPoint(o->point[0], index1, r1);
-
-        // Create mapping for second point
-//        index2 = mapper2.addPointB(o->point[1], index2, r2
-//#ifdef DETECTIONOUTPUT_BARYCENTRICINFO
-//                , o->baryCoords[1]
-//#endif
-//                                  );
-
         index2 = mapper2.addPoint(o->point[1], index2, r2);
-
 
         double distance = d0 + r1 + r2;
         double stiffness = (elem1.getContactStiffness() * elem2.getContactStiffness());
@@ -220,17 +193,16 @@ void BarycentricPenalityContact<TCollisionModel1,TCollisionModel2,ResponseDataTy
 template < class TCollisionModel1, class TCollisionModel2, class ResponseDataTypes >
 void BarycentricPenalityContact<TCollisionModel1,TCollisionModel2,ResponseDataTypes>::createResponse(core::objectmodel::BaseContext* group)
 {
-    if (ff!=NULL)
+    if (ff!=nullptr)
     {
-        if (parent!=NULL)
+        if (parent!=nullptr)
         {
             parent->removeObject(this);
             parent->removeObject(ff);
         }
         parent = group;
-        if (parent!=NULL)
+        if (parent!=nullptr)
         {
-            //sout << "Attaching contact response to "<<parent->getName()<<sendl;
             parent->addObject(this);
             parent->addObject(ff);
         }
@@ -240,23 +212,20 @@ void BarycentricPenalityContact<TCollisionModel1,TCollisionModel2,ResponseDataTy
 template < class TCollisionModel1, class TCollisionModel2, class ResponseDataTypes >
 void BarycentricPenalityContact<TCollisionModel1,TCollisionModel2,ResponseDataTypes>::removeResponse()
 {
-    if (ff!=NULL)
+    if (ff!=nullptr)
     {
-        if (parent!=NULL)
+        if (parent!=nullptr)
         {
-            //sout << "Removing contact response from "<<parent->getName()<<sendl;
             parent->removeObject(this);
             parent->removeObject(ff);
         }
-        parent = NULL;
+        parent = nullptr;
     }
 }
 
 template < class TCollisionModel1, class TCollisionModel2, class ResponseDataTypes >
 void BarycentricPenalityContact<TCollisionModel1,TCollisionModel2,ResponseDataTypes>::draw(const core::visual::VisualParams* )
 {
-    //	if (ff!=NULL)
-    //		ff->draw(vparams);
 }
 
 template < class TCollisionModel1, class TCollisionModel2, class ResponseDataTypes >

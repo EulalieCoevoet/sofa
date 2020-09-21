@@ -1,9 +1,8 @@
+#include "contourimagetoolboxaction.h"
+#include "contourimagetoolbox.h"
+
 #include <QString>
 #include <QWidgetAction>
-
-#include "contourimagetoolboxaction.h"
-
-#include "contourimagetoolbox.h"
 
 namespace sofa
 {
@@ -381,8 +380,6 @@ void ContourImageToolBoxAction::optionChangeSection(sofa::defaulttype::Vec3i v)
 
 
 
-
-SOFA_DECL_CLASS(ContourImageToolBoxAction);
 
 //template class SOFA_IMAGE_GUI_API ImageToolBox<ImageUS>;
 

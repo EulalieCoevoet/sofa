@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -26,7 +23,22 @@
 #define BINDING_BASE_H
 
 #include "PythonMacros.h"
-
+#include <sofa/core/DataEngine.h>
+#include <sofa/core/objectmodel/Base.h>
+#include <sofa/core/objectmodel/BaseData.h>
+#include <sofa/helper/Factory.h>
+#include <sofa/helper/Factory.inl>
 SP_DECLARE_CLASS_TYPE(Base)
+
+template<typename DataType>
+class DataCreator : public sofa::helper::BaseCreator<sofa::core::objectmodel::BaseData>
+{
+public:
+    sofa::core::objectmodel::BaseData* createInstance(sofa::helper::NoArgument) override { return new sofa::core::objectmodel::Data<DataType>(); }
+    virtual const std::type_info& type() override { return typeid(sofa::core::objectmodel::BaseData);}
+};
+
+//sofa::core::objectmodel::BaseData * helper_addNewData(PyObject *args, sofa::core::objectmodel::Base* obj);
+sofa::core::objectmodel::BaseData * helper_addNewData(PyObject *args, PyObject * kw, sofa::core::objectmodel::Base * obj);
 
 #endif // BINDING_BASE_H

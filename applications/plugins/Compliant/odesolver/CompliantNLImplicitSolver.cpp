@@ -2,19 +2,17 @@
 
 #include <sofa/core/ObjectFactory.h>
 
-#include "../assembly/AssemblyVisitor.h"
-#include "../utils/scoped.h"
+#include <Compliant/assembly/AssemblyVisitor.h>
+#include <Compliant/utils/scoped.h>
+#include <Compliant/numericalsolver/KKTSolver.h>
 
 using std::cerr;
 using std::endl;
-
-
 
 namespace sofa {
 namespace component {
 namespace odesolver {
 
-SOFA_DECL_CLASS(CompliantNLImplicitSolver)
 int CompliantNLImplicitSolverClass = core::RegisterObject("Implicit solver with pre-inversed matrix and Newton iterations")
         .add< CompliantNLImplicitSolver >()
         .addAlias("CompliantNonLinearImplicitSolver")
@@ -82,7 +80,7 @@ public:
 #endif
     }
 
-    virtual Result fwdMappedMechanicalState(simulation::Node* node, core::behavior::BaseMechanicalState* mm)
+    Result fwdMappedMechanicalState(simulation::Node* node, core::behavior::BaseMechanicalState* mm) override
     {
         if( node->forceField.empty() || node->forceField[0]->isCompliance.getValue() )
             mm->resetForce(this->params, lambda.getId(mm));
@@ -90,7 +88,7 @@ public:
     }
 
 
-    void bwdMechanicalMapping(simulation::Node* /*node*/, core::BaseMapping* map)
+    void bwdMechanicalMapping(simulation::Node* /*node*/, core::BaseMapping* map) override
     {
         //       cerr<<"MechanicalComputeForceVisitor::bwdMechanicalMapping "<<map->getName()<<endl;
 
@@ -105,7 +103,7 @@ public:
     }
 
 
-    void bwdMechanicalState(simulation::Node* , core::behavior::BaseMechanicalState* mm)
+    void bwdMechanicalState(simulation::Node* , core::behavior::BaseMechanicalState* mm) override
     {
         mm->forceMask.activate(false);
     }
@@ -113,15 +111,15 @@ public:
 
     /// Return a class name for this visitor
     /// Only used for debugging / profiling purposes
-    virtual const char* getClassName() const {return "AccumulateConstraintForceVisitor";}
-    virtual std::string getInfos() const
+    const char* getClassName() const override {return "AccumulateConstraintForceVisitor";}
+    virtual std::string getInfos() const override
     {
         std::string name=std::string("[")+lambda.getName()+std::string("]");
         return name;
     }
 
     /// Specify whether this action can be parallelized.
-    virtual bool isThreadSafe() const
+    bool isThreadSafe() const override
     {
         return true;
     }
@@ -144,13 +142,13 @@ public:
         , invdt( -1.0/dt )
     {
     }
-    virtual Result fwdMechanicalState(simulation::Node* /*node*/, core::behavior::BaseMechanicalState* mm)
+    Result fwdMechanicalState(simulation::Node* /*node*/, core::behavior::BaseMechanicalState* mm) override
     {
         mm->resetForce(this->params, res.getId(mm));
         mm->accumulateForce(this->params, res.getId(mm));
         return RESULT_CONTINUE;
     }
-    virtual Result fwdMappedMechanicalState(simulation::Node* node, core::behavior::BaseMechanicalState* mm)
+    Result fwdMappedMechanicalState(simulation::Node* node, core::behavior::BaseMechanicalState* mm) override
     {
         if( !node->forceField.empty() && node->forceField[0]->isCompliance.getValue() )
             // compliance should be alone in the node
@@ -184,14 +182,14 @@ public:
     }
 
     // TODO how to propagate lambdas without invalidating forces on mapped dofs?
-    virtual Result fwdMappedMechanicalState(simulation::Node* /*node*/, core::behavior::BaseMechanicalState* mm)
+    Result fwdMappedMechanicalState(simulation::Node* /*node*/, core::behavior::BaseMechanicalState* mm) override
     {
         mm->resetForce(this->params, res.getId(mm));
         return RESULT_CONTINUE;
     }
 
 
-    virtual Result fwdForceField(simulation::Node* /*node*/, core::behavior::BaseForceField* ff)
+    Result fwdForceField(simulation::Node* /*node*/, core::behavior::BaseForceField* ff) override
     {
         if( ff->isCompliance.getValue() )
         {
@@ -204,7 +202,7 @@ public:
     }
 
 
-    virtual void bwdMechanicalMapping(simulation::Node* /*node*/, core::BaseMapping* map)
+    void bwdMechanicalMapping(simulation::Node* /*node*/, core::BaseMapping* map) override
     {
         ForceMaskActivate( map->getMechFrom() );
         ForceMaskActivate( map->getMechTo() );
@@ -212,12 +210,12 @@ public:
         ForceMaskDeactivate( map->getMechTo() );
     }
 
-    virtual void bwdMechanicalState(simulation::Node* /*node*/, core::behavior::BaseMechanicalState* mm)
+    void bwdMechanicalState(simulation::Node* /*node*/, core::behavior::BaseMechanicalState* mm) override
     {
         mm->forceMask.activate(false);
     }
 
-    virtual void bwdProjectiveConstraintSet(simulation::Node* /*node*/, core::behavior::BaseProjectiveConstraintSet* c)
+    void bwdProjectiveConstraintSet(simulation::Node* /*node*/, core::behavior::BaseProjectiveConstraintSet* c) override
     {
         c->projectResponse( this->mparams, res );
     }
@@ -225,15 +223,15 @@ public:
 
     /// Return a class name for this visitor
     /// Only used for debugging / profiling purposes
-    virtual const char* getClassName() const {return "MechanicalAddLagrangeForce";}
-    virtual std::string getInfos() const
+    const char* getClassName() const override {return "MechanicalAddLagrangeForce";}
+    virtual std::string getInfos() const override
     {
         std::string name=std::string("[")+res.getName()+","+lambdas.getName()+std::string("]");
         return name;
     }
 
     /// Specify whether this action can be parallelized.
-    virtual bool isThreadSafe() const
+    bool isThreadSafe() const override
     {
         return true;
     }
@@ -541,7 +539,7 @@ void CompliantNLImplicitSolver::solve(const core::ExecParams* eparams,
 
         vec x(sys.size()); // unknown
         vec residual(sys.size()); // residual
-        boost::scoped_ptr<chuck_type> residual_constraints( sys.n?new chuck_type(&residual(sys.m),sys.n):NULL);
+        std::unique_ptr<chuck_type> residual_constraints( sys.n?new chuck_type(&residual(sys.m),sys.n):NULL);
 
         handleUnilateralConstraints();
 
@@ -706,9 +704,10 @@ void CompliantNLImplicitSolver::solve(const core::ExecParams* eparams,
 
 
     // propagate lambdas if asked to
-    if( propagate_lambdas.getValue() ) {
-        scoped::timer step("lambda propagation");
-        simulation::propagate_constraint_force_visitor prop( &sop.mparams(), core::VecId::force(), lagrange.id(), sys.dt );
+    unsigned constraint_f = this->constraint_forces.getValue().getSelectedId();
+    if( constraint_f && sys.n ) {
+        scoped::timer step("constraint_forces");
+        simulation::propagate_constraint_force_visitor prop( &sop.mparams(), core::VecId::force(), lagrange.id(), formulation.getValue().getSelectedId()==FORMULATION_VEL ? 1.0/sys.dt : 1.0, constraint_f>1, constraint_f==3 );
         send( prop );
     }
 
@@ -741,7 +740,7 @@ bool CompliantNLImplicitSolver::lnsrch( SReal& resnorm, vec& p, vec& residual, S
 
     const unsigned n = sys.size();
 
-    boost::scoped_ptr<chuck_type> residual_constraints( sys.n?new chuck_type(&residual(sys.m),sys.n):NULL);
+    std::unique_ptr<chuck_type> residual_constraints( sys.n?new chuck_type(&residual(sys.m),sys.n):NULL);
 
     vec x(n), xold(n);
     sys.copyFromMultiVec( xold, newV );

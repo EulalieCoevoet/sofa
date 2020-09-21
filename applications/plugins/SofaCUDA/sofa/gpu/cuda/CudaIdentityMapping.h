@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -77,45 +74,29 @@ using namespace sofa::defaulttype;
 using namespace sofa::component::mapping;
 using namespace sofa::gpu::cuda;
 
-extern template class  IdentityMapping< CudaVec3fTypes, CudaVec3fTypes>;
-#ifndef SOFA_DOUBLE
-extern template class  IdentityMapping< CudaVec3fTypes, Vec3fTypes>;
-extern template class  IdentityMapping< Vec3fTypes, CudaVec3fTypes>;
-#endif
-#ifndef SOFA_FLOAT
-extern template class  IdentityMapping< CudaVec3fTypes, Vec3dTypes>;
-extern template class  IdentityMapping< Vec3dTypes, CudaVec3fTypes>;
-#endif
+// CudaVec3fTypes
+extern template class SOFA_GPU_CUDA_API  IdentityMapping< CudaVec3fTypes, CudaVec3fTypes>;
+extern template class SOFA_GPU_CUDA_API  IdentityMapping< CudaVec3fTypes, CudaVec3f1Types>;
+extern template class SOFA_GPU_CUDA_API  IdentityMapping< CudaVec3fTypes, Vec3Types>;
+extern template class SOFA_GPU_CUDA_API  IdentityMapping< Vec3Types, CudaVec3fTypes>;
+
+// CudaVec3f1Types
+extern template class SOFA_GPU_CUDA_API  IdentityMapping< CudaVec3f1Types, CudaVec3f1Types>;
+extern template class SOFA_GPU_CUDA_API  IdentityMapping< CudaVec3f1Types, CudaVec3fTypes>;
+extern template class SOFA_GPU_CUDA_API  IdentityMapping< CudaVec3f1Types, Vec3Types>;
+extern template class SOFA_GPU_CUDA_API  IdentityMapping< Vec3dTypes, CudaVec3f1Types>;
+
 
 #ifdef SOFA_GPU_CUDA_DOUBLE
-extern template class  IdentityMapping< CudaVec3fTypes, CudaVec3dTypes>;
-extern template class  IdentityMapping< CudaVec3dTypes, CudaVec3fTypes>;
-extern template class  IdentityMapping< CudaVec3dTypes, CudaVec3dTypes>;
-extern template class  IdentityMapping< CudaVec3dTypes, Vec3fTypes>;
-extern template class  IdentityMapping< CudaVec3dTypes, Vec3dTypes>;
-#ifndef SOFA_DOUBLE
-extern template class  IdentityMapping< Vec3dTypes, CudaVec3dTypes>;
-#endif
-#ifndef SOFA_FLOAT
-extern template class  IdentityMapping< Vec3fTypes, CudaVec3dTypes>;
-#endif
+// CudaVec3dTypes
+extern template class SOFA_GPU_CUDA_API  IdentityMapping< CudaVec3dTypes, CudaVec3dTypes>;
+extern template class SOFA_GPU_CUDA_API  IdentityMapping< CudaVec3dTypes, CudaVec3fTypes>;
+extern template class SOFA_GPU_CUDA_API  IdentityMapping< CudaVec3dTypes, Vec3Types>;
 
-extern template class  IdentityMapping< CudaVec3d1Types, ExtVec3dTypes >;
-extern template class  IdentityMapping< CudaVec3dTypes, ExtVec3dTypes >;
+extern template class SOFA_GPU_CUDA_API  IdentityMapping< CudaVec3fTypes, CudaVec3dTypes>;
+extern template class SOFA_GPU_CUDA_API  IdentityMapping< Vec3Types, CudaVec3dTypes>;
+
 #endif
-extern template class  IdentityMapping< CudaVec3f1Types, ExtVec3fTypes >;
-extern template class  IdentityMapping< CudaVec3f1Types, CudaVec3f1Types>;
-extern template class  IdentityMapping< CudaVec3f1Types, Vec3fTypes>;
-#ifndef SOFA_FLOAT
-extern template class  IdentityMapping< Vec3dTypes, CudaVec3f1Types>;
-extern template class  IdentityMapping< CudaVec3f1Types, Vec3dTypes>;
-extern template class  IdentityMapping< CudaVec3f1Types, ExtVec3dTypes >;
-#endif
-#ifndef SOFA_DOUBLE
-extern template class  IdentityMapping< Vec3fTypes, ExtVec3fTypes>;
-#endif
-extern template class  IdentityMapping< CudaVec3f1Types, CudaVec3fTypes>;
-extern template class  IdentityMapping< CudaVec3fTypes, CudaVec3f1Types>;
 
 #endif
 

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -38,16 +35,28 @@ namespace mapping
 {
 
 template <class TIn, class TOut>
+TubularMapping<TIn, TOut>::TubularMapping ( )
+    : Inherit ( )
+    , m_nbPointsOnEachCircle( initData(&m_nbPointsOnEachCircle, "nbPointsOnEachCircle", "Discretization of created circles"))
+    , m_radius( initData(&m_radius, "radius", "Radius of created circles"))
+    , m_peak (initData(&m_peak, 0, "peak", "=0 no peak, =1 peak on the first segment =2 peak on the two first segment, =-1 peak on the last segment"))
+    ,radiusContainer(nullptr)
+{
+}
+template <class TIn, class TOut>
 void TubularMapping<TIn, TOut>::init()
 {
     if (!m_radius.isSet())
     {
         this->getContext()->get(radiusContainer);
-        sout << "get Radius Container" << sendl;
-        if(!radiusContainer)
-            serr << "TubularMapping : No Radius defined" << sendl;
+        msg_info() << "get Radius Container";
+        if (!radiusContainer)
+            msg_error() << "TubularMapping : No Radius defined";
     }
-    else sout << "get Radius tout court" << sendl;
+    else
+    {
+        msg_info() << "get Radius tout court";
+    }
 
     Inherit::init();
 

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -87,7 +84,7 @@ protected:
 public:
 
     FullMatrix()
-        : data(NULL), nRow(0), nCol(0), pitch(0), allocsize(0)
+        : data(nullptr), nRow(0), nCol(0), pitch(0), allocsize(0)
     {
     }
 
@@ -106,7 +103,7 @@ public:
     {
     }
 
-    ~FullMatrix()
+    ~FullMatrix() override
     {
         if (allocsize>0)
             delete[] data;
@@ -139,7 +136,7 @@ public:
         return data+i*pitch;
     }
 
-    void resize(Index nbRow, Index nbCol)
+    void resize(Index nbRow, Index nbCol) override
     {
 #ifdef FULLMATRIX_VERBOSE
         if (nbRow != rowSize() || nbCol != colSize())
@@ -151,7 +148,7 @@ public:
             {
                 if (nbRow*nbCol > -allocsize)
                 {
-                    std::cerr << "ERROR: cannot resize preallocated matrix to size ("<<nbRow<<","<<nbCol<<")"<<std::endl;
+                    msg_error() << "Cannot resize preallocated matrix to size (" << nbRow << "," << nbCol << ")";
                     return;
                 }
             }
@@ -173,29 +170,29 @@ public:
     }
 
 
-    Index rowSize(void) const
+    Index rowSize(void) const override
     {
         return nRow;
     }
 
-    Index colSize(void) const
+    Index colSize(void) const override
     {
         return nCol;
     }
 
-    SReal element(Index i, Index j) const
+    SReal element(Index i, Index j) const override
     {
 #ifdef FULLMATRIX_CHECK
         if (i >= rowSize() || j >= colSize())
         {
-            std::cerr << "ERROR: invalid read access to element ("<<i<<","<<j<<") in "<</*this->Name()<<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
+            msg_error() << "Invalid read access to element (" << i << "," << j << ") in " <</*this->Name()<<*/" of size (" << rowSize() << "," << colSize() << ")";
             return 0.0;
         }
 #endif
         return (SReal)data[i*pitch+j];
     }
 
-    void set(Index i, Index j, double v)
+    void set(Index i, Index j, double v) override
     {
 #ifdef FULLMATRIX_VERBOSE
         std::cout << /*this->Name() <<*/ "("<<rowSize()<<","<<colSize()<<"): element("<<i<<","<<j<<") = "<<v<<std::endl;
@@ -203,14 +200,14 @@ public:
 #ifdef FULLMATRIX_CHECK
         if (i >= rowSize() || j >= colSize())
         {
-            std::cerr << "ERROR: invalid write access to element ("<<i<<","<<j<<") in "<</*this->Name()<<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
+            msg_error() << "Invalid write access to element (" << i << "," << j << ") in " <</*this->Name()<<*/" of size (" << rowSize() << "," << colSize() << ")";
             return;
         }
 #endif
         data[i*pitch+j] = (Real)v;
     }
 
-    void add(Index i, Index j, double v)
+    void add(Index i, Index j, double v) override
     {
 #ifdef FULLMATRIX_VERBOSE
         std::cout << /*this->Name() << */"("<<rowSize()<<","<<colSize()<<"): element("<<i<<","<<j<<") += "<<v<<std::endl;
@@ -218,14 +215,14 @@ public:
 #ifdef FULLMATRIX_CHECK
         if (i >= rowSize() || j >= colSize())
         {
-            std::cerr << "ERROR: invalid write access to element ("<<i<<","<<j<<") in "/*<<this->Name()*/<<" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
+            msg_error() << "Invalid write access to element (" << i << "," << j << ") in "/*<<this->Name()*/ << " of size (" << rowSize() << "," << colSize() << ")";
             return;
         }
 #endif
         data[i*pitch+j] += (Real)v;
     }
 
-    void clear(Index i, Index j)
+    void clear(Index i, Index j) override
     {
 #ifdef FULLMATRIX_VERBOSE
         std::cout << /*this->Name() <<*/ "("<<rowSize()<<","<<colSize()<<"): element("<<i<<","<<j<<") = 0"<<std::endl;
@@ -233,14 +230,14 @@ public:
 #ifdef FULLMATRIX_CHECK
         if (i >= rowSize() || j >= colSize())
         {
-            std::cerr << "ERROR: invalid write access to element ("<<i<<","<<j<<") in "<</*this->Name()<<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
+            msg_error() << "Invalid write access to element (" << i << "," << j << ") in " <</*this->Name()<<*/" of size (" << rowSize() << "," << colSize() << ")";
             return;
         }
 #endif
         data[i*pitch+j] = (Real)0;
     }
 
-    void clearRow(Index i)
+    void clearRow(Index i) override
     {
 #ifdef FULLMATRIX_VERBOSE
         std::cout << /*this->Name() <<*/ "("<<rowSize()<<","<<colSize()<<"): row("<<i<<") = 0"<<std::endl;
@@ -248,7 +245,7 @@ public:
 #ifdef FULLMATRIX_CHECK
         if (i >= rowSize())
         {
-            std::cerr << "ERROR: invalid write access to row "<<i<<" in "<</*this->Name()<<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
+            msg_error() << "Invalid write access to row " << i << " in " <</*this->Name()<<*/" of size (" << rowSize() << "," << colSize() << ")";
             return;
         }
 #endif
@@ -256,7 +253,7 @@ public:
             data[i*pitch+j] = (Real)0;
     }
 
-    void clearCol(Index j)
+    void clearCol(Index j) override
     {
 #ifdef FULLMATRIX_VERBOSE
         std::cout <</* this->Name() << */"("<<rowSize()<<","<<colSize()<<"): col("<<j<<") = 0"<<std::endl;
@@ -264,7 +261,7 @@ public:
 #ifdef FULLMATRIX_CHECK
         if (j >= colSize())
         {
-            std::cerr << "ERROR: invalid write access to column "<<j<<" in "<</*this->Name()<<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
+            msg_error() << "Invalid write access to column " << j << " in " <</*this->Name()<<*/" of size (" << rowSize() << "," << colSize() << ")";
             return;
         }
 #endif
@@ -272,7 +269,7 @@ public:
             data[i*pitch+j] = (Real)0;
     }
 
-    void clearRowCol(Index i)
+    void clearRowCol(Index i) override
     {
 #ifdef FULLMATRIX_VERBOSE
         std::cout << /*this->Name() << */"("<<rowSize()<<","<<colSize()<<"): row("<<i<<") = 0 and col("<<i<<") = 0"<<std::endl;
@@ -280,7 +277,7 @@ public:
 #ifdef FULLMATRIX_CHECK
         if (i >= rowSize() || i >= colSize())
         {
-            std::cerr << "ERROR: invalid write access to row and column "<<i<<" in "<</*this->Name()<<*/" of size ("<<rowSize()<<","<<colSize()<<")"<<std::endl;
+            msg_error() << "Invalid write access to row and column " << i << " in " <</*this->Name()<<*/" of size (" << rowSize() << "," << colSize() << ")";
             return;
         }
 #endif
@@ -288,14 +285,16 @@ public:
         clearCol(i);
     }
 
-    void clear()
+    void clear() override
     {
-        //if (pitch == nCol)
-        //    std::fill(data, data+nRow*pitch, (Real)0);
-        //else
-        for (Index i=0; i<nRow; ++i)
-            for (Index j=0; j<nCol; ++j)
-                data[i*pitch+j] = (Real)0;
+        if (pitch == nCol)
+            std::fill(data, data+nRow*pitch, (Real)0);
+        else
+        {
+            for (Index i = 0; i<nRow; ++i)
+                for (Index j = 0; j<nCol; ++j)
+                    data[i*pitch + j] = (Real)0;
+        }
     }
 
     /// matrix-vector product
@@ -426,7 +425,7 @@ protected:
     Index lallocsize;
 public:
     LPtrFullMatrix()
-        : ldata(NULL), lallocsize(0)
+        : ldata(nullptr), lallocsize(0)
     {
     }
 
@@ -457,8 +456,6 @@ public:
 
     T** lptr() { return ldata; }
     const T** lptr() const { return ldata; }
-    //operator T**() { return ldata; }
-    //operator const T**() const { return ldata; }
 };
 
 

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -34,7 +31,7 @@
 
 #include <vector>
 
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 
 
 namespace sofa
@@ -82,7 +79,7 @@ protected:
     sofa::helper::vector<Coord> rotatedPoints0;
     sofa::helper::vector<Coord> rotatedPoints1;
 
-    boost::scoped_ptr<MatrixType> matrixJ;
+    std::unique_ptr<MatrixType> matrixJ;
     bool updateJ;
 
     BeamLinearMapping()
@@ -100,21 +97,21 @@ protected:
 
 public:
     //Data<unsigned> index;
-    Data<bool> localCoord;
+    Data<bool> localCoord; ///< true if initial coordinates are in the beam local coordinate system (i.e. a point at (10,0,0) is on the DOF number 10, whereas if this is false it is at whatever position on the beam where the distance from the initial DOF is 10)
 
-    void init();
+    void init() override;
 
-    void apply(const core::MechanicalParams *mparams, Data< typename Out::VecCoord >& out, const Data< typename In::VecCoord >& in);
+    void apply(const core::MechanicalParams *mparams, Data< typename Out::VecCoord >& out, const Data< typename In::VecCoord >& in) override;
 
-    void applyJ(const core::MechanicalParams *mparams, Data< typename Out::VecDeriv >& out, const Data< typename In::VecDeriv >& in);
+    void applyJ(const core::MechanicalParams *mparams, Data< typename Out::VecDeriv >& out, const Data< typename In::VecDeriv >& in) override;
 
-    void applyJT(const core::MechanicalParams *mparams, Data< typename In::VecDeriv >& out, const Data< typename Out::VecDeriv >& in);
+    void applyJT(const core::MechanicalParams *mparams, Data< typename In::VecDeriv >& out, const Data< typename Out::VecDeriv >& in) override;
 
-    void applyJT(const core::ConstraintParams *cparams, Data< typename In::MatrixDeriv >& out, const Data< typename Out::MatrixDeriv >& in);
+    void applyJT(const core::ConstraintParams *cparams, Data< typename In::MatrixDeriv >& out, const Data< typename Out::MatrixDeriv >& in) override;
 
-    const sofa::defaulttype::BaseMatrix* getJ();
+    const sofa::defaulttype::BaseMatrix* getJ() override;
 
-    void draw(const core::visual::VisualParams* vparams);
+    void draw(const core::visual::VisualParams* vparams) override;
 };
 
 
@@ -122,22 +119,11 @@ public:
 template <int N, class Real> struct RigidMappingMatrixHelper;
 
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_MAPPING_BEAMLINEARMAPPING_CPP)
-#ifndef SOFA_FLOAT
-extern template class SOFA_MISC_MAPPING_API BeamLinearMapping< defaulttype::Rigid3dTypes, defaulttype::Vec3dTypes >;
-extern template class SOFA_MISC_MAPPING_API BeamLinearMapping< defaulttype::Rigid3dTypes, defaulttype::ExtVec3fTypes >;
-#endif
-#ifndef SOFA_DOUBLE
-extern template class SOFA_MISC_MAPPING_API BeamLinearMapping< defaulttype::Rigid3fTypes, defaulttype::Vec3fTypes >;
-extern template class SOFA_MISC_MAPPING_API BeamLinearMapping< defaulttype::Rigid3fTypes, defaulttype::ExtVec3fTypes >;
-#endif
+#if  !defined(SOFA_COMPONENT_MAPPING_BEAMLINEARMAPPING_CPP)
+extern template class SOFA_MISC_MAPPING_API BeamLinearMapping< defaulttype::Rigid3Types, defaulttype::Vec3dTypes >;
 
-#ifndef SOFA_FLOAT
-#ifndef SOFA_DOUBLE
-extern template class SOFA_MISC_MAPPING_API BeamLinearMapping< defaulttype::Rigid3dTypes, defaulttype::Vec3fTypes >;
-extern template class SOFA_MISC_MAPPING_API BeamLinearMapping< defaulttype::Rigid3fTypes, defaulttype::Vec3dTypes >;
-#endif
-#endif
+
+
 #endif
 
 } // namespace mapping

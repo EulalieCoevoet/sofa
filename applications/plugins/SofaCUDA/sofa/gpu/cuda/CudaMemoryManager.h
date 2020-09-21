@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -29,8 +26,9 @@
 #include <cstring>
 #include "mycuda.h"
 
+#ifndef  SOFA_NO_OPENGL
 #include <sofa/helper/system/gl.h>
-
+#endif // SOFA_NO_OPENGL
 
 namespace sofa
 {
@@ -54,7 +52,9 @@ public :
 
     typedef T* host_pointer;
     typedef /*mutable*/ void* device_pointer;
+#ifndef  SOFA_NO_OPENGL
     typedef GLuint gl_buffer;
+#endif // SOFA_NO_OPENGL
 
     enum { MAX_DEVICES = 8 };
     enum { BSIZE = 64 };
@@ -68,11 +68,6 @@ public :
     static void hostAlloc(void ** hPointer,int n)
     {
         mycudaMallocHost(hPointer,n);
-    }
-
-    static void memsetHost(host_pointer hPointer, int value,size_t n)
-    {
-        memset((void*) hPointer, value, n);
     }
 
     static void hostFree(const host_pointer hSrcPointer)
@@ -89,6 +84,8 @@ public :
     {
         mycudaFree(dSrcPointer,d);
     }
+
+    static void memsetHost(host_pointer hPointer, int value,size_t n) { memset((void*) hPointer, value, n); }
 
     static void memcpyHostToDevice(int d, device_pointer dDestPointer, const host_pointer hSrcPointer, size_t n)
     {
@@ -119,6 +116,7 @@ public :
 
     static bool bufferAlloc(gl_buffer* bId, int n)
     {
+#ifndef SOFA_NO_OPENGL
         if (n > 0)
         {
             glGenBuffers(1, bId);
@@ -127,34 +125,47 @@ public :
             glBindBuffer( GL_ARRAY_BUFFER, 0);
             return true;
         }
+#endif // SOFA_NO_OPENGL
         return false;
     }
 
     static void bufferFree(const gl_buffer bId)
     {
+#ifndef SOFA_NO_OPENGL
         glDeleteBuffers( 1, &bId);
+#endif // SOFA_NO_OPENGL
     }
 
     static bool bufferRegister(const gl_buffer bId)
     {
+#ifndef SOFA_NO_OPENGL
         mycudaGLRegisterBufferObject(bId);
+#endif // SOFA_NO_OPENGL
         return true;
     }
 
     static void bufferUnregister(const gl_buffer bId)
     {
+#ifndef SOFA_NO_OPENGL
         mycudaGLUnregisterBufferObject(bId);
+#endif // SOFA_NO_OPENGL
     }
 
     static bool bufferMapToDevice(device_pointer * dDestPointer, const gl_buffer bSrcId)
     {
+#ifndef SOFA_NO_OPENGL
         mycudaGLMapBufferObject(dDestPointer, bSrcId);
         return true;
+#else
+        return false;
+#endif // SOFA_NO_OPENGL
     }
 
     static void bufferUnmapToDevice(device_pointer * /*dDestPointer*/, const gl_buffer bSrcId)
     {
+#ifndef SOFA_NO_OPENGL
         mycudaGLUnmapBufferObject(bSrcId);
+#endif // SOFA_NO_OPENGL
     }
 
     static device_pointer deviceOffset(device_pointer dPointer,size_t offset)

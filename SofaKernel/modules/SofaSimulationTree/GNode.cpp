@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -42,77 +39,87 @@ GNode::GNode(const std::string& name, GNode* parent)
     , l_parent(initLink("parent", "Parent node in the graph"))
 {
     if( parent )
-        parent->addChild((Node*)this);
+        parent->addChild(dynamic_cast<Node*>(this));
 }
 
 GNode::~GNode()
 {
-	for (ChildIterator it = child.begin(), itend = child.end(); it != itend; ++it)
+    for (ChildIterator it = child.begin(), itend = child.end(); it != itend; ++it)
     {
-		GNode::SPtr gnode = sofa::core::objectmodel::SPtr_static_cast<GNode>(*it);
-		gnode->l_parent.remove(this);
-	}
+        GNode::SPtr gnode = sofa::core::objectmodel::SPtr_static_cast<GNode>(*it);
+        gnode->l_parent.remove(this);
+    }
 }
 
 /// Create, add, then return the new child of this Node
 Node::SPtr GNode::createChild(const std::string& nodeName)
 {
-    GNode::SPtr newchild = sofa::core::objectmodel::New<GNode>(nodeName);
-    this->addChild(newchild); newchild->updateSimulationContext();
-    return newchild;
-}
-
-/// Add a child node
-void GNode::doAddChild(GNode::SPtr node)
-{
-    child.add(node);
-    node->l_parent.add(this);
-}
-
-/// Remove a child
-void GNode::doRemoveChild(GNode::SPtr node)
-{
-    child.remove(node);
-    node->l_parent.remove(this);
-}
-
-
-/// Add a child node
-void GNode::addChild(core::objectmodel::BaseNode::SPtr node)
-{
-    GNode::SPtr gnode = down_cast<GNode>(node.get());
-    notifyAddChild(gnode);
-    doAddChild(gnode);
-}
-
-/// Remove a child
-void GNode::removeChild(core::objectmodel::BaseNode::SPtr node)
-{
-    GNode::SPtr gnode = down_cast<GNode>(node.get());
-    notifyRemoveChild(gnode);
-    doRemoveChild(gnode);
-}
-
-
-/// Move a node from another node
-void GNode::moveChild(BaseNode::SPtr node)
-{
-    GNode::SPtr gnode = down_cast<GNode>(node.get());
-    if (!gnode) return;
-    GNode* prev = gnode->parent();
-    if (prev==NULL)
+    GNode::SPtr newchild;
+    if (nodeName.empty())
     {
-        addChild(node);
+        int i = 0;
+        std::string newName = "unnamed";
+        bool uid_found = false;
+        while (!uid_found)
+        {
+            uid_found = true;
+            for (const auto& c : this->child)
+            {
+                if (c->getName() == newName)
+                {
+                    newName = "unnamed" + std::to_string(++i);
+                    uid_found = true;
+                }
+            }
+            for (const auto& o : this->object)
+            {
+                if (o->getName() == newName)
+                {
+                    newName = "unnamed" + std::to_string(++i);
+                    uid_found = true;
+                }
+            }
+        }
+        msg_error("Node::createChild()") << "Empty string given to property 'name': Forcefully setting an empty name is forbidden.\n"
+                                      "Renaming to " + newName + " to avoid unexpected behaviors.";
+        newchild = sofa::core::objectmodel::New<GNode>(newName);
     }
     else
-    {
-        notifyMoveChild(gnode,prev);
-        prev->doRemoveChild(gnode);
-        doAddChild(gnode);
-    }
+        newchild = sofa::core::objectmodel::New<GNode>(nodeName);
+    this->addChild(newchild); newchild->updateSimulationContext();
+    return std::move(newchild);
+}
+
+void GNode::moveChild(BaseNode::SPtr node)
+{
+    Node::moveChild(node, node->getFirstParent());
 }
 
 
+/// Add a child node
+void GNode::doAddChild(BaseNode::SPtr node)
+{
+    GNode::SPtr gnode = down_cast<GNode>(node.get());
+    child.add(gnode);
+    gnode->l_parent.add(this);
+}
+
+/// Remove a child
+void GNode::doRemoveChild(BaseNode::SPtr node)
+{
+    GNode::SPtr gnode = down_cast<GNode>(node.get());
+    child.remove(gnode);
+    gnode->l_parent.remove(this);
+}
+
+/// Remove a child
+void GNode::doMoveChild(BaseNode::SPtr node, BaseNode::SPtr prev)
+{
+    Node* parentNode = static_cast<Node*>(prev.get());
+    if (parentNode != nullptr)
+        parentNode->removeChild(node);
+    addChild(node);
+}
 /// Remove a child
 void GNode::detachFromGraph()
 {
@@ -128,10 +135,10 @@ void* GNode::getObject(const sofa::core::objectmodel::ClassInfo& class_info, con
 {
     if (dir == SearchRoot)
     {
-        if (parent() != NULL) return parent()->getObject(class_info, tags, dir);
+        if (parent() != nullptr) return parent()->getObject(class_info, tags, dir);
         else dir = SearchDown; // we are the root, search down from here.
     }
-    void *result = NULL;
+    void *result = nullptr;
 #ifdef DEBUG_GETOBJECT
     std::string cname = class_info.name();
     if (cname != std::string("N4sofa4core6ShaderE"))
@@ -150,7 +157,7 @@ void* GNode::getObject(const sofa::core::objectmodel::ClassInfo& class_info, con
                     std::cout << "GNODE: testing object " << (obj)->getName() << " of type " << (obj)->getClassName() << std::endl;
 #endif
                 result = class_info.dynamicCast(obj);
-                if (result != NULL)
+                if (result != nullptr)
                 {
 #ifdef DEBUG_GETOBJECT
                     std::cout << "GNODE: found object " << (obj)->getName() << " of type " << (obj)->getClassName() << std::endl;
@@ -160,7 +167,7 @@ void* GNode::getObject(const sofa::core::objectmodel::ClassInfo& class_info, con
             }
         }
 
-    if (result == NULL)
+    if (result == nullptr)
     {
         switch(dir)
         {
@@ -174,11 +181,11 @@ void* GNode::getObject(const sofa::core::objectmodel::ClassInfo& class_info, con
             for(ChildIterator it = child.begin(); it != child.end(); ++it)
             {
                 result = (*it)->getObject(class_info, tags, dir);
-                if (result != NULL) break;
+                if (result != nullptr) break;
             }
             break;
         case SearchRoot:
-            std::cerr << "SearchRoot SHOULD NOT BE POSSIBLE HERE!\n";
+            dmsg_error("GNode") << "SearchRoot SHOULD NOT BE POSSIBLE HERE.";
             break;
         }
     }
@@ -229,24 +236,24 @@ void* GNode::getObject(const sofa::core::objectmodel::ClassInfo& class_info, con
         }
         else if (pend < path.length())
         {
-            //std::cerr << "ERROR: child node "<<name<<" not found in "<<getPathName()<<std::endl;
-            return NULL;
+            //dmsg_error("GNode") << "Child node "<<name<<" not found in "<<getPathName();
+            return nullptr;
         }
         else
         {
             core::objectmodel::BaseObject* obj = simulation::Node::getObject(name);
-            if (obj == NULL)
+            if (obj == nullptr)
             {
-                //std::cerr << "ERROR: object "<<name<<" not found in "<<getPathName()<<std::endl;
-                return NULL;
+                //dmsg_error("GNode") << "Object "<<name<<" not found in "<<getPathName();
+                return nullptr;
             }
             else
             {
                 void* result = class_info.dynamicCast(obj);
-                if (result == NULL)
+                if (result == nullptr)
                 {
-                    std::cerr << "ERROR: object "<<name<<" in "<<getPathName()<<" does not implement class "<<class_info.name()<<std::endl;
-                    return NULL;
+                    dmsg_error("GNode") << "Object "<<name<<" in "<<getPathName()<<" does not implement class "<<class_info.name() ;
+                    return nullptr;
                 }
                 else
                 {
@@ -265,7 +272,7 @@ void GNode::getObjects(const sofa::core::objectmodel::ClassInfo& class_info, Get
 {
     if (dir == SearchRoot)
     {
-        if (parent() != NULL)
+        if (parent() != nullptr)
         {
             if (parent()->isActive())
             {
@@ -281,7 +288,7 @@ void GNode::getObjects(const sofa::core::objectmodel::ClassInfo& class_info, Get
         {
             core::objectmodel::BaseObject* obj = it->get();
             void* result = class_info.dynamicCast(obj);
-            if (result != NULL && (tags.empty() || (obj)->getTags().includes(tags)))
+            if (result != nullptr && (tags.empty() || (obj)->getTags().includes(tags)))
                 container(result);
         }
 
@@ -302,7 +309,7 @@ void GNode::getObjects(const sofa::core::objectmodel::ClassInfo& class_info, Get
             }
             break;
         case SearchRoot:
-            std::cerr << "SearchRoot SHOULD NOT BE POSSIBLE HERE!\n";
+            dmsg_error("GNode") << "SearchRoot SHOULD NOT BE POSSIBLE HERE.";
             break;
         }
     }
@@ -323,7 +330,7 @@ size_t GNode::getNbParents() const
     return parent() ? 1 : 0;
 }
 
-/// return the first parent (returns NULL if no parent)
+/// return the first parent (returns nullptr if no parent)
 core::objectmodel::BaseNode* GNode::getFirstParent() const
 {
     return parent();
@@ -343,6 +350,41 @@ bool GNode::hasAncestor(const BaseContext* context) const
     return false;
 }
 
+/// Mesh Topology that is relevant for this context
+/// (within it or its parents until a mapping is reached that does not preserve topologies).
+core::topology::BaseMeshTopology* GNode::getMeshTopologyLink(SearchDirection dir) const
+{
+    if (this->meshTopology)
+        return this->meshTopology;
+
+    if (dir != Local)
+        return Node::getMeshTopologyLink(dir);
+
+    //local case similar to getActiveMeshTopology ...
+
+    // Check if a local mapping stops the search
+    if (this->mechanicalMapping && !this->mechanicalMapping->sameTopology())
+    {
+        return nullptr;
+    }
+    for ( Sequence<core::BaseMapping>::iterator i=this->mapping.begin(), iend=this->mapping.end(); i!=iend; ++i )
+    {
+        if (!(*i)->sameTopology())
+        {
+            return nullptr;
+        }
+    }
+    // No mapping with a different topology, continue on to the parent
+    GNode* p = parent();
+    if (!p)
+    {
+        return nullptr;
+    }
+    else
+    {
+        return p->getMeshTopologyLink(Local);
+    }
+}
 
 /// Execute a recursive action starting from this node
 void GNode::doExecuteVisitor(simulation::Visitor* action, bool)
@@ -356,14 +398,14 @@ void GNode::doExecuteVisitor(simulation::Visitor* action, bool)
     {
         if (action->childOrderReversed(this))
         {
-            for(unsigned int i = child.size(); i>0;)
+            for(unsigned i = unsigned(child.size()); i>0;)
             {
                 child[--i]->executeVisitor(action);
             }
         }
         else
         {
-            for(unsigned int i = 0; i<child.size(); ++i)
+            for(unsigned i = 0; i<child.size(); ++i)
             {
                 child[i]->executeVisitor(action);
             }
@@ -391,7 +433,7 @@ void GNode::updateContext()
     {
         if( debug_ )
         {
-            std::cerr<<"GNode::updateContext, node = "<<getName()<<", incoming context = "<< *parent()->getContext() << std::endl;
+            msg_info()<<"GNode::updateContext, node = "<<getName()<<", incoming context = "<< *parent()->getContext() ;
         }
         copyContext(*parent());
     }
@@ -404,7 +446,7 @@ void GNode::updateSimulationContext()
     {
         if( debug_ )
         {
-            std::cerr<<"GNode::updateContext, node = "<<getName()<<", incoming context = "<< *parent()->getContext() << std::endl;
+            msg_info()<<"GNode::updateContext, node = "<<getName()<<", incoming context = "<< *parent()->getContext() ;
         }
         copySimulationContext(*parent());
     }
@@ -425,7 +467,7 @@ Node* GNode::findCommonParent( simulation::Node* node2 )
         hierarchyParent.push_back(gnodeGroup1);
         gnodeGroup1=static_cast<GNode*>(gnodeGroup1->parent());
     }
-    if (hierarchyParent.empty())   return NULL;
+    if (hierarchyParent.empty())   return nullptr;
 
     gnodeGroup2=static_cast<GNode*>(gnodeGroup2->parent());
     while (gnodeGroup2)
@@ -438,14 +480,12 @@ Node* GNode::findCommonParent( simulation::Node* node2 )
         gnodeGroup2=static_cast<GNode*>(gnodeGroup2->parent());
     }
 
-    return NULL;
+    return nullptr;
 }
 
 
-SOFA_DECL_CLASS(GNode)
-
 //helper::Creator<xml::NodeElement::Factory, GNode> GNodeDefaultClass("default");
-helper::Creator<xml::NodeElement::Factory, GNode> GNodeClass("GNode");
+static helper::Creator<xml::NodeElement::Factory, GNode> GNodeClass("GNode");
 
 } // namespace tree
 

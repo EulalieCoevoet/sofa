@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -35,76 +32,37 @@ namespace component
 namespace mapping
 {
 
-SOFA_DECL_CLASS(RigidMapping)
-
 using namespace defaulttype;
 
 // Register in the Factory
 int RigidMappingClass = core::RegisterObject("Set the positions and velocities of points attached to a rigid parent")
-#ifndef SOFA_FLOAT
-        .add< RigidMapping< Rigid3dTypes, Vec3dTypes > >()
-        .add< RigidMapping< Rigid2dTypes, Vec2dTypes > >()
-        .add< RigidMapping< Rigid3dTypes, ExtVec3fTypes > >()
-#endif
-#ifndef SOFA_DOUBLE
-        .add< RigidMapping< Rigid3fTypes, Vec3fTypes > >()
-        .add< RigidMapping< Rigid2fTypes, Vec2fTypes > >()
-        .add< RigidMapping< Rigid3fTypes, ExtVec3fTypes > >()
-#endif
+        .add< RigidMapping< Rigid3Types, Vec3dTypes > >()
+        .add< RigidMapping< Rigid2Types, Vec2Types > >()
 
-#ifndef SOFA_FLOAT
-#ifndef SOFA_DOUBLE
-        .add< RigidMapping< Rigid3dTypes, Vec3fTypes > >()
-        .add< RigidMapping< Rigid3fTypes, Vec3dTypes > >()
-#endif
-#endif
+
+
         ;
 
-#ifndef SOFA_FLOAT
-template class SOFA_RIGID_API RigidMapping< Rigid3dTypes, Vec3dTypes >;
-template class SOFA_RIGID_API RigidMapping< Rigid2dTypes, Vec2dTypes >;
-template class SOFA_RIGID_API RigidMapping< Rigid3dTypes, ExtVec3fTypes >;
-#endif
-
-#ifndef SOFA_DOUBLE
-template class SOFA_RIGID_API RigidMapping< Rigid3fTypes, Vec3fTypes >;
-template class SOFA_RIGID_API RigidMapping< Rigid2fTypes, Vec2fTypes >;
-template class SOFA_RIGID_API RigidMapping< Rigid3fTypes, ExtVec3fTypes >;
-#endif
-
-#ifndef SOFA_FLOAT
-#ifndef SOFA_DOUBLE
-template class SOFA_RIGID_API RigidMapping< Rigid3dTypes, Vec3fTypes >;
-template class SOFA_RIGID_API RigidMapping< Rigid3fTypes, Vec3dTypes >;
-#endif
-#endif
+template class SOFA_RIGID_API RigidMapping< Rigid3Types, Vec3dTypes >;
+template class SOFA_RIGID_API RigidMapping< Rigid2Types, Vec2Types >;
 
 
 
 
 
-#ifndef SOFA_FLOAT
+
+
+
 template<>
-void RigidMapping< sofa::defaulttype::Rigid2dTypes, sofa::defaulttype::Vec2dTypes >::updateK( const core::MechanicalParams* /*mparams*/, core::ConstMultiVecDerivId /*childForceId*/ )
+void RigidMapping< sofa::defaulttype::Rigid2Types, sofa::defaulttype::Vec2Types >::updateK( const core::MechanicalParams* /*mparams*/, core::ConstMultiVecDerivId /*childForceId*/ )
 {}
 template<>
-const defaulttype::BaseMatrix* RigidMapping< sofa::defaulttype::Rigid2dTypes, sofa::defaulttype::Vec2dTypes >::getK()
+const defaulttype::BaseMatrix* RigidMapping< sofa::defaulttype::Rigid2Types, sofa::defaulttype::Vec2Types >::getK()
 {
-    serr<<"TODO: assembled geometric stiffness not implemented"<<sendl;
-    return NULL;
+    msg_error() << "TODO: assembled geometric stiffness not implemented";
+    return nullptr;
 }
-#endif
-#ifndef SOFA_DOUBLE
-template<>
-void RigidMapping< sofa::defaulttype::Rigid2fTypes, sofa::defaulttype::Vec2fTypes >::updateK( const core::MechanicalParams* /*mparams*/, core::ConstMultiVecDerivId /*childForceId*/ )
-{}
-template<>
-const defaulttype::BaseMatrix* RigidMapping< sofa::defaulttype::Rigid2fTypes, sofa::defaulttype::Vec2fTypes >::getK()
-{
-    serr<<"TODO: assembled geometric stiffness not implemented"<<sendl;
-    return NULL;
-}
-#endif
+
 
 
 

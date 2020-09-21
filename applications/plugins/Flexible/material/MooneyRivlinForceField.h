@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -54,13 +51,13 @@ public:
 
     /** @name  Material parameters */
     //@{
-    Data<helper::vector<Real> > f_C1;
-    Data<helper::vector<Real> > f_C2;
-    Data<helper::vector<Real> > f_bulk;
-    Data<bool > f_PSDStabilization;
+    Data<helper::vector<Real> > f_C1; ///< weight of (~I1-3) term in energy
+    Data<helper::vector<Real> > f_C2; ///< weight of (~I2-3) term in energy
+    Data<helper::vector<Real> > f_bulk; ///< bulk modulus (working on I3=J=detF=volume variation)
+    Data<bool > f_PSDStabilization; ///< project stiffness matrix to its nearest symmetric, positive semi-definite matrix
     //@}
 
-    virtual void reinit()
+    virtual void reinit() override
     {
         Real C1=0,C2=0,bulk=0;
         for(unsigned int i=0; i<this->material.size(); i++)
@@ -82,7 +79,6 @@ protected:
         , f_C2(initData(&f_C2,helper::vector<Real>((int)1,(Real)1000),"C2","weight of (~I2-3) term in energy"))
         , f_bulk(initData(&f_bulk,helper::vector<Real>((int)1,(Real)0),"bulk","bulk modulus (working on I3=J=detF=volume variation)"))
         , f_PSDStabilization(initData(&f_PSDStabilization,false,"PSDStabilization","project stiffness matrix to its nearest symmetric, positive semi-definite matrix"))
-//        , _viscosity(initData(&_viscosity,(Real)0,"viscosity","Viscosity (stress/strainRate)"))
     {
     }
 

@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -34,8 +31,6 @@ namespace component
 namespace misc
 {
 
-SOFA_DECL_CLASS(ReadTopology)
-
 using namespace defaulttype;
 
 int ReadTopologyClass = core::RegisterObject("Read topology containers informations from file at each timestep")
@@ -44,7 +39,7 @@ int ReadTopologyClass = core::RegisterObject("Read topology containers informati
 ReadTopologyCreator::ReadTopologyCreator(const core::ExecParams* params)
     :Visitor(params)
     , sceneName("")
-#ifdef SOFA_HAVE_ZLIB
+#if SOFAGENERALLOADER_HAVE_ZLIB
     , extension(".txt.gz")
 #else
     , extension(".txt")
@@ -58,7 +53,7 @@ ReadTopologyCreator::ReadTopologyCreator(const core::ExecParams* params)
 ReadTopologyCreator::ReadTopologyCreator(const std::string &n, bool _createInMapping, const core::ExecParams* params, bool i, int c)
     :Visitor(params)
     , sceneName(n)
-#ifdef SOFA_HAVE_ZLIB
+#if SOFAGENERALLOADER_HAVE_ZLIB
     , extension(".txt.gz")
 #else
     , extension(".txt")
@@ -72,7 +67,7 @@ ReadTopologyCreator::ReadTopologyCreator(const std::string &n, bool _createInMap
 //Create a Read Topology component each time a BaseMeshTopology is found
 simulation::Visitor::Result ReadTopologyCreator::processNodeTopDown( simulation::Node* gnode)
 {
-    sofa::core::topology::BaseMeshTopology* topo = gnode->getMeshTopology();
+    sofa::core::topology::BaseMeshTopology* topo = gnode->getMeshTopologyLink();
     if (!topo)   return simulation::Visitor::RESULT_CONTINUE;
     //We have a meshTopology
     addReadTopology(topo, gnode);
@@ -84,11 +79,11 @@ void ReadTopologyCreator::addReadTopology(core::topology::BaseMeshTopology* topo
     sofa::core::objectmodel::BaseContext* context = gnode->getContext();
     sofa::core::BaseMapping *mapping;
     context->get(mapping);
-    if (createInMapping || mapping== NULL)
+    if (createInMapping || mapping== nullptr)
     {
         sofa::component::misc::ReadTopology::SPtr rt;
         context->get(rt, this->subsetsToManage, core::objectmodel::BaseContext::Local);
-        if (rt == NULL)
+        if (rt == nullptr)
         {
             rt = sofa::core::objectmodel::New<ReadTopology>();
             gnode->addObject(rt);
@@ -110,7 +105,7 @@ void ReadTopologyCreator::addReadTopology(core::topology::BaseMeshTopology* topo
 simulation::Visitor::Result ReadTopologyActivator::processNodeTopDown( simulation::Node* gnode)
 {
     sofa::component::misc::ReadTopology *rt = gnode->get< sofa::component::misc::ReadTopology >(this->subsetsToManage);
-    if (rt != NULL) { changeTopologyReader(rt);}
+    if (rt != nullptr) { changeTopologyReader(rt);}
 
     return simulation::Visitor::RESULT_CONTINUE;
 }
@@ -128,7 +123,7 @@ simulation::Visitor::Result ReadTopologyModifier::processNodeTopDown( simulation
     using namespace sofa::defaulttype;
 
     sofa::component::misc::ReadTopology* rt = gnode->get< sofa::component::misc::ReadTopology>(this->subsetsToManage);
-    if (rt != NULL) {changeTimeReader(rt);}
+    if (rt != nullptr) {changeTimeReader(rt);}
 
     return simulation::Visitor::RESULT_CONTINUE;
 }

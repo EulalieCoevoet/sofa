@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -27,11 +24,12 @@
 
 #include <image/config.h>
 #include "ImageTypes.h"
-#include <limits.h>
+#include <climits>
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/core/objectmodel/DataFileName.h>
 #include <sofa/core/visual/VisualParams.h>
+#include <sofa/helper/system/gl.h>
 #include <sofa/defaulttype/BoundingBox.h>
 #include <sofa/core/objectmodel/Event.h>
 #include <sofa/simulation/AnimateBeginEvent.h>
@@ -39,8 +37,9 @@
 #include <sofa/defaulttype/Mat.h>
 #include <sofa/defaulttype/Quat.h>
 #include <sofa/helper/rmath.h>
+#include <sofa/helper/system/FileRepository.h>
 
-#ifdef SOFA_HAVE_ZLIB
+#if IMAGE_HAVE_ZLIB
 #include <zlib.h>
 #endif
 
@@ -56,43 +55,42 @@ namespace container
 
 
 /// Default implementation does not compile
-template <int imageTypeLabel>
+template <class ImageType>
 struct ImageContainerSpecialization
 {
 };
 
+/// forward declaration
+template<class ImageTypes> class ImageContainer;
 
-/// Specialization for regular Image
-template <>
-struct ImageContainerSpecialization<defaulttype::IMAGELABEL_IMAGE>
+template <class T>
+struct ImageContainerSpecialization< defaulttype::Image<T> >
 {
-    template<class ImageContainer>
-    static void constructor( ImageContainer* container )
+    typedef ImageContainer<defaulttype::Image<T>> ImageContainerT;
+
+    static void constructor( ImageContainerT* container )
     {
         container->f_listening.setValue(true);  // to update camera during animate
     }
 
-    template<class ImageContainer>
-    static void parse( ImageContainer* container, sofa::core::objectmodel::BaseObjectDescription* /* arg */ = NULL )
+    static void parse( ImageContainerT* container, sofa::core::objectmodel::BaseObjectDescription* /* arg */ = nullptr )
     {
         if( container->image.isSet() ) return; // image is set from data link
 
         // otherwise try to load it from a file
-        typename ImageContainer::waImage wimage(container->image);
+        typename ImageContainerT::waImage wimage(container->image);
         if( wimage->isEmpty() )
             if( !container->load() )
                 container->loadCamera();
     }
 
-    template<class ImageContainer>
-    static void init( ImageContainer* container )
+    static void init( ImageContainerT* container )
     {
         // if the image is not set from data link
         // and was not loaded from a file during parsing
         // try to load it now (maybe the loading was data-dependant, like the filename)
-        typedef typename ImageContainer::T T;
 
-        typename ImageContainer::waImage wimage(container->image);
+        typename ImageContainerT::waImage wimage(container->image);
         if( wimage->isEmpty() )
             if( !container->load() )
                 if( !container->loadCamera() )
@@ -102,18 +100,15 @@ struct ImageContainerSpecialization<defaulttype::IMAGELABEL_IMAGE>
                 }
     }
 
-    template<class ImageContainer>
-    static bool load( ImageContainer* container, std::string fname )
+    static bool load( ImageContainerT* container, std::string fname )
     {
-        typedef typename ImageContainer::T T;
-        typedef typename ImageContainer::Real Real;
+        typedef typename ImageContainerT::Real Real;
 
-        typename ImageContainer::waImage wimage(container->image);
-        typename ImageContainer::waTransform wtransform(container->transform);
+        typename ImageContainerT::waImage wimage(container->image);
+        typename ImageContainerT::waTransform wtransform(container->transform);
 
         // read image
-#ifndef __PS3__
-#ifdef SOFA_HAVE_ZLIB
+#if IMAGE_HAVE_ZLIB
         //Load .inr.gz using ZLib
         if(fname.size() >= 3 && (fname.substr(fname.size()-7)==".inr.gz" || fname.substr(fname.size()-4)==".inr") )
         {
@@ -139,8 +134,7 @@ struct ImageContainerSpecialization<defaulttype::IMAGELABEL_IMAGE>
 
         }
         else
-#endif // SOFA_HAVE_ZLIB
-#endif // __PS3__
+#endif // IMAGE_HAVE_ZLIB
             if(fname.find(".mhd")!=std::string::npos || fname.find(".MHD")!=std::string::npos || fname.find(".Mhd")!=std::string::npos
                     || fname.find(".raw")!=std::string::npos || fname.find(".RAW")!=std::string::npos || fname.find(".Raw")!=std::string::npos)
             {
@@ -209,14 +203,12 @@ struct ImageContainerSpecialization<defaulttype::IMAGELABEL_IMAGE>
         return true;
     }
 
-    //    template<class ImageContainer>
-    //    static bool load( ImageContainer* container, std::FILE* const file, std::string fname)
+    //    static bool load( ImageContainerT* container, std::FILE* const file, std::string fname)
     //    {
-    //        typedef typename ImageContainer::T T;
-    //        typedef typename ImageContainer::Real Real;
+    //        typedef typename ImageContainerT::Real Real;
 
-    //        typename ImageContainer::waImage wimage(container->image);
-    //        typename ImageContainer::waTransform wtransform(container->transform);
+    //        typename ImageContainerT::waImage wimage(container->image);
+    //        typename ImageContainerT::waTransform wtransform(container->transform);
 
     //        if(fname.find(".cimg")!=std::string::npos || fname.find(".CIMG")!=std::string::npos || fname.find(".Cimg")!=std::string::npos || fname.find(".CImg")!=std::string::npos)
     //            wimage->getCImgList().load_cimg(file);
@@ -243,16 +235,13 @@ struct ImageContainerSpecialization<defaulttype::IMAGELABEL_IMAGE>
     //        return true;
     //    }
 
-    template<class ImageContainer>
-    static bool loadCamera( ImageContainer* container )
+    static bool loadCamera( ImageContainerT* container )
     {
-        //        typedef typename ImageContainer::T T;
-
         if( container->m_filename.isSet() ) return false;
         if( container->name.getValue().find("CAMERA") == std::string::npos ) return false;
 
 #ifdef cimg_use_opencv
-        typename ImageContainer::waImage wimage(container->image);
+        typename ImageContainerT::waImage wimage(container->image);
         if(wimage->isEmpty() wimage->getCImgList().push_back(CImg<T>().load_camera());
                 else wimage->getCImgList()[0].load_camera();
                 if(!wimage->isEmpty())  return true;  else return false;
@@ -265,11 +254,10 @@ struct ImageContainerSpecialization<defaulttype::IMAGELABEL_IMAGE>
      * CImg only allows to get the voxel size of a nifti image, whereas this function
      * gives access to the whole structure of the header to get rotation and translation.
      */
-    template<class ImageContainer>
-    static void readNiftiHeader(ImageContainer* container, std::string fname)
+    static void readNiftiHeader(ImageContainerT* container, std::string fname)
     {
-        typedef typename ImageContainer::Real Real;
-        typename ImageContainer::waTransform wtransform(container->transform);
+        typedef typename ImageContainerT::Real Real;
+        typename ImageContainerT::waTransform wtransform(container->transform);
 
         struct transformData{
             float b;
@@ -339,8 +327,7 @@ template<class _ImageTypes>
 class ImageContainer : public core::objectmodel::BaseObject
 {
 
-    friend struct ImageContainerSpecialization<defaulttype::IMAGELABEL_IMAGE>;
-    friend struct ImageContainerSpecialization<defaulttype::IMAGELABEL_BRANCHINGIMAGE>;
+    friend struct ImageContainerSpecialization<_ImageTypes>;
 
 public:
     typedef core::objectmodel::BaseObject Inherited;
@@ -352,32 +339,28 @@ public:
     typedef typename ImageTypes::imCoord imCoord;
     typedef helper::WriteAccessor<Data< ImageTypes > > waImage;
     typedef helper::ReadAccessor<Data< ImageTypes > > raImage;
-    Data< ImageTypes > image;
+    Data< ImageTypes > image; ///< image
 
     // transform data
     typedef SReal Real;
     typedef defaulttype::ImageLPTransform<Real> TransformType;
     typedef helper::WriteAccessor<Data< TransformType > > waTransform;
     typedef helper::ReadAccessor<Data< TransformType > > raTransform;
-    Data< TransformType > transform;
+    Data< TransformType > transform; ///< 12-param vector for trans, rot, scale, ...
 
     // input file
     sofa::core::objectmodel::DataFileName m_filename;
 
-    Data<bool> drawBB;
+    Data<bool> drawBB; ///< draw bounding box
 
     /**
     * If true, the container will attempt to load a sequence of images starting from the file given by filename
     */
-    Data<bool> sequence;
+    Data<bool> sequence; ///< load a sequence of images
     /**
     * The number of frames of the sequence to be loaded.
     */
-    Data<unsigned int> nFrames;
-
-
-    virtual std::string getTemplateName() const	{ return templateName(this); }
-    static std::string templateName(const ImageContainer<ImageTypes>* = NULL) {	return ImageTypes::Name(); }
+    Data<unsigned int> nFrames; ///< The number of frames of the sequence to be loaded. Default is the entire sequence.
 
     ImageContainer() : Inherited()
       , image(initData(&image,ImageTypes(),"image","image"))
@@ -394,7 +377,7 @@ public:
         this->transform.setGroup("Transform");
         this->transform.unset();
 
-        ImageContainerSpecialization<ImageTypes::label>::constructor( this );
+        ImageContainerSpecialization<ImageTypes>::constructor( this );
     }
 
 
@@ -404,11 +387,11 @@ public:
         wimage->clear();
     }
 
-    virtual ~ImageContainer() {clear();}
+    ~ImageContainer() override {clear();}
 
     bool transformIsSet;
 
-    virtual void parse(sofa::core::objectmodel::BaseObjectDescription *arg)
+    void parse(sofa::core::objectmodel::BaseObjectDescription *arg) override
     {
         Inherited::parse(arg);
 
@@ -421,12 +404,12 @@ public:
         else
             sout << "Transform is NOT set" << sendl;
 
-        ImageContainerSpecialization<ImageTypes::label>::parse( this, arg );
+        ImageContainerSpecialization<ImageTypes>::parse( this, arg );
     }
 
-    virtual void init()
+    void init() override
     {
-        ImageContainerSpecialization<ImageTypes::label>::init( this );
+        ImageContainerSpecialization<ImageTypes>::init( this );
 
         raImage wimage(this->image);
         waTransform wtransform(this->transform);
@@ -504,20 +487,20 @@ protected:
 
     bool load(std::string fname)
     {
-        return ImageContainerSpecialization<ImageTypes::label>::load( this, fname );
+        return ImageContainerSpecialization<ImageTypes>::load( this, fname );
     }
 
     //    bool load(std::FILE* const file, std::string fname)
     //    {
-    //       return ImageContainerSpecialization<ImageTypes::label>::load( this, file, fname );
+    //       return ImageContainerSpecialization<ImageTypes>::load( this, file, fname );
     //    }
 
     bool loadCamera()
     {
-        return ImageContainerSpecialization<ImageTypes::label>::loadCamera( this );
+        return ImageContainerSpecialization<ImageTypes>::loadCamera( this );
     }
 
-    void handleEvent(sofa::core::objectmodel::Event *event)
+    void handleEvent(sofa::core::objectmodel::Event *event) override
     {
         if (simulation::AnimateEndEvent::checkEventType(event))
             loadCamera();
@@ -543,8 +526,10 @@ protected:
         for(unsigned int i=0;i<p.size();i++) c[i]=rtransform->fromImage(p[i]);
     }
 
-    virtual void computeBBox(const core::ExecParams*  params, bool onlyVisible=false )
+    void computeBBox(const core::ExecParams*  params, bool onlyVisible=false ) override
     {
+        SOFA_UNUSED(params);
+
         if( onlyVisible && !drawBB.getValue()) return;
 
         defaulttype::Vec<8,defaulttype::Vector3> c;
@@ -557,10 +542,10 @@ protected:
                 if(bbmin[j]>c[i][j]) bbmin[j]=c[i][j];
                 if(bbmax[j]<c[i][j]) bbmax[j]=c[i][j];
             }
-        this->f_bbox.setValue(params,sofa::defaulttype::TBoundingBox<Real>(bbmin,bbmax));
+        this->f_bbox.setValue(sofa::defaulttype::TBoundingBox<Real>(bbmin,bbmax));
     }
 
-    void draw(const core::visual::VisualParams* vparams)
+    void draw(const core::visual::VisualParams* vparams) override
     {
 #ifndef SOFA_NO_OPENGL
         // draw bounding box

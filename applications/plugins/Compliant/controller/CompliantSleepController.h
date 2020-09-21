@@ -18,6 +18,8 @@ namespace controller
  */
 class BaseComplianceTester
 {
+protected:
+    virtual ~BaseComplianceTester() {}
 public:
 	virtual bool canConvert(core::objectmodel::BaseObject* o) = 0;
 };
@@ -26,7 +28,7 @@ template <class DataTypes>
 class ComplianceTester : public BaseComplianceTester
 {
 public:
-	virtual bool canConvert(core::objectmodel::BaseObject* o);
+	bool canConvert(core::objectmodel::BaseObject* o) override;
 };
 
 /**
@@ -39,16 +41,16 @@ public:
 
 protected:
     CompliantSleepController();
-    virtual ~CompliantSleepController();
+    ~CompliantSleepController() override;
 
-	virtual void collectWakeupPairs(std::vector<BaseContexts>& wakeupPairs);
+    virtual void collectWakeupPairs(std::vector<BaseContexts>& wakeupPairs) override;
 
 	bool isCompliance(core::objectmodel::BaseObject* o) const;
 
 	template <class DataTypes> void addCompliance()
 		{ m_complianceTesters.push_back(ComplianceTesterPtr(new ComplianceTester<DataTypes>())); }
 
-	typedef boost::shared_ptr<BaseComplianceTester> ComplianceTesterPtr;
+	typedef std::shared_ptr<BaseComplianceTester> ComplianceTesterPtr;
 	typedef std::vector<ComplianceTesterPtr> ComplianceTesters;
 	ComplianceTesters m_complianceTesters; // All supported templates
 
@@ -60,7 +62,7 @@ class SOFA_Compliant_API GetConstrainedContextPairs : public simulation::Visitor
 public:
 	GetConstrainedContextPairs(const core::ExecParams* params, CompliantSleepController* sleepController, std::vector<CompliantSleepController::BaseContexts>& wakeupPairs);
 
-	virtual void processNodeBottomUp(simulation::Node* node);
+	void processNodeBottomUp(simulation::Node* node) override;
 
 protected:
 	void processObject(simulation::Node* node, core::objectmodel::BaseObject* o);

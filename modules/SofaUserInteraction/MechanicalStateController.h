@@ -1,39 +1,24 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-//
-// C++ Interface: MechanicalStateController
-//
-// Description:
-//
-//
-// Author: Pierre-Jean Bensoussan, Digital Trainers (2008)
-//
-// Copyright: See COPYING file that comes with this distribution
-//
-//
-
 #ifndef SOFA_COMPONENT_CONTROLLER_MECHANICALSTATECONTROLLER_H
 #define SOFA_COMPONENT_CONTROLLER_MECHANICALSTATECONTROLLER_H
 #include "config.h"
@@ -79,12 +64,12 @@ protected:
     /**
      * @brief Default Destructor.
      */
-    virtual ~MechanicalStateController() {};
+    ~MechanicalStateController() override {};
 public:
     /**
      * @brief SceneGraph callback initialization method.
      */
-    void init();
+    void init() override;
 
     /**
      * @name Controller Interface
@@ -94,7 +79,7 @@ public:
     /**
      * @brief Mouse event callback.
      */
-    void onMouseEvent(core::objectmodel::MouseEvent *mev);
+    void onMouseEvent(core::objectmodel::MouseEvent *mev) override;
 
     /**
      * @brief HapticDevice event callback.
@@ -104,7 +89,7 @@ public:
     /**
      * @brief Begin Animation event callback.
      */
-    void onBeginAnimationStep(const double dt);
+    void onBeginAnimationStep(const double dt) override;
 
     //@}
 
@@ -149,21 +134,11 @@ public:
      * @brief Apply the controller modifications to the controlled MechanicalState.
      */
     void applyController(void);
-
-    virtual std::string getTemplateName() const
-    {
-        return templateName(this);
-    }
-
-    static std::string templateName(const MechanicalStateController<DataTypes>* = NULL)
-    {
-        return DataTypes::Name();
-    }
 protected:
 
     Data< unsigned int > index; ///< Controlled DOF index.
     Data< bool > onlyTranslation; ///< Controlling the DOF only in translation
-    Data< bool > buttonDeviceState;
+    Data< bool > buttonDeviceState; ///< state of ths device button
 
     core::behavior::MechanicalState<DataTypes> *mState; ///< Controlled MechanicalState.
 
@@ -181,23 +156,9 @@ protected:
     bool buttonDevice;
 };
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_CONTROLLER_MECHANICALSTATECONTROLLER_CPP)
-#ifndef SOFA_FLOAT
-//extern template class SOFA_USER_INTERACTION_API MechanicalStateController<defaulttype::Vec3dTypes>;
-//extern template class SOFA_USER_INTERACTION_API MechanicalStateController<defaulttype::Vec2dTypes>;
-extern template class SOFA_USER_INTERACTION_API MechanicalStateController<defaulttype::Vec1dTypes>;
-//extern template class SOFA_USER_INTERACTION_API MechanicalStateController<defaulttype::Vec6dTypes>;
-extern template class SOFA_USER_INTERACTION_API MechanicalStateController<defaulttype::Rigid3dTypes>;
-//extern template class SOFA_USER_INTERACTION_API MechanicalStateController<defaulttype::Rigid2dTypes>;
-#endif
-#ifndef SOFA_DOUBLE
-//extern template class SOFA_USER_INTERACTION_API MechanicalStateController<defaulttype::Vec3fTypes>;
-//extern template class SOFA_USER_INTERACTION_API MechanicalStateController<defaulttype::Vec2fTypes>;
-extern template class SOFA_USER_INTERACTION_API MechanicalStateController<defaulttype::Vec1fTypes>;
-//extern template class SOFA_USER_INTERACTION_API MechanicalStateController<defaulttype::Vec6fTypes>;
-extern template class SOFA_USER_INTERACTION_API MechanicalStateController<defaulttype::Rigid3fTypes>;
-//extern template class SOFA_USER_INTERACTION_API MechanicalStateController<defaulttype::Rigid2fTypes>;
-#endif
+#if  !defined(SOFA_COMPONENT_CONTROLLER_MECHANICALSTATECONTROLLER_CPP)
+extern template class SOFA_USER_INTERACTION_API MechanicalStateController<defaulttype::Vec1Types>;
+extern template class SOFA_USER_INTERACTION_API MechanicalStateController<defaulttype::Rigid3Types>;
 #endif
 
 } // namespace controller

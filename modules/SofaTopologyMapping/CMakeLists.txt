@@ -1,17 +1,12 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.12)
 project(SofaTopologyMapping)
 
 set(HEADER_FILES
-    Bezier2MeshMechanicalMapping.h
-    Bezier2MeshMechanicalMapping.inl
-    Bezier2MeshTopologicalMapping.h
-    BezierTetra2BezierTriangleTopologicalMapping.h
     CenterPointTopologicalMapping.h
     Edge2QuadTopologicalMapping.h
     Hexa2QuadTopologicalMapping.h
     Hexa2TetraTopologicalMapping.h
     IdentityTopologicalMapping.h
-    Mesh2BezierTopologicalMapping.h
     Mesh2PointMechanicalMapping.h
     Mesh2PointMechanicalMapping.inl
     Mesh2PointTopologicalMapping.h
@@ -28,15 +23,11 @@ set(HEADER_FILES
 )
 
 set(SOURCE_FILES
-    Bezier2MeshMechanicalMapping.cpp
-    Bezier2MeshTopologicalMapping.cpp
-    BezierTetra2BezierTriangleTopologicalMapping.cpp
     CenterPointTopologicalMapping.cpp
     Edge2QuadTopologicalMapping.cpp
     Hexa2QuadTopologicalMapping.cpp
     Hexa2TetraTopologicalMapping.cpp
     IdentityTopologicalMapping.cpp
-    Mesh2BezierTopologicalMapping.cpp
     Mesh2PointMechanicalMapping.cpp
     Mesh2PointTopologicalMapping.cpp
     Quad2TriangleTopologicalMapping.cpp
@@ -52,7 +43,5 @@ set(SOURCE_FILES
 
 add_library(${PROJECT_NAME} SHARED ${HEADER_FILES} ${SOURCE_FILES})
 target_link_libraries(${PROJECT_NAME} PUBLIC SofaGeneralTopology)
-set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-DSOFA_BUILD_TOPOLOGY_MAPPING")
-set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${HEADER_FILES}")
 
-sofa_install_targets(SofaGeneral ${PROJECT_NAME} ${PROJECT_NAME})
+sofa_install_targets(SofaGeneral ${PROJECT_NAME} "SofaGeneral/${PROJECT_NAME}")

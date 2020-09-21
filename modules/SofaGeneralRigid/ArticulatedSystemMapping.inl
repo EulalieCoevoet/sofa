@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -31,7 +28,6 @@
 
 #include <sofa/simulation/Simulation.h>
 #include <sofa/core/objectmodel/BaseContext.h>
-#include <sofa/helper/gl/template.h>
 
 #include <sofa/simulation/Node.h>
 
@@ -46,8 +42,8 @@ namespace mapping
 
 template <class TIn, class TInRoot, class TOut>
 ArticulatedSystemMapping<TIn, TInRoot, TOut>::ArticulatedSystemMapping ()
-    : ahc(NULL)
-    , m_fromModel(NULL), m_toModel(NULL), m_fromRootModel(NULL)
+    : ahc(nullptr)
+    , m_fromModel(nullptr), m_toModel(nullptr), m_fromRootModel(nullptr)
 {
 
 }
@@ -58,22 +54,18 @@ void ArticulatedSystemMapping<TIn, TInRoot, TOut>::init()
 
     if(this->getFromModels1().empty())
     {
-        serr << "Error while iniatilizing ; input Model not found" << sendl;
+        msg_error() << "While iniatilizing ; input Model not found.";
         return;
     }
 
     if(this->getToModels().empty())
     {
-        serr << "Error while iniatilizing ; output Model not found" << sendl;
+        msg_error() << "While iniatilizing ; output Model not found.";
         return;
     }
 
     m_fromModel = this->getFromModels1()[0];
     m_toModel = this->getToModels()[0];
-
-    sofa::simulation::Node* context = dynamic_cast<sofa::simulation::Node*>(m_fromModel->getContext());
-    context->getNodeObject(ahc);
-    articulationCenters = ahc->getArticulationCenters();
 
     const InVecCoord& xfrom = m_fromModel->read(core::ConstVecCoordId::position())->getValue();
 
@@ -96,23 +88,10 @@ void ArticulatedSystemMapping<TIn, TInRoot, TOut>::init()
         CoordinateBuf[c].x() = 0.0;
     }
 
-    helper::vector< sofa::component::container::ArticulationCenter* >::const_iterator ac = articulationCenters.begin();
-    helper::vector< sofa::component::container::ArticulationCenter* >::const_iterator acEnd = articulationCenters.end();
-
-    for (; ac != acEnd; ac++)
-    {
-        (*ac)->OrientationArticulationCenter.clear();
-        (*ac)->DisplacementArticulationCenter.clear();
-        (*ac)->Disp_Rotation.clear();
-
-        // sout << "(*ac)->OrientationArticulationCenter : " << (*ac)->OrientationArticulationCenter << sendl;
-        // todo : warning if a (*a)->articulationIndex.getValue() exceed xfrom size !
-    }
-
     helper::WriteAccessor<Data<OutVecCoord> > xtoData = *m_toModel->write(core::VecCoordId::position());
     apply(xtoData.wref(),
             xfrom,
-            m_fromRootModel == NULL ? NULL : &m_fromRootModel->read(core::ConstVecCoordId::position())->getValue());
+            m_fromRootModel == nullptr ? nullptr : &m_fromRootModel->read(core::ConstVecCoordId::position())->getValue());
     Inherit::init();
     /*
     OutVecDeriv& vto = m_toModel->read(core::ConstVecDerivId::velocity())->getValue();
@@ -122,6 +101,30 @@ void ArticulatedSystemMapping<TIn, TInRoot, TOut>::init()
 
 }
 
+template <class TIn, class TInRoot, class TOut>
+void ArticulatedSystemMapping<TIn, TInRoot, TOut>::bwdInit()
+{
+    //make sure that articulatedHierarchyContainer has been initialized before
+    m_fromModel->getContext()->get(ahc, sofa::core::objectmodel::BaseContext::SearchDown);
+    if (!ahc)
+    {
+        msg_error("ArticulatedSystemMapping::bwdInit") << "ArticulatedSystemMapping needs a ArticulatedHierarchyContainer, but it could not find it.";
+        return;
+    }
+    articulationCenters = ahc->getArticulationCenters();
+
+    helper::vector< sofa::component::container::ArticulationCenter* >::const_iterator ac = articulationCenters.begin();
+    helper::vector< sofa::component::container::ArticulationCenter* >::const_iterator acEnd = articulationCenters.end();
+
+    for (; ac != acEnd; ac++)
+    {
+        (*ac)->OrientationArticulationCenter.clear();
+        (*ac)->DisplacementArticulationCenter.clear();
+        (*ac)->Disp_Rotation.clear();
+
+        // todo : warning if a (*a)->articulationIndex.getValue() exceed xfrom size !
+    }
+}
 
 
 template <class TIn, class TInRoot, class TOut>
@@ -135,8 +138,6 @@ void ArticulatedSystemMapping<TIn, TInRoot, TOut>::reset()
 template <class TIn, class TInRoot, class TOut>
 void ArticulatedSystemMapping<TIn, TInRoot, TOut>::apply( typename Out::VecCoord& out, const typename In::VecCoord& in, const typename InRoot::VecCoord* inroot  )
 {
-//    std::cout << " --> ArticulatedSystemMapping<TIn, TOut>::apply called with in: " << in << "  -- inroot" << (*inroot) << std::endl;
-
     const Data< OutVecCoord > &xtoData = *m_toModel->read(core::VecCoordId::position());
     out.resize(xtoData.getValue().size());
 
@@ -212,9 +213,7 @@ void ArticulatedSystemMapping<TIn, TInRoot, TOut>::apply( typename Out::VecCoord
         }
         case 1: // the axis of the articulations are linked to the parent - rotations are treated by successive increases -
         {
-            //sout<<"Case 1"<<sendl;
             // no reset of the position of the child its position is corrected at the end to respect the articulation center.
-
             for (; a != aEnd; a++)
             {
                 int ind = (*a)->articulationIndex.getValue();
@@ -263,7 +262,6 @@ void ArticulatedSystemMapping<TIn, TInRoot, TOut>::apply( typename Out::VecCoord
         }
         case 2: // the axis of the articulations are linked to the child (previous pos) - rotations are treated by successive increases -
         {
-            //sout<<"Case 2"<<sendl;
             // no reset of the position of the child its position is corrected at the end to respect the articulation center.
             //Quat dq(0,0,0,1);
             sofa::defaulttype::Vec<3,Real> disp(0,0,0);
@@ -318,54 +316,21 @@ void ArticulatedSystemMapping<TIn, TInRoot, TOut>::apply( typename Out::VecCoord
     {
         CoordinateBuf[c].x() = in[c].x();
     }
-
-    //if( this->f_printLog.getValue())
-    //{
-    //	serr<<"ArticulatedSystemMapping::propageX processed :"<<sendl;
-    //	if (m_fromRootModel!=NULL)
-    //		serr<<"input root: "<<*m_fromRootModel->read(sofa::core::ConstVecCoordId::position())->getValue();
-    //	serr<<"  - input: "<<*m_fromModel->read(sofa::core::ConstVecCoordId::position())->getValue()<<"  output : "<<*m_toModel->read(sofa::core::ConstVecCoordId::position())->getValue()<<sendl;
-    //}
-
-    //if( this->f_printLog.getValue())
-    //{
-    //	serr<<"ArticulatedSystemMapping::propageXfree processed"<<sendl;
-    //	if (rootModel!=NULL)
-    //		serr<<"input root: "<<*rootModel->read(sofa::core::ConstVecCoordId::freePosition())->getValue();
-    //	serr<<"  - input: "<<*m_fromModel->read(sofa::core::ConstVecCoordId::freePosition())->getValue()<<"  output : "<<*m_toModel->read(sofa::core::ConstVecCoordId::freePosition())->getValue()<<sendl;
-    //}
-
-//	  std::cout << " <-- ArticulatedSystemMapping<TIn, TOut>::apply called with in: " << in << "  -- inroot" << (*inroot) << std::endl;
 }
 
 template <class TIn, class TInRoot, class TOut>
 void ArticulatedSystemMapping<TIn, TInRoot, TOut>::applyJ( typename Out::VecDeriv& out, const typename In::VecDeriv& in, const typename InRoot::VecDeriv* inroot )
 {
     Data<OutVecCoord>* xtoData = m_toModel->write(core::VecCoordId::position());
-    //const Data<InVecCoord>* xfromData = m_fromModel->read(core::ConstVecCoordId::position());
-
-    /*apply(*xtoData->beginEdit(), xfromData->getValue(),
-          (m_fromRootModel==NULL ? NULL : &m_fromRootModel->read(core::ConstVecCoordId::position())->getValue()));
-
-    xtoData->endEdit();*/
 
     const OutVecCoord& xto = xtoData->getValue();
-
-    /*std::cout << "--> applyJ : \n";
-    std::cout << "xto=" << xto << std::endl;
-    std::cout << "xfrom=" << xfromData->getValue() << std::endl;*/
-
-    //sout<<" \n ApplyJ ";
 
     out.clear();
     out.resize(xto.size());
 
     // Copy the root position if a rigid root model is present
     if (m_fromRootModel && inroot)
-    {
-        // sout << "Root Model Name = " << rootModel->getName() << sendl;
         out[0] = (*inroot)[m_fromRootModel->getSize()-1];
-    }
     else
         out[0] = OutDeriv();
 
@@ -410,25 +375,6 @@ void ArticulatedSystemMapping<TIn, TInRoot, TOut>::applyJ( typename Out::VecDeri
 
         }
     }
-    //if( this->f_printLog.getValue())
-    //{
-    //	serr<<" propagateV processed"<<sendl;
-    //	if (m_fromRootModel!=NULL)
-    //		serr<<"V input root: "<<m_fromRootModel->read(core::ConstVecDerivId::velocity())->getValue();
-    //	serr<<"  - V input: "<<m_fromModel->read(core::ConstVecDerivId::velocity())->getValue()<<"   V output : "<<m_toModel->read(core::ConstVecCoordId::velocity())->getValue()<<sendl;
-    //}
-
-    //if( this->f_printLog.getValue())
-    //{
-    //	serr<<"ArticulatedSystemMapping::propagateDx processed"<<sendl;
-    //	if (m_fromRootModel!=NULL)
-    //		serr<<"input root: "<<*m_fromRootModel->getDx();
-    //	serr<<"  - input: "<<*m_fromModel->getDx()<<"  output : "<<*m_toModel->getDx()<<sendl;
-    //}
-
-    /*std::cout << "<-- applyJ : \n";
-    std::cout << "xto=" << xto << std::endl;
-    std::cout << "xfrom=" << xfromData->getValue() << std::endl;*/
 }
 
 
@@ -436,15 +382,7 @@ void ArticulatedSystemMapping<TIn, TInRoot, TOut>::applyJ( typename Out::VecDeri
 template <class TIn, class TInRoot, class TOut>
 void ArticulatedSystemMapping<TIn, TInRoot, TOut>::applyJT( typename In::VecDeriv& out, const typename Out::VecDeriv& in, typename InRoot::VecDeriv* outroot )
 {
-    //sout<<"\n ApplyJt";
     const OutVecCoord& xto = m_toModel->read(core::VecCoordId::position())->getValue();
-//	InVecCoord &xfrom= *m_fromModel->read(core::ConstVecCoordId::position());
-
-    //apply(xto,xfrom);
-
-    // debug
-    //apply(core::VecCoordId::position(), core::ConstVecCoordId::position(), (rootModel==NULL ? NULL : rootModel->read(sofa::core::ConstVecCoordId::position())->getValue()));
-    //serr<<" XTO = "<<xto<<"  - Xroot :"<<*rootModel->read(sofa::core::ConstVecCoordId::position())->getValue()<<sendl;
 
     OutVecDeriv fObjects6DBuf = in;
     InVecDeriv OutBuf = out;
@@ -495,24 +433,6 @@ void ArticulatedSystemMapping<TIn, TInRoot, TOut>::applyJT( typename In::VecDeri
     {
         (*outroot)[m_fromRootModel->getSize()-1] += fObjects6DBuf[0];
     }
-
-    //if( this->f_printLog.getValue())
-    //{
-    //	serr<<"ArticulatedSystemMapping::accumulateForce processed"<<sendl;
-    //	serr<<" input f : "<<*m_toModel->getF();
-    //	if (m_fromRootModel!=NULL)
-    //		serr<<"- output root: "<<*m_fromRootModel->getF();
-    //	serr<<"  - output F: "<<*m_fromModel->getF()<<sendl;
-    //}
-
-    //if( this->f_printLog.getValue())
-    //{
-    //	serr<<"ArticulatedSystemMapping::accumulateDf processed"<<sendl;
-    //	serr<<" input df : "<<*m_toModel->getF();
-    //	if (m_fromRootModel!=NULL)
-    //		serr<<"- output root: "<<*m_fromRootModel->getF();
-    //	serr<<"  - output: "<<*m_fromModel->getF()<<sendl;
-    //}
 }
 
 
@@ -520,11 +440,6 @@ template <class TIn, class TInRoot, class TOut>
 void ArticulatedSystemMapping<TIn, TInRoot, TOut>::applyJT( InMatrixDeriv& out, const OutMatrixDeriv& in, InRootMatrixDeriv* outRoot )
 {
     const OutVecCoord& xto = m_toModel->read(core::ConstVecCoordId::position())->getValue();
-
-    //std::cout << "applyJT (constraints) : \n";
-    //std::cout << "xto = " << xto << std::endl;
-    //std::cout << "xfrom = " <<m_fromModel->read(core::ConstVecCoordId::position())->getValue() << std::endl;
-    //std::cout << "xfromFree = " << m_fromModel->read(core::VecCoordId::freePosition())->getValue() << std::endl;
 
     typename OutMatrixDeriv::RowConstIterator rowItEnd = in.end();
 
@@ -617,6 +532,8 @@ void ArticulatedSystemMapping<TIn, TInRoot, TOut>::applyJT( InMatrixDeriv& out, 
 template <class TIn, class TInRoot, class TOut>
 void ArticulatedSystemMapping<TIn, TInRoot, TOut>::draw(const core::visual::VisualParams* vparams)
 {
+    vparams->drawTool()->saveLastState();
+
     if (!vparams->displayFlags().getShowMappings()) return;
     std::vector< sofa::defaulttype::Vector3 > points;
     std::vector< sofa::defaulttype::Vector3 > pointsLine;
@@ -626,8 +543,6 @@ void ArticulatedSystemMapping<TIn, TInRoot, TOut>::draw(const core::visual::Visu
     unsigned int i=0;
     for (; ac != acEnd; ac++)
     {
-//		int parent = (*ac)->parentIndex.getValue();
-//		int child = (*ac)->childIndex.getValue();
         helper::vector< sofa::component::container::Articulation* > articulations = (*ac)->getArticulations();
         helper::vector< sofa::component::container::Articulation* >::const_iterator a = articulations.begin();
         helper::vector< sofa::component::container::Articulation* >::const_iterator aEnd = articulations.end();
@@ -649,10 +564,7 @@ void ArticulatedSystemMapping<TIn, TInRoot, TOut>::draw(const core::visual::Visu
     vparams->drawTool()->drawPoints(points, 10, sofa::defaulttype::Vec<4,float>(1,0.5,0.5,1));
     vparams->drawTool()->drawLines(pointsLine, 1, sofa::defaulttype::Vec<4,float>(0,0,1,1));
 
-    //
-    //OutVecCoord& xto =m_toModel->read(core::ConstVecCoordId::position())->getValue();
-    //glDisable (GL_LIGHTING);
-    //glPointSize(2);
+    vparams->drawTool()->restoreLastState();
 }
 
 } // namespace mapping

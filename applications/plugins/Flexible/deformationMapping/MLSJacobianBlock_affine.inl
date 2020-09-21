@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -51,93 +48,6 @@ class MLSJacobianBlock< Affine3(InReal) , V3(OutReal) > :
     public:
     typedef Affine3(InReal) In;
     typedef V3(OutReal) Out;
-
-    typedef BaseJacobianBlock<In,Out> Inherit;
-    typedef typename Inherit::InCoord InCoord;
-    typedef typename Inherit::InDeriv InDeriv;
-    typedef typename Inherit::OutCoord OutCoord;
-    typedef typename Inherit::OutDeriv OutDeriv;
-    typedef typename Inherit::MatBlock MatBlock;
-    typedef typename Inherit::KBlock KBlock;
-    typedef typename Inherit::Real Real;
-
-    enum { dim = Out::spatial_dimensions };
-
-    typedef typename MLSInfo< dim, InInfo<In>::order, InReal >::basis Basis;
-    typedef Vec<dim,Basis> Gradient;
-    typedef Mat<dim,dim,Basis> Hessian;
-
-    typedef Vec<dim, Real> SpatialCoord;
-    typedef Mat<dim,dim,Real> MaterialToSpatial;
-
-    /**
-    Mapping:   \f$ p = w.t + A.A0^{-1}.(p*-w.t0) + w.p0- p*   = w.t + A.q0 + C \f$
-    where :
-        - (A0,t0) are the frame orientation and position (A,t) in the reference configuration,
-        - p0 is the position of p in the reference configuration.
-        - p* is the mls coordinate
-        - w is the mls weight (first value of basis)
-
-    Jacobian:    \f$ dp = w.dt + dA.q0\f$
-      */
-
-    static const bool constant=true;
-
-    Real Pt;      ///< =   w         =  dp/dt
-    OutCoord Pa;   ///< =  q0      =  dp/dA
-    OutCoord C;   ///< =  w.p0- p*      =  constant term
-
-
-
-    void init( const InCoord& InPos, const OutCoord& /*OutPos*/, const SpatialCoord& SPos, const MaterialToSpatial& /*M*/, const Basis& p, const Gradient& /*dp*/, const Hessian& /*ddp*/)
-    {
-        Pt=p[0];
-        Pa=In::inverse(InPos).getAffine()*(BasisToCoord(p)-InPos.getCenter()*Pt);
-        C=SPos*Pt-BasisToCoord(p);
-    }
-
-    void addapply( OutCoord& result, const InCoord& data )
-    {
-        result +=  data.getCenter() * Pt + data.getAffine() * Pa + C;
-    }
-
-    void addmult( OutDeriv& result,const InDeriv& data )
-    {
-        result += data.getVCenter() * Pt + data.getVAffine() * Pa;
-    }
-
-    void addMultTranspose( InDeriv& result, const OutDeriv& data )
-    {
-        result.getVCenter() += data * Pt ;
-        for (unsigned int j = 0; j < dim; ++j) result.getVAffine()[j] += Pa * data[j];
-    }
-
-    MatBlock getJ()
-    {
-        MatBlock J = MatBlock();
-        for(unsigned int i=0; i<dim; ++i) J(i,i)=Pt;
-        for(unsigned int i=0; i<dim; ++i) for (unsigned int j=0; j<dim; ++j) J(j,i+(j+1)*dim)=Pa[i];
-        return J;
-    }
-
-    // no geometric striffness (constant J)
-    KBlock getK(const OutDeriv& /*childForce*/, bool=false) {return KBlock();}
-    void addDForce( InDeriv& /*df*/, const InDeriv& /*dx*/,  const OutDeriv& /*childForce*/, const SReal& /*kfactor */) {}
-};
-
-
-
-//////////////////////////////////////////////////////////////////////////////////
-////  Affine3 -> ExtVec3   same as Vec3 -> Factorize using partial instanciation ?
-//////////////////////////////////////////////////////////////////////////////////
-
-template<class InReal,class OutReal>
-class MLSJacobianBlock< Affine3(InReal) , EV3(OutReal) > :
-    public  BaseJacobianBlock< Affine3(InReal) , EV3(OutReal) >
-{
-    public:
-    typedef Affine3(InReal) In;
-    typedef EV3(OutReal) Out;
 
     typedef BaseJacobianBlock<In,Out> Inherit;
     typedef typename Inherit::InCoord InCoord;

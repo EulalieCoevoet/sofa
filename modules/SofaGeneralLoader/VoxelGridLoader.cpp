@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -46,7 +43,6 @@ using namespace sofa::defaulttype;
 using namespace sofa::core::loader;
 using namespace sofa::core;
 
-SOFA_DECL_CLASS(VoxelGridLoader);
 int VoxelGridLoaderClass = RegisterObject("Voxel loader based on RAW files").add<VoxelGridLoader>();
 
 VoxelGridLoader::VoxelGridLoader()
@@ -60,8 +56,8 @@ VoxelGridLoader::VoxelGridLoader()
       backgroundValue ( initData ( &backgroundValue, "bgValue", "Background values (to be ignored)" ) ),
       activeValue ( initData ( &activeValue, "dataValue", "Active data values" ) ),
       generateHexa( initData ( &generateHexa, true, "generateHexa", "Interpret voxel as either hexa or points")),
-      image(NULL),
-      segmentation(NULL),
+      image(nullptr),
+      segmentation(nullptr),
       bpp(8) // bits per pixel
 {
     addAlias(&m_filename,"segmentationFile");
@@ -71,13 +67,13 @@ VoxelGridLoader::~VoxelGridLoader()
 {
     clear();
 
-    if(image != NULL)
+    if(image != nullptr)
         delete image;
-    image = NULL;
+    image = nullptr;
 
-    if(segmentation != NULL)
+    if(segmentation != nullptr)
         delete segmentation;
-    segmentation = NULL;
+    segmentation = nullptr;
 }
 
 void VoxelGridLoader::init()
@@ -97,9 +93,9 @@ void VoxelGridLoader::init()
     if(ROI[2] > ROI[5]) ROI[5] = ROI[2];
     roi.endEdit();
 
-    if ( image == NULL )
+    if ( image == nullptr )
     {
-        serr << "Error while loading the file " << m_filename.getValue() << this->sendl;
+        msg_error() << "Error while loading the file " << m_filename.getValue();
         return;
     }
 
@@ -170,10 +166,9 @@ void VoxelGridLoader::reinit()
 
         sout << " done. " << sendl;
 
-        std::cout << "[VoxelGridLoader::init] inserting hexa ... ";
         helper::vector<Hexahedron>& seqHexahedra = *hexahedra.beginEdit();
 
-
+        msg_info() << "inserting hexahedras...please wait... " ;
         for ( unsigned int k=(unsigned)ROI[2]; k<=(unsigned)ROI[5]; ++k )
             for ( unsigned int j=(unsigned)ROI[1]; j<=(unsigned)ROI[4]; ++j )
                 for ( unsigned int i=(unsigned)ROI[0]; i<=(unsigned)ROI[3]; ++i )
@@ -189,27 +184,18 @@ void VoxelGridLoader::reinit()
                         }
 
                         addHexahedron( &seqHexahedra, p[0], p[1], p[3], p[2], p[4], p[5], p[7], p[6] );
-
-//            addHexahedron( &seqHexahedra, p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7] );
-
-
                         _idxInRegularGrid.push_back ( idx );
                     }
                 }
-
-        std::cout << "done. (" << seqHexahedra.size() << ")" << std::endl;
+        msg_info() << "inserting (" << seqHexahedra.size() << ")  hexahedras done. " ;
         hexahedra.endEdit();
-
     }
     else
     {
         const unsigned int numVoxelsX = dataResolution.getValue()[0];
         const unsigned int numVoxelsY = dataResolution.getValue()[1];
-        //	  const unsigned int numVoxelsZ = dataResolution.getValue()[2];
 
-        std::cout << "[VoxelGridLoader::init] inserting points ... ";
-
-
+        msg_info() << "inserting point...please wait... " ;
         for ( unsigned int k=(unsigned)ROI[2]; k<=(unsigned)ROI[5]; ++k )
             for ( unsigned int j=(unsigned)ROI[1]; j<=(unsigned)ROI[4]; ++j )
                 for ( unsigned int i=(unsigned)ROI[0]; i<=(unsigned)ROI[3]; ++i )
@@ -227,8 +213,7 @@ void VoxelGridLoader::reinit()
                         _idxInRegularGrid.push_back ( idx );
                     }
                 }
-
-        std::cout << "done. (" << seqPoints.size() << ")" << std::endl;
+        msg_info() << "inserting (" << seqPoints.size() << ") points done." ;
 
     }
     idxInRegularGrid.endEdit();
@@ -265,7 +250,7 @@ bool VoxelGridLoader::load ()
 
     image = loadImage(m_filename.getValue(), dataResolution.getValue(), headerSize.getValue());
 
-    if(image != NULL)
+    if(image != nullptr)
     {
         return true;
     }
@@ -275,7 +260,7 @@ bool VoxelGridLoader::load ()
 
 helper::io::Image* VoxelGridLoader::loadImage ( const std::string& filename, const Vec3i& res, const int hsize ) const
 {
-    helper::io::Image* image = NULL;
+    helper::io::Image* image = nullptr;
 
     std::string _filename ( filename );
 
@@ -299,8 +284,8 @@ helper::io::Image* VoxelGridLoader::loadImage ( const std::string& filename, con
                 channels = helper::io::Image::RGBA;
                 break;
             default:
-                serr << "Unknown bitdepth: " << bpp << sendl;
-                return 0;
+                msg_warning("VoxelGridLoader") << "Unknown bitdepth: " << bpp ;
+                return nullptr;
             }
             helper::io::ImageRAW *imageRAW = new helper::io::ImageRAW();
             imageRAW->init(res[0], res[1], res[2], 1, helper::io::Image::UNORM8, channels);
@@ -310,9 +295,9 @@ helper::io::Image* VoxelGridLoader::loadImage ( const std::string& filename, con
         }
     }
 
-    if(image == NULL)
+    if(image == nullptr)
     {
-        this->serr << "Unable to load file " <<  _filename << sendl;
+        msg_warning("VoxelGridLoader") << "Unable to load file " <<  _filename ;
     }
 
     return image;
@@ -351,7 +336,7 @@ void VoxelGridLoader::addBackgroundValue ( const int value )
     helper::vector<int>& vecVal = ( *backgroundValue.beginEdit() );
     vecVal.push_back(value);
     std::sort(vecVal.begin(), vecVal.end());
-    std::unique(vecVal.begin(), vecVal.end());
+    vecVal.erase( std::unique(vecVal.begin(), vecVal.end()), vecVal.end() ); // remove non-unique values
     backgroundValue.endEdit();
     reinit();
 }
@@ -370,7 +355,7 @@ void VoxelGridLoader::addActiveDataValue(const int value)
     helper::vector<int>& vecVal = ( *activeValue.beginEdit() );
     vecVal.push_back(value);
     std::sort(vecVal.begin(), vecVal.end());
-    std::unique(vecVal.begin(), vecVal.end());
+    vecVal.erase( std::unique(vecVal.begin(), vecVal.end()), vecVal.end() ); // remove non-unique values
     activeValue.endEdit();
     reinit();
 }
@@ -395,7 +380,7 @@ unsigned char * VoxelGridLoader::getSegmentID()
     if( segmentation)
         return segmentation->getPixels();
     else
-        return NULL;
+        return nullptr;
 }
 
 
@@ -413,7 +398,7 @@ bool VoxelGridLoader::isActive(const unsigned int idx) const
     if(activeVal.empty() && bgVal.empty())
         return true;
 
-    helper::io::Image* img = (segmentation == NULL) ? image : segmentation;
+    helper::io::Image* img = (segmentation == nullptr) ? image : segmentation;
     const unsigned char value = img->getPixels()[idx];
 
     if(!activeVal.empty()) // active values were specified

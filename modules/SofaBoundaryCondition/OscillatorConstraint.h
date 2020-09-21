@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -73,15 +70,9 @@ protected:
         Real pulsation;
         Real phase;
 
-        Oscillator()
-        {
-        }
-
+        Oscillator();
         Oscillator(unsigned int i, const Coord& m, const Deriv& a,
-                const Real& w, const Real& p) :
-            index(i), mean(m), amplitude(a), pulsation(w), phase(p)
-        {
-        }
+                   const Real& w, const Real& p);
 
         inline friend std::istream& operator >>(std::istream& in, Oscillator& o)
         {
@@ -101,36 +92,27 @@ protected:
 
 
 public:
-    OscillatorConstraint();
+    OscillatorConstraint(core::behavior::MechanicalState<TDataTypes>* mstate=nullptr);
+    ~OscillatorConstraint() override ;
 
-    OscillatorConstraint(core::behavior::MechanicalState<TDataTypes>* mstate);
+    OscillatorConstraint<TDataTypes>* addConstraint(unsigned index,
+                                                    const Coord& mean, const Deriv& amplitude,
+                                                    Real pulsation, Real phase);
 
-    ~OscillatorConstraint();
-public:
-    OscillatorConstraint<TDataTypes>* addConstraint(unsigned index, const Coord& mean, const Deriv& amplitude, Real pulsation, Real phase);
-
-    // -- Constraint interface
-
-
-    void projectResponse(const core::MechanicalParams* mparams, DataVecDeriv& resData);
-    void projectVelocity(const core::MechanicalParams* mparams, DataVecDeriv& vData);
-    void projectPosition(const core::MechanicalParams* mparams, DataVecCoord& xData);
-    void projectJacobianMatrix(const core::MechanicalParams* mparams, DataMatrixDeriv& cData);
+    void projectResponse(const core::MechanicalParams* mparams, DataVecDeriv& resData) override;
+    void projectVelocity(const core::MechanicalParams* mparams, DataVecDeriv& vData) override;
+    void projectPosition(const core::MechanicalParams* mparams, DataVecCoord& xData) override;
+    void projectJacobianMatrix(const core::MechanicalParams* mparams, DataMatrixDeriv& cData) override;
 
 protected:
     template <class DataDeriv>
     void projectResponseT(const core::MechanicalParams* mparams, DataDeriv& dx);
 };
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_PROJECTIVECONSTRAINTSET_OSCILLATORCONSTRAINT_CPP)
-#ifndef SOFA_FLOAT
-extern template class OscillatorConstraint<defaulttype::Rigid3dTypes>;
-extern template class OscillatorConstraint<defaulttype::Vec3dTypes>;
-#endif
-#ifndef SOFA_DOUBLE
-extern template class OscillatorConstraint<defaulttype::Rigid3fTypes>;
-extern template class OscillatorConstraint<defaulttype::Vec3fTypes>;
-#endif
+
+#if  !defined(SOFA_COMPONENT_PROJECTIVECONSTRAINTSET_OSCILLATORCONSTRAINT_CPP)
+extern template class OscillatorConstraint<defaulttype::Rigid3Types>;
+extern template class OscillatorConstraint<defaulttype::Vec3Types>;
 #endif
 
 } // namespace projectiveconstraintset

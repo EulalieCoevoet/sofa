@@ -1,7 +1,7 @@
 #### Compiler options
 
 ## GCC-specific
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+if(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
     ## Find out the version of g++ (and save it in GCXX_VERSION)
     if(CMAKE_CXX_COMPILER_ARG1) # CXX="ccache g++"
         string(STRIP ${CMAKE_CXX_COMPILER_ARG1} CMAKE_CXX_COMPILER_ARG1_stripped)
@@ -28,35 +28,25 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
 endif()
 
 ## GCC/Clang-specific
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+if(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU" OR ${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
     # Warnings
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -W")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -W -Wno-padded")
 endif()
 
 ## Windows-specific
 if(WIN32)
-    add_definitions("-DUNICODE")
-    add_definitions("-D_USE_MATH_DEFINES") # just to access M_PI with cmath
-    add_definitions("-wd4250 -wd4251 -wd4275 -wd4675 -wd4996")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+    add_definitions("-D_USE_MATH_DEFINES")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP -wd4250 -wd4251 -wd4275 -wd4675 -wd4996")
+    if(MSVC_TOOLSET_VERSION GREATER 140) # > VS 2015
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:__cplusplus")
+    endif()
 endif()
 
-## XBox-specific
-if(XBOX)
-    add_definitions("-wd4250 -wd4231 /GR /EHsc")
+# Mac specific
+if(APPLE)
+    #remove OpenGL deprecation message
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGL_SILENCE_DEPRECATION")
 endif()
-
-## SOFA_DEBUG preprocessor macro
-if(WIN32 OR APPLE)
-    # Reminder: multi-configuration generators like Visual Studio and XCode do
-    # not use CMAKE_BUILD_TYPE, as they generate all configurations in the
-    # project, not just one at a time!
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DSOFA_DEBUG")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSOFA_DEBUG")
-elseif(CMAKE_BUILD_TYPE MATCHES "Debug")
-    add_definitions("-DSOFA_DEBUG")
-endif()
-
 
 
 ## OpenMP
@@ -72,5 +62,27 @@ if(SOFA_OPENMP)
     else()
         message("WARNING: Your compiler does not implement OpenMP.")
     endif()
+endif()
+
+
+
+# C++17 is now mandatory
+# TODO how to propagate such properties to dependents?
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# An important C++11 feature may be not enabled due to
+# the compiler being built without the --enable-libstdcxx-time option.
+if(CMAKE_COMPILER_IS_GNUCXX)
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_NANOSLEEP -D_GLIBCXX_USE_SCHED_YIELD")
+    endif()
+endif()
+
+# hack for clang on old macosx (version < 10.9, such as the dashboard servers)
+# that is using, by default at that time, a libstdc++ that did not fully implement c++11
+if(APPLE AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND CMAKE_SYSTEM_VERSION VERSION_LESS "10.9" AND ${CMAKE_CXX_COMPILER_ID} MATCHES "Clang" )
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+#    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
 endif()
 

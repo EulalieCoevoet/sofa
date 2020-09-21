@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -13,11 +13,8 @@
 * more details.                                                               *
 *                                                                             *
 * You should have received a copy of the GNU General Public License along     *
-* with this program; if not, write to the Free Software Foundation, Inc., 51  *
-* Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.                   *
+* with this program. If not, see <http://www.gnu.org/licenses/>.              *
 *******************************************************************************
-*                            SOFA :: Applications                             *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -79,7 +76,7 @@ class SofaModeler: public QMainWindow
     Q_OBJECT;
 public:
     SofaModeler();
-    ~SofaModeler() {};
+    ~SofaModeler() override {};
 
     /// Create a new empty Tab
     void createTab();
@@ -94,7 +91,7 @@ public:
     void changeTabName(GraphModeler *graph, const QString &name, const QString &suffix=QString());
     void setDebugBinary(bool b) {debug=b;};
 
-	void resizeEvent(QResizeEvent * event);
+	void resizeEvent(QResizeEvent * event) override;
 
 signals:
     void loadPresetGraph(std::string);
@@ -130,7 +127,7 @@ public slots:
 
     //File Menu
     /// Creation of a new scene (new tab will be created)
-    void fileNew() {fileNew(NULL);};
+    void fileNew() {fileNew(nullptr);};
     void fileNew(Node* root);
 
     /// Open an existing simulation (new tab will be created)
@@ -182,12 +179,12 @@ public slots:
     void loadPreset(QAction *act);
 
     /// When the user enter the Modeler, grabbing something: determine the acceptance or not
-    void dragEnterEvent( QDragEnterEvent* event);
+    void dragEnterEvent( QDragEnterEvent* event) override;
     /// When the user move the mouse around, with something grabbed
-    void dragMoveEvent( QDragMoveEvent* event);
+    void dragMoveEvent( QDragMoveEvent* event) override;
 
     /// Action to perform when the user drop something in the Modeler
-    void dropEvent(QDropEvent* event);
+    void dropEvent(QDropEvent* event) override;
 
     /// Open a recently Opened files from the menu Recently Opened Files...
     void fileRecentlyOpened(QAction *act);
@@ -198,7 +195,7 @@ public slots:
     void changeSofaBinary();
     void GUIChanged();
     //When the window is closed: we close all the Sofa launched, and remove temporary files
-    void closeEvent ( QCloseEvent * e );
+    void closeEvent ( QCloseEvent * e ) override;
 
     ///display the plugin manager window, to add/remove some external dynamic libraries
     void showPluginManager();

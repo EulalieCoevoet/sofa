@@ -1,6 +1,6 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
 * This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU General Public License as published by the Free  *
@@ -13,11 +13,8 @@
 * more details.                                                               *
 *                                                                             *
 * You should have received a copy of the GNU General Public License along     *
-* with this program; if not, write to the Free Software Foundation, Inc., 51  *
-* Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.                   *
+* with this program. If not, see <http://www.gnu.org/licenses/>.              *
 *******************************************************************************
-*                            SOFA :: Applications                             *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -28,10 +25,9 @@
 
 #include "Sofa_test.h"
 
-
+#include <sofa/core/DataEngine.h>
 #include <sofa/defaulttype/VecTypes.h>
 #include <SofaBaseMechanics/MechanicalObject.h>
-
 
 namespace sofa {
 
@@ -52,10 +48,9 @@ public:
     {}
 
 
-    virtual void update()
+    void doUpdate() override
     {
-        DataEngineType::update();
-
+        Inherit1::doUpdate();
         ++m_counter;
     }
 
@@ -84,7 +79,7 @@ struct DataEngine_test : public Sofa_test<>
     typedef DDGNode::DDGLinkContainer DDGLinkContainer;
 
     typename Engine::SPtr m_engine; ///< the real tested engine
-    typename DataEngineType::SPtr m_engineInput; ///< an other identical engine, where only inputs are used (not the engine itself). It is an easy way to create all inputs of the right type, to be able to link wuth them.
+    typename DataEngineType::SPtr m_engineInput; ///< an other identical engine, where only inputs are used (not the engine itself). It is an easy way to create all inputs of the right type, to be able to link with them.
 
     ///
     DataEngine_test()
@@ -97,6 +92,8 @@ struct DataEngine_test : public Sofa_test<>
 
     virtual void init()
     {
+        preInit();
+
         m_engineInput->init();
         m_engine->init();
 
@@ -123,30 +120,34 @@ struct DataEngine_test : public Sofa_test<>
     /// To do so, you can inherit this class and add a test function that takes inputs and ouputs to test
     void run_basic_test()
     {
-        init();
+        /// The comp
+        {
+            IGNORE_MSG(Error) ;
+            init();
+        }
 
         m_engine->resetCounter();
 
         const DDGLinkContainer& inputs = m_engine->DDGNode::getInputs();
 
-        CHECKCOUNTER( 0 );  // c'est parti mon kiki
+        CHECKCOUNTER( 0 );
         const DDGLinkContainer& parent_inputs = m_engineInput->DDGNode::getInputs();
 
 
-        CHECKCOUNTER( 0 );  // c'est parti mon kiki
+        CHECKCOUNTER( 0 );
         const DDGLinkContainer& outputs = m_engine->DDGNode::getOutputs();
 
 
-        CHECKCOUNTER( 0 );  // c'est parti mon kiki
+        CHECKCOUNTER( 0 );
 
         // modifying inputs to ensure the engine should be evaluated
         for( unsigned i=0, iend=parent_inputs.size() ; i<iend ; ++i )
         {
-            parent_inputs[i]->setDirtyValue();            
-            CHECKCOUNTER( 0 );  // c'est parti mon kiki
+            parent_inputs[i]->setDirtyValue();
+            CHECKCOUNTER( 0 );
         }
 
-        CHECKCOUNTER( 0 );  // c'est parti mon kiki
+        CHECKCOUNTER( 0 );
 
         outputs[0]->updateIfDirty(); // could call the engine
         CHECKMAXCOUNTER( 1 );
@@ -174,7 +175,11 @@ struct DataEngine_test : public Sofa_test<>
         }
         CHECKMAXCOUNTER( parent_inputs.size() );
     }
-
+private:
+    virtual void preInit()
+    {
+        // stub
+    }
 
 };
 

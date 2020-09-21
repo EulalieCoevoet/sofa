@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -30,7 +27,7 @@
 #include <sofa/simulation/MechanicalVisitor.h>
 #include <sofa/simulation/UpdateMappingVisitor.h>
 
-#include <string.h>
+#include <cstring>
 #include <sstream>
 
 namespace sofa
@@ -47,10 +44,10 @@ ReadTopology::ReadTopology()
     , f_interval( initData(&f_interval, 0.0, "interval", "time duration between inputs"))
     , f_shift( initData(&f_shift, 0.0, "shift", "shift between times in the file and times when they will be read"))
     , f_loop( initData(&f_loop, false, "loop", "set to 'true' to re-read the file when reaching the end"))
-    , m_topology(NULL)
-    , infile(NULL)
-#ifdef SOFA_HAVE_ZLIB
-    , gzfile(NULL)
+    , m_topology(nullptr)
+    , infile(nullptr)
+#if SOFAGENERALLOADER_HAVE_ZLIB
+    , gzfile(nullptr)
 #endif
     , nextTime(0.0)
     , lastTime(0.0)
@@ -63,7 +60,7 @@ ReadTopology::~ReadTopology()
 {
     if (infile)
         delete infile;
-#ifdef SOFA_HAVE_ZLIB
+#if SOFAGENERALLOADER_HAVE_ZLIB
     if (gzfile)
         gzclose(gzfile);
 #endif
@@ -77,32 +74,41 @@ void ReadTopology::init()
 
 void ReadTopology::reset()
 {
-    m_topology = this->getContext()->getMeshTopology();
+    if (l_topology.empty())
+    {
+        msg_info() << "link to Topology container should be set to ensure right behavior. First Topology found in current context will be used.";
+        l_topology.set(this->getContext()->getMeshTopologyLink());
+    }
+
+    m_topology = l_topology.get();
+    msg_info() << "Topology path used: '" << l_topology.getLinkedPath() << "'";
+    
     if (infile)
     {
         delete infile;
-        infile = NULL;
+        infile = nullptr;
     }
-#ifdef SOFA_HAVE_ZLIB
+
+#if SOFAGENERALLOADER_HAVE_ZLIB
     if (gzfile)
     {
         gzclose(gzfile);
-        gzfile = NULL;
+        gzfile = nullptr;
     }
 #endif
 
     const std::string& filename = f_filename.getFullPath();
     if (filename.empty())
     {
-        serr << "ERROR: empty filename"<<sendl;
+        msg_error() << "Empty filename";
     }
-#ifdef SOFA_HAVE_ZLIB
+#if SOFAGENERALLOADER_HAVE_ZLIB
     else if (filename.size() >= 3 && filename.substr(filename.size()-3)==".gz")
     {
         gzfile = gzopen(filename.c_str(),"rb");
         if( !gzfile )
         {
-            serr << "Error opening compressed file "<<filename<<sendl;
+            msg_error() << "Opening compressed file " << filename;
         }
     }
 #endif
@@ -111,9 +117,9 @@ void ReadTopology::reset()
         infile = new std::ifstream(filename.c_str());
         if( !infile->is_open() )
         {
-            serr << "Error opening file "<<filename<<sendl;
+            msg_error() << "Opening file " << filename;
             delete infile;
-            infile = NULL;
+            infile = nullptr;
         }
     }
     nextTime = 0;
@@ -149,7 +155,7 @@ bool ReadTopology::readNext(double time, std::vector<std::string>& validLines)
 {
     if (!m_topology) return false;
     if (!infile
-#ifdef SOFA_HAVE_ZLIB
+#if SOFAGENERALLOADER_HAVE_ZLIB
         && !gzfile
 #endif
        )
@@ -164,7 +170,7 @@ bool ReadTopology::readNext(double time, std::vector<std::string>& validLines)
     while ((double)nextTime <= (time + epsilon))
     {
 
-#ifdef SOFA_HAVE_ZLIB
+#if SOFAGENERALLOADER_HAVE_ZLIB
         if (gzfile)
         {
 
@@ -179,7 +185,7 @@ bool ReadTopology::readNext(double time, std::vector<std::string>& validLines)
             line.clear();
             char buf[4097];
             buf[0] = '\0';
-            while (gzgets(gzfile,buf,sizeof(buf))!=NULL && buf[0])
+            while (gzgets(gzfile,buf,sizeof(buf))!=nullptr && buf[0])
             {
                 size_t l = strlen(buf);
                 if (buf[l-1] == '\n')
@@ -209,16 +215,13 @@ bool ReadTopology::readNext(double time, std::vector<std::string>& validLines)
                 }
                 getline(*infile, line);
             }
-        //std::cout << "line= "<<line<<std::endl;
         std::istringstream str(line);
         str >> cmd;
-        //std::cout << "cmd:: " << cmd << std::endl;
         if (cmd == "T=")
         {
             str >> nextTime;
 
             nextTime += loopTime;
-            //sout << "next time: " << nextTime << sendl;
             if (nextTime <= time)
                 validLines.clear();
         }
@@ -249,7 +252,6 @@ void ReadTopology::processReadTopology()
         if (buff == "T=")
         {
             //Nothing to do in this case.
-            //std::cout << "cas T" << std::endl;
             ++it;
             continue;
         }

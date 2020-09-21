@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -26,9 +23,7 @@
 #define ROIValueMapper_H_
 #include "config.h"
 
-#if !defined(__GNUC__) || (__GNUC__ > 3 || (_GNUC__ == 3 && __GNUC_MINOR__ > 3))
-#pragma once
-#endif
+
 
 #include <sofa/core/DataEngine.h>
 #include <SofaBaseMechanics/MechanicalObject.h>
@@ -57,20 +52,17 @@ public:
     typedef unsigned int Index;
 
     //Input
-    Data<unsigned int> nbROIs;
+    Data<unsigned int> nbROIs; ///< size of indices/value vector
     helper::vectorData<helper::vector<Index> > f_indices;
     helper::vectorData<Real> f_value;
 
     //Output
-    Data<sofa::helper::vector<Real> > f_outputValues;
+    Data<sofa::helper::vector<Real> > f_outputValues; ///< New vector of values
 
     //Parameter
-    Data<Real> p_defaultValue;
+    Data<Real> p_defaultValue; ///< Default value for indices out of ROIs
 
-    virtual std::string getTemplateName() const    {        return templateName(this);    }
-    static std::string templateName(const ROIValueMapper* = NULL)    {        return std::string();    }
-
-    virtual void init()
+    void init() override
     {
         addInput(&nbROIs);
         f_indices.resize(nbROIs.getValue());
@@ -80,7 +72,7 @@ public:
         setDirtyValue();
     }
 
-    virtual void reinit()
+    void reinit() override
     {
         f_indices.resize(nbROIs.getValue());
         f_value.resize(nbROIs.getValue());
@@ -89,7 +81,7 @@ public:
 
 
     /// Parse the given description to assign values to this object's fields and potentially other parameters
-    void parse ( sofa::core::objectmodel::BaseObjectDescription* arg )
+    void parse ( sofa::core::objectmodel::BaseObjectDescription* arg ) override
     {
         f_indices.parseSizeData(arg, nbROIs);
         f_value.parseSizeData(arg, nbROIs);
@@ -97,7 +89,7 @@ public:
     }
 
     /// Assign the field values stored in the given map of name -> value pairs
-    void parseFields ( const std::map<std::string,std::string*>& str )
+    void parseFields ( const std::map<std::string,std::string*>& str ) override
     {
         f_indices.parseFieldsSizeData(str, nbROIs);
         f_value.parseFieldsSizeData(str, nbROIs);
@@ -115,9 +107,9 @@ protected:
     {
     }
 
-    virtual ~ROIValueMapper() {}
+    ~ROIValueMapper() override {}
 
-    virtual void update()
+    void doUpdate() override
     {
         size_t nb = nbROIs.getValue();
         f_indices.resize(nb);
@@ -145,8 +137,6 @@ protected:
                 outputValues[ind] = value;
             }
         }
-
-        cleanDirty();
     }
 
 };

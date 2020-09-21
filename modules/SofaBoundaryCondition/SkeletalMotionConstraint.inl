@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -29,7 +26,6 @@
 #include <sofa/core/visual/VisualParams.h>
 #include <sofa/core/topology/BaseMeshTopology.h>
 #include <sofa/simulation/Simulation.h>
-#include <sofa/helper/gl/template.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <SofaBaseTopology/TopologySubsetData.inl>
 
@@ -51,13 +47,11 @@ SkeletalMotionConstraint<DataTypes>::SkeletalMotionConstraint() : sofa::core::be
 	, animationSpeed(initData(&animationSpeed, 1.0f, "animationSpeed", "animation speed"))
     , active(initData(&active, true, "active", "is the constraint active?"))
 {
-
 }
 
 template <class DataTypes>
 SkeletalMotionConstraint<DataTypes>::~SkeletalMotionConstraint()
 {
-
 }
 
 template <class DataTypes>
@@ -200,7 +194,7 @@ void SkeletalMotionConstraint<DataTypes>::projectPosition(const core::Mechanical
 
 template <class DataTypes>
 template <class MyCoord>
-void SkeletalMotionConstraint<DataTypes>::interpolatePosition(Real cT, typename boost::enable_if<boost::is_same<MyCoord, defaulttype::RigidCoord<3, Real> >, VecCoord>::type& x)
+void SkeletalMotionConstraint<DataTypes>::interpolatePosition(Real cT, typename std::enable_if<std::is_same<MyCoord, defaulttype::RigidCoord<3, Real> >::value, VecCoord>::type& x)
 {
     // set the motion to the SkeletonJoint corresponding rigid
     
@@ -277,7 +271,7 @@ void SkeletalMotionConstraint<DataTypes>::projectJacobianMatrix(const core::Mech
 
 template <class DataTypes>
 template <class MyCoord>
-void SkeletalMotionConstraint<DataTypes>::localToGlobal(typename boost::enable_if<boost::is_same<MyCoord, defaulttype::RigidCoord<3, Real> >, VecCoord>::type& x)
+void SkeletalMotionConstraint<DataTypes>::localToGlobal(typename std::enable_if<std::is_same<MyCoord, defaulttype::RigidCoord<3, Real> >::value, VecCoord>::type& x)
 {
     for(unsigned int i = 0; i < skeletonJoints.getValue().size(); ++i)
     {
@@ -351,6 +345,17 @@ void SkeletalMotionConstraint<DataTypes>::applyConstraint(defaulttype::BaseVecto
     	for (unsigned int c=0;c<N;++c)
     		vect->clear(offset + N * (*it) + c);
     }*/
+}
+
+template <class DataTypes>
+void SkeletalMotionConstraint<DataTypes>::projectMatrix( sofa::defaulttype::BaseMatrix* M, unsigned offset )
+{
+    unsigned blockSize = DataTypes::deriv_total_size;
+    unsigned size = this->mstate->getSize();
+    for( unsigned i=0; i<size; i++ )
+    {
+        M->clearRowsCols( offset + i * blockSize, offset + (i+1) * (blockSize) );
+    }
 }
 
 // display the paths the constrained dofs will go through

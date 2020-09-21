@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -32,11 +29,9 @@
 #include <sofa/core/objectmodel/BaseObject.h>
 #include <sofa/core/BaseMapping.h>
 
-
 #include <sofa/core/objectmodel/Event.h>
 #include <sofa/simulation/AnimateEndEvent.h>
 
-#include <Compliant/assembly/AssemblyHelper.h>
 
 namespace sofa
 {
@@ -53,34 +48,37 @@ namespace engine
  */
 
 /// Default implementation does not compile
-template <int imageTypeLabel>
+template <class DataTypes, class ImageTypes>
 struct MassFromDensitySpecialization
 {
 };
 
+/// forward declaration
+template <class DataTypes, class ImageTypes> class MassFromDensity;
+
 /// Specialization for regular Image
-template <>
-struct MassFromDensitySpecialization<defaulttype::IMAGELABEL_IMAGE>
+template <class DataTypes, class T>
+struct MassFromDensitySpecialization<DataTypes, defaulttype::Image<T>>
 {
+    typedef MassFromDensity<DataTypes, defaulttype::Image<T>> MassFromDensityT;
 
-    template<class MassFromDensity>
-    static void update(MassFromDensity* This)
+    static void update(MassFromDensityT* This)
     {
-        typedef typename MassFromDensity::Real Real;
-        typedef typename MassFromDensity::VecCoord VecCoord;
-        typedef typename MassFromDensity::Coord Coord;
+        typedef typename MassFromDensityT::Real Real;
+        typedef typename MassFromDensityT::VecCoord VecCoord;
+        typedef typename MassFromDensityT::Coord Coord;
 
-        typename MassFromDensity::raImage in(This->image);
-        typename MassFromDensity::raTransform inT(This->transform);
+        typename MassFromDensityT::raImage in(This->image);
+        typename MassFromDensityT::raTransform inT(This->transform);
         if(in->isEmpty()) return;
-        const cimg_library::CImg<typename MassFromDensity::T>& img = in->getCImg(This->time);
+        const cimg_library::CImg<T>& img = in->getCImg(This->time);
 
         // count non zero voxels
         unsigned int nb=0;
         cimg_forXYZ(img,x,y,z) if(img(x,y,z)) nb++;
 
         // build mass and mapped dofs
-        This->Me=typename MassFromDensity::rmat(3*nb,3*nb);
+        This->Me=typename MassFromDensityT::rmat(3*nb,3*nb);
         This->Me.reserve(3*nb);
         This->dofs->resize(nb);
         helper::WriteOnlyAccessor<Data<VecCoord> > rpos ( This->dofs->writeOnlyRestPositions() );
@@ -108,9 +106,8 @@ struct MassFromDensitySpecialization<defaulttype::IMAGELABEL_IMAGE>
 template <class _DataTypes, class _ImageTypes>
 class MassFromDensity : public core::DataEngine
 {
-    friend struct MassFromDensitySpecialization<defaulttype::IMAGELABEL_IMAGE>;
-    friend struct MassFromDensitySpecialization<defaulttype::IMAGELABEL_BRANCHINGIMAGE>;
-    typedef MassFromDensitySpecialization<_ImageTypes::label> MassFromDensitySpec;
+    friend struct MassFromDensitySpecialization<_DataTypes,_ImageTypes>;
+    typedef MassFromDensitySpecialization<_DataTypes,_ImageTypes> MassFromDensitySpec;
 
 public:
     typedef core::DataEngine Inherited;
@@ -135,13 +132,10 @@ public:
 
     Data< ImageTypes > image;
     Data< TransformType > transform;
-    Data< MassMatrix > massMatrix;
+    Data< MassMatrix > massMatrix; ///< Mass Matrix
 
     enum { NO_LUMPING=0, BLOCK_LUMPING=1, DIAGONAL_LUMPING=2 };
     Data< int > f_lumping; ///< is the mass matrix lumped? (copy each non-diagonal term on the diagonal term of the same line)  0->no, 1->by bloc, 2->diagonal matrix
-
-    virtual std::string getTemplateName() const    { return templateName(this);    }
-    static std::string templateName(const MassFromDensity<DataTypes,ImageTypes>* = NULL) { return DataTypes::Name()+std::string(",")+ImageTypes::Name();  }
 
     MassFromDensity()    :   Inherited()
       , image(initData(&image,ImageTypes(),"image",""))
@@ -157,9 +151,9 @@ public:
         transform.setReadOnly(true);
     }
 
-    virtual ~MassFromDensity() {}
+    ~MassFromDensity() override {}
 
-    virtual void init()
+    void init() override
     {
         addInput(&image);
         addInput(&transform);
@@ -171,18 +165,14 @@ public:
         this->getContext()->get( dofs, core::objectmodel::BaseContext::Local);
     }
 
-    virtual void reinit() { update(); }
+    void reinit() override { update(); }
 
 protected:
 
-    virtual void update()
+    void doUpdate() override
     {
         if(!deformationMapping) { serr<<SOFA_CLASS_METHOD<<"can't compute the mass : no mapping found"<<sendl; return; }
         if(!dofs) { serr<<SOFA_CLASS_METHOD<<"can't compute the mass : no MechanicalObject<Vec3> found"<<sendl; return; }
-
-        updateAllInputsIfDirty(); // the easy way...
-
-        cleanDirty();
 
         MassFromDensitySpec::update(this);
 
@@ -199,7 +189,7 @@ protected:
             const core::State< DataTypes >* compatible = dynamic_cast<const core::State< DataTypes >*> (deformationMapping->getFrom()[i]);
             if(compatible)
             {
-                MySPtr<rmat> J( convertSPtr<rmat>( (*js)[i] ) );
+                helper::OwnershipSPtr<rmat> J( convertSPtr<rmat>( (*js)[i] ) );
                 rmat JTMe=J->transpose()*Me;
                 MassMatrix& M = *massMatrix.beginWriteOnly();
                 M.compressedMatrix=JTMe*(*J);
@@ -243,7 +233,7 @@ protected:
         deformationMapping->init();
     }
 
-    void handleEvent(sofa::core::objectmodel::Event *event)
+    void handleEvent(sofa::core::objectmodel::Event *event) override
     {
         if (simulation::AnimateEndEvent::checkEventType(event))
         {

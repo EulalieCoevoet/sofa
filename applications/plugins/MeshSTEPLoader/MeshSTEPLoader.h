@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -64,7 +61,10 @@
 
 #include <TopTools_DataMapOfIntegerShape.hxx>
 #include <BRepTools.hxx>
+#include <Standard_Version.hxx>
+#if ( OCC_VERSION_MAJOR < 7 || OCC_VERSION_MAJOR == 7 && OCC_VERSION_MINOR < 4 ) // OCC_VERSION < 7.4
 #include <BRepMesh.hxx>
+#endif
 #include <Poly_Triangulation.hxx>
 #include <Poly_PolygonOnTriangulation.hxx>
 #include <Poly_Array1OfTriangle.hxx>
@@ -94,7 +94,7 @@ public:
 
     MeshSTEPLoader();
 
-    virtual bool load();
+    virtual bool load() override;
 
     template <class T>
     static bool canCreate(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
@@ -117,20 +117,20 @@ protected:
 
 public:
     // UV point coordinates
-    Data<helper::vector<sofa::defaulttype::Vector2> > _uv;
+    Data<helper::vector<sofa::defaulttype::Vector2> > _uv; ///< UV coordinates
 
     // Deflection parameter for tesselation
-    Data<double> _aDeflection;
+    Data<double> _aDeflection; ///< Deflection parameter for tesselation
 
     // Boolean for debug mode (display information)
-    Data<bool> _debug;
+    Data<bool> _debug; ///< if true, print information for debug mode
 
     // Boolean for keeping duplicated vertices (as vertices are read per face, there are many duplicated vertices)
     // If _keepDuplicate is true, keep the original list of vertices, else remove all duplicated vertices
-    Data<bool> _keepDuplicate;
+    Data<bool> _keepDuplicate; ///< if true, keep duplicated vertices
 
     // Shape number, number of vertices and of triangles of the shape
-    Data<helper::vector<helper::fixed_array <unsigned int,3> > > _indicesComponents;
+    Data<helper::vector<helper::fixed_array <unsigned int,3> > > _indicesComponents; ///< Shape # | number of nodes | number of triangles
 };
 
 }

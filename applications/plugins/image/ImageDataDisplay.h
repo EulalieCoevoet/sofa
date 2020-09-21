@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -67,10 +64,7 @@ public:
 
     Data< InImageTypes > inputImage;
     Data< OutImageTypes > outputImage;
-    Data<helper::SVector<helper::SVector<To> > > VoxelData;
-
-    virtual std::string getTemplateName() const    { return templateName(this);    }
-    static std::string templateName(const ImageDataDisplay<InImageTypes,OutImageTypes>* = NULL) { return InImageTypes::Name()+std::string(",")+OutImageTypes::Name(); }
+    Data<helper::SVector<helper::SVector<To> > > VoxelData; ///< Data associed to each non null input voxel
 
     ImageDataDisplay()    :   Inherited()
       , inputImage(initData(&inputImage,InImageTypes(),"inputImage",""))
@@ -81,9 +75,9 @@ public:
         outputImage.setReadOnly(true);
     }
 
-    virtual ~ImageDataDisplay() {}
+    ~ImageDataDisplay() override {}
 
-    virtual void init()
+    void init() override
     {
         addInput(&VoxelData);
         addInput(&inputImage);
@@ -91,16 +85,14 @@ public:
         setDirtyValue();
     }
 
-    virtual void reinit() { update(); }
+    void reinit() override { update(); }
 
 protected:
 
-    virtual void update()
+    void doUpdate() override
     {
         const helper::SVector<helper::SVector<To> >& dat = this->VoxelData.getValue();
         raImagei in(this->inputImage);
-
-        cleanDirty();
 
         waImageo out(this->outputImage);
         imCoordi dim = in->getDimensions();

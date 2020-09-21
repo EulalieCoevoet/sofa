@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Plugins                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -47,11 +44,7 @@ int PersistentContactBarycentricMapperMeshTopology<In,Out>::addContactPointFromI
     int retValue = 0;
 
     const sofa::core::topology::BaseMeshTopology::SeqTetrahedra& tetrahedra = this->fromTopology->getTetrahedra();
-#ifdef SOFA_NEW_HEXA
     const sofa::core::topology::BaseMeshTopology::SeqHexahedra& cubes = this->fromTopology->getHexahedra();
-#else
-    const sofa::core::topology::BaseMeshTopology::SeqCubes& cubes = this->fromTopology->getCubes();
-#endif
     const sofa::core::topology::BaseMeshTopology::SeqTriangles& triangles = this->fromTopology->getTriangles();
     const sofa::core::topology::BaseMeshTopology::SeqQuads& quads = this->fromTopology->getQuads();
 
@@ -174,11 +167,7 @@ int PersistentContactBarycentricMapperMeshTopology<In,Out>::addContactPointFromI
         {
             defaulttype::Mat3x3d m,mt;
             m[0] = in[cubes[c][1]]-in[cubes[c][0]];
-#ifdef SOFA_NEW_HEXA
             m[1] = in[cubes[c][3]]-in[cubes[c][0]];
-#else
-            m[1] = in[cubes[c][2]]-in[cubes[c][0]];
-#endif
             m[2] = in[cubes[c][4]]-in[cubes[c][0]];
             mt.transpose ( m );
             bases[c0+c].invert ( mt );
@@ -237,11 +226,7 @@ int PersistentContactBarycentricMapperSparseGridTopology<In,Out>::addContactPoin
 
     this->updateJ = true;
 
-#ifdef SOFA_NEW_HEXA
     const sofa::core::topology::BaseMeshTopology::SeqHexahedra& cubes = this->fromTopology->getHexahedra();
-#else
-    const sofa::core::topology::BaseMeshTopology::SeqCubes& cubes = this->fromTopology->getCubes();
-#endif
 
     sofa::helper::vector<defaulttype::Matrix3> bases;
     sofa::helper::vector<defaulttype::Vector3> centers;
@@ -253,11 +238,7 @@ int PersistentContactBarycentricMapperSparseGridTopology<In,Out>::addContactPoin
     {
         defaulttype::Mat3x3d m,mt;
         m[0] = in[cubes[c][1]]-in[cubes[c][0]];
-#ifdef SOFA_NEW_HEXA
         m[1] = in[cubes[c][3]]-in[cubes[c][0]];
-#else
-        m[1] = in[cubes[c][2]]-in[cubes[c][0]];
-#endif
         m[2] = in[cubes[c][4]]-in[cubes[c][0]];
         mt.transpose ( m );
         bases[c].invert ( mt );

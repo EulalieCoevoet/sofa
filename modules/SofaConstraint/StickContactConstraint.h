@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -32,7 +29,7 @@
 #include <SofaConstraint/BilateralInteractionConstraint.h>
 #include <sofa/helper/Factory.h>
 #include <SofaBaseCollision/BaseContactMapper.h>
-#include <SofaConstraint/FrictionContact.h>
+#include <SofaConstraint/ContactIdentifier.h>
 #include <sofa/core/behavior/MechanicalState.h>
 #include <sofa/core/BaseMapping.h>
 
@@ -46,7 +43,7 @@ namespace collision
 {
 
 template <class TCollisionModel1, class TCollisionModel2>
-class StickContactConstraint : public core::collision::Contact, public Identifier
+class StickContactConstraint : public core::collision::Contact, public ContactIdentifier
 {
 public:
     SOFA_CLASS(SOFA_TEMPLATE2(StickContactConstraint, TCollisionModel1, TCollisionModel2), core::collision::Contact);
@@ -76,29 +73,29 @@ protected:
     std::vector< std::pair< std::pair<int, int>, double > > mappedContacts;
     void activateMappers();
 
-    StickContactConstraint() : model1(NULL), model2(NULL), intersectionMethod(NULL), parent(NULL) {}
-
+    StickContactConstraint();
     StickContactConstraint(CollisionModel1* model1, CollisionModel2* model2, Intersection* intersectionMethod);
-    virtual ~StickContactConstraint();
+
+    ~StickContactConstraint() override;
 public:
-    Data<bool> f_keepAlive;
+    Data<bool> f_keepAlive; ///< set to true to keep this contact alive even after collisions are no longer detected
 
     /// Return true if this contact should be kept alive, even if objects are no longer in collision
-    virtual bool keepAlive() { return f_keepAlive.getValue(); }
+    bool keepAlive() override { return f_keepAlive.getValue(); }
 
     /// Control the keepAlive flag of the contact.
-    virtual void setKeepAlive(bool val) { f_keepAlive.setValue(val); }
+    void setKeepAlive(bool val) override { f_keepAlive.setValue(val); }
 
 
-    void cleanup();
+    void cleanup() override;
 
-    std::pair<core::CollisionModel*,core::CollisionModel*> getCollisionModels() { return std::make_pair(model1,model2); }
+    std::pair<core::CollisionModel*,core::CollisionModel*> getCollisionModels() override { return std::make_pair(model1,model2); }
 
-    void setDetectionOutputs(OutputVector* outputs);
+    void setDetectionOutputs(OutputVector* outputs) override;
 
-    void createResponse(core::objectmodel::BaseContext* group);
+    void createResponse(core::objectmodel::BaseContext* group) override;
 
-    void removeResponse();
+    void removeResponse() override;
 };
 
 

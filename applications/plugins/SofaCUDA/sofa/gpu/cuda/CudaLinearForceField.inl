@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -102,19 +99,19 @@ void LinearForceFieldInternalData< gpu::cuda::CudaRigidTypes<N, real> >::addForc
 
     Real cT = (Real) m->getContext()->getTime();
 
-	if (m->keyTimes.getValue().size() != 0 && cT >= *m->keyTimes.getValue().begin() && cT <= *m->keyTimes.getValue().rbegin())
+    if (m->d_keyTimes.getValue().size() != 0 && cT >= *m->d_keyTimes.getValue().begin() && cT <= *m->d_keyTimes.getValue().rbegin())
     {
-        m->nextT = *m->keyTimes.getValue().begin();
+        m->nextT = *m->d_keyTimes.getValue().begin();
         m->prevT = m->nextT;
 
         bool finished = false;
 
-        typename helper::vector< Real >::const_iterator it_t = m->keyTimes.getValue().begin();
-        typename VecDeriv::const_iterator it_f = m->keyForces.getValue().begin();
+        typename helper::vector< Real >::const_iterator it_t = m->d_keyTimes.getValue().begin();
+        typename VecDeriv::const_iterator it_f = m->d_keyForces.getValue().begin();
 
         // WARNING : we consider that the key-events are in chronological order
         // here we search between which keyTimes we are.
-        while( it_t != m->keyTimes.getValue().end() && !finished)
+        while( it_t != m->d_keyTimes.getValue().end() && !finished)
         {
             if ( *it_t <= cT)
             {
@@ -135,7 +132,7 @@ void LinearForceFieldInternalData< gpu::cuda::CudaRigidTypes<N, real> >::addForc
         {
             Deriv slope = (m->nextF - m->prevF)*(1.0/(m->nextT - m->prevT));
             Deriv ff = slope*(cT - m->prevT) + m->prevF;
-            ff = ff*m->force.getValue();
+            ff = ff*m->d_force.getValue();
 
             Kernels::addForce(
                 data.size,

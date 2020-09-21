@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -67,27 +64,23 @@ public:
     Data< TransformType > transform;
 
     typedef defaulttype::RigidCoord<3,Real> RigidCoord;
-    Data< RigidCoord > d_position;
+    Data< RigidCoord > d_position; ///< position
 
     /** @name  Outputs */
     //@{
-    Data< Real > d_mass;
-    Data< Coord > d_inertia;
+    Data< Real > d_mass; ///< mass
+    Data< Coord > d_inertia; ///< axis-aligned inertia tensor
 
     typedef defaulttype::RigidMass<3,Real> RigidMass;
     typedef typename RigidMass::Mat3x3 Mat3x3;
-    Data< RigidMass > d_rigidMass;
+    Data< RigidMass > d_rigidMass; ///< rigidMass
     //@}
 
     /** @name  Inputs */
     //@{
-    Data< Real > d_density;
-    Data< bool > d_mult;
+    Data< Real > d_density; ///< density (in kg/m^3)
+    Data< bool > d_mult; ///< multiply density by image intensity?
     //@}
-
-
-    virtual std::string getTemplateName() const    { return templateName(this);    }
-    static std::string templateName(const ImageToRigidMassEngine<ImageTypes>* = NULL) { return ImageTypes::Name();    }
 
     ImageToRigidMassEngine()    :   Inherited()
       , image(initData(&image,ImageTypes(),"image",""))
@@ -105,7 +98,7 @@ public:
         f_listening.setValue(true);
     }
 
-    virtual void init()
+    void init() override
     {
         addInput(&image);
         addInput(&transform);
@@ -117,13 +110,13 @@ public:
         setDirtyValue();
     }
 
-    virtual void reinit() { update(); }
+    void reinit() override { update(); }
 
 protected:
 
     unsigned int time;
 
-    virtual void update()
+    void doUpdate() override
     {
         raTransform inT(this->transform);
         raImage in(this->image);
@@ -133,8 +126,6 @@ protected:
         Real d = d_density.getValue();
         bool mult = d_mult.getValue();
 
-
-        cleanDirty();
 
         helper::WriteOnlyAccessor<Data< RigidCoord > > pos(this->d_position);
         helper::WriteOnlyAccessor<Data< RigidMass > > rigidMass(this->d_rigidMass);
@@ -180,7 +171,7 @@ protected:
 
     }
 
-    void handleEvent(sofa::core::objectmodel::Event *event)
+    void handleEvent(sofa::core::objectmodel::Event *event) override
     {
         if (simulation::AnimateEndEvent::checkEventType(event))
         {

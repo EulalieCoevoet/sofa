@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -89,12 +86,13 @@ public:
 protected:
     ArticulatedSystemMapping();
 
-    virtual ~ArticulatedSystemMapping()
+    ~ArticulatedSystemMapping() override
     {
     }
 public:
-    void init();
-    void reset();
+    void init() override;
+    void bwdInit() override;
+    void reset() override;
 
     using Inherit::apply;
     using Inherit::applyJ;
@@ -105,12 +103,12 @@ public:
     void apply(
         const core::MechanicalParams* /* mparams */, const helper::vector<OutDataVecCoord*>& dataVecOutPos,
         const helper::vector<const InDataVecCoord*>& dataVecInPos ,
-        const helper::vector<const InRootDataVecCoord*>& dataVecInRootPos)
+        const helper::vector<const InRootDataVecCoord*>& dataVecInRootPos) override
     {
         if(dataVecOutPos.empty() || dataVecInPos.empty())
             return;
 
-        const InRootVecCoord* inroot = NULL;
+        const InRootVecCoord* inroot = nullptr;
 
         //We need only one input In model and input Root model (if present)
         OutVecCoord& out = *dataVecOutPos[0]->beginEdit();
@@ -129,12 +127,12 @@ public:
     void applyJ(
         const core::MechanicalParams* /* mparams */, const helper::vector< OutDataVecDeriv*>& dataVecOutVel,
         const helper::vector<const InDataVecDeriv*>& dataVecInVel,
-        const helper::vector<const InRootDataVecDeriv*>& dataVecInRootVel)
+        const helper::vector<const InRootDataVecDeriv*>& dataVecInRootVel) override
     {
         if(dataVecOutVel.empty() || dataVecInVel.empty())
             return;
 
-        const InRootVecDeriv* inroot = NULL;
+        const InRootVecDeriv* inroot = nullptr;
 
         //We need only one input In model and input Root model (if present)
         OutVecDeriv& out = *dataVecOutVel[0]->beginEdit();
@@ -153,12 +151,12 @@ public:
     void applyJT(
         const core::MechanicalParams* /* mparams */, const helper::vector< InDataVecDeriv*>& dataVecOutForce,
         const helper::vector< InRootDataVecDeriv*>& dataVecOutRootForce,
-        const helper::vector<const OutDataVecDeriv*>& dataVecInForce)
+        const helper::vector<const OutDataVecDeriv*>& dataVecInForce) override
     {
         if(dataVecOutForce.empty() || dataVecInForce.empty())
             return;
 
-        InRootVecDeriv* outroot = NULL;
+        InRootVecDeriv* outroot = nullptr;
 
         //We need only one input In model and input Root model (if present)
         InVecDeriv& out = *dataVecOutForce[0]->beginEdit();
@@ -170,13 +168,13 @@ public:
         applyJT(out,in, outroot);
 
         dataVecOutForce[0]->endEdit();
-        if (outroot != NULL)
+        if (outroot != nullptr)
             dataVecOutRootForce[0]->endEdit();
     }
 
-    virtual void applyDJT(const core::MechanicalParams* /*mparams*/, core::MultiVecDerivId /*inForce*/, core::ConstMultiVecDerivId /*outForce*/)
+    void applyDJT(const core::MechanicalParams* /*mparams*/, core::MultiVecDerivId /*inForce*/, core::ConstMultiVecDerivId /*outForce*/) override
     {
-//                     serr<<"Warning ! ArticulatedSystemMapping::applyDJT(const MechanicalParams* mparams, MultiVecDerivId inForce, ConstMultiVecDerivId outForce)  not implemented !"<< sendl;
+
     }
 
 
@@ -186,12 +184,12 @@ public:
     void applyJT(
         const core::ConstraintParams* /* cparams */, const helper::vector< InDataMatrixDeriv*>& dataMatOutConst ,
         const helper::vector< InRootDataMatrixDeriv*>&  dataMatOutRootConst ,
-        const helper::vector<const OutDataMatrixDeriv*>& dataMatInConst)
+        const helper::vector<const OutDataMatrixDeriv*>& dataMatInConst) override
     {
         if(dataMatOutConst.empty() || dataMatInConst.empty())
             return;
 
-        InRootMatrixDeriv* outroot = NULL;
+        InRootMatrixDeriv* outroot = nullptr;
 
         //We need only one input In model and input Root model (if present)
         InMatrixDeriv& out = *dataMatOutConst[0]->beginEdit();
@@ -203,13 +201,13 @@ public:
         applyJT(out,in, outroot);
 
         dataMatOutConst[0]->endEdit();
-        if (outroot != NULL)
+        if (outroot != nullptr)
             dataMatOutRootConst[0]->endEdit();
     }
 
-    const sofa::defaulttype::BaseMatrix* getJ() { return NULL; }
+    const sofa::defaulttype::BaseMatrix* getJ() override { return nullptr; }
 
-    void draw(const core::visual::VisualParams* vparams);
+    void draw(const core::visual::VisualParams* vparams) override;
 
     /**
     *	Stores al the articulation centers
@@ -230,25 +228,12 @@ private:
     OutVecDeriv dxRigidBuf;
 };
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_MAPPING_ARTICULATEDSYSTEMMAPPING_CPP)
+#if  !defined(SOFA_COMPONENT_MAPPING_ARTICULATEDSYSTEMMAPPING_CPP)
 
-#ifndef SOFA_FLOAT
-extern template class SOFA_GENERAL_RIGID_API ArticulatedSystemMapping< sofa::defaulttype::Vec1dTypes, sofa::defaulttype::Rigid3dTypes, sofa::defaulttype::Rigid3dTypes >;
-#endif
-#ifndef SOFA_DOUBLE
-extern template class SOFA_GENERAL_RIGID_API ArticulatedSystemMapping< sofa::defaulttype::Vec1fTypes, sofa::defaulttype::Rigid3fTypes, sofa::defaulttype::Rigid3fTypes >;
-#endif
+extern template class SOFA_GENERAL_RIGID_API ArticulatedSystemMapping< sofa::defaulttype::Vec1Types, sofa::defaulttype::Rigid3Types, sofa::defaulttype::Rigid3Types >;
 
-#ifndef SOFA_FLOAT
-#ifndef SOFA_DOUBLE
-extern template class SOFA_GENERAL_RIGID_API ArticulatedSystemMapping< sofa::defaulttype::Vec1fTypes, sofa::defaulttype::Rigid3fTypes, sofa::defaulttype::Rigid3dTypes >;
-extern template class SOFA_GENERAL_RIGID_API ArticulatedSystemMapping< sofa::defaulttype::Vec1fTypes, sofa::defaulttype::Rigid3dTypes, sofa::defaulttype::Rigid3dTypes >;
-extern template class SOFA_GENERAL_RIGID_API ArticulatedSystemMapping< sofa::defaulttype::Vec1dTypes, sofa::defaulttype::Rigid3fTypes, sofa::defaulttype::Rigid3dTypes >;
-extern template class SOFA_GENERAL_RIGID_API ArticulatedSystemMapping< sofa::defaulttype::Vec1fTypes, sofa::defaulttype::Rigid3dTypes, sofa::defaulttype::Rigid3fTypes >;
-extern template class SOFA_GENERAL_RIGID_API ArticulatedSystemMapping< sofa::defaulttype::Vec1dTypes, sofa::defaulttype::Rigid3fTypes, sofa::defaulttype::Rigid3fTypes >;
-extern template class SOFA_GENERAL_RIGID_API ArticulatedSystemMapping< sofa::defaulttype::Vec1dTypes, sofa::defaulttype::Rigid3dTypes, sofa::defaulttype::Rigid3fTypes >;
-#endif
-#endif
+
+
 
 #endif
 

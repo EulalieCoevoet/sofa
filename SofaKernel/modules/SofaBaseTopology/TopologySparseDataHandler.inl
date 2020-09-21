@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -41,48 +38,10 @@ namespace topology
 template <typename TopologyElementType, typename VecT>
 void TopologySparseDataHandler <TopologyElementType, VecT>::swap( unsigned int i1, unsigned int i2 )
 {
-    sofa::component::topology::TopologySparseDataImpl<TopologyElementType, VecT>* _topologyData = dynamic_cast<sofa::component::topology::TopologySparseDataImpl<TopologyElementType, VecT>* >(m_topologyData);
-
-    if (!_topologyData->getSparseDataStatus())
-        return;
-
+    // get access to data and its map
+    sofa::component::topology::TopologySparseDataImpl<TopologyElementType, VecT>* _topologyData = dynamic_cast<sofa::component::topology::TopologySparseDataImpl<TopologyElementType, VecT>* >(m_topologyData);    
     container_type& data = *(_topologyData->beginEdit());
     sofa::helper::vector <unsigned int>& keys = _topologyData->getMap2Elements();
-
-    /*    unsigned int pos1, pos2;
-        unsigned int cpt = 0;
-
-        for (unsigned int i=0; i<keys.size(); ++i)
-        {
-            if (i1 == keys[i])
-            {
-                pos1 = i;
-                cpt++;
-            }
-
-            if (i2 == keys[i])
-            {
-                pos2 = i;
-                cpt++;
-            }
-
-            if (cpt == 2)
-                break;
-        }
-
-        if (cpt < 2)
-            return;
-
-        value_type& t = data[pos2];
-        data[pos2] = data[pos1];
-        data[pos1] = t;
-
-
-        //apply same change to map:
-        unsigned int tmp = keys[pos2];
-        keys[pos2] = keys[pos1];
-        keys[pos1] = tmp;
-        */
 
     value_type tmp = data[i1];
     data[i1] = data[i2];
@@ -102,14 +61,15 @@ void TopologySparseDataHandler <TopologyElementType, VecT>::add(unsigned int nbE
         const sofa::helper::vector<sofa::helper::vector<unsigned int> > &ancestors,
         const sofa::helper::vector<sofa::helper::vector<double> > &coefs)
 {
+    // get access to data and its map
     sofa::component::topology::TopologySparseDataImpl<TopologyElementType, VecT>* _topologyData = dynamic_cast<sofa::component::topology::TopologySparseDataImpl<TopologyElementType, VecT>* >(m_topologyData);
     if (!_topologyData->getSparseDataStatus())
         return;
 
-    // Using default values
-    sofa::helper::vector <unsigned int>& keys = _topologyData->getMap2Elements();
     container_type& data = *(_topologyData->beginEdit());
-    unsigned int size = data.size();
+    sofa::helper::vector <unsigned int>& keys = _topologyData->getMap2Elements();
+
+    size_type size = data.size();
     data.resize(size+nbElements);
 
     for (unsigned int i = 0; i < nbElements; ++i)
@@ -149,7 +109,7 @@ void TopologySparseDataHandler <TopologyElementType, VecT>::move( const sofa::he
         const sofa::helper::vector< sofa::helper::vector< unsigned int > >& ,
         const sofa::helper::vector< sofa::helper::vector< double > >& )
 {
-    std::cerr << "WARNING: move event on topology SparseData is not yet handled" << std::endl;
+    msg_warning("TopologySparseDataHandler") << "Move event on topology SparseData is not yet handled." ;
 }
 
 
@@ -157,33 +117,40 @@ template <typename TopologyElementType, typename VecT>
 void TopologySparseDataHandler <TopologyElementType, VecT>::remove( const sofa::helper::vector<unsigned int> &index )
 {
     sofa::component::topology::TopologySparseDataImpl<TopologyElementType, VecT>* _topologyData = dynamic_cast<sofa::component::topology::TopologySparseDataImpl<TopologyElementType, VecT>* >(m_topologyData);
-    if (!_topologyData->getSparseDataStatus())
-        return;
 
+    // get the sparseData map
     sofa::helper::vector <unsigned int>& keys = _topologyData->getMap2Elements();
     container_type& data = *(_topologyData->beginEdit());
-    unsigned int last = data.size() -1;
+    size_type last = data.size() -1;
 
-    for (unsigned int i = 0; i < index.size(); ++i)
+    // check for each element remove if it concern this sparseData
+    unsigned int cptDone = 0;
+    for (size_type i = 0; i < index.size(); ++i)
     {
-        this->applyDestroyFunction( index[i], data[index[i]] );
-        this->swap( index[i], last );
+        unsigned int elemId = index[i];
+        unsigned int id = _topologyData->indexOfElement(elemId);
+
+        if (id == sofa::core::topology::Topology::InvalidID)
+            continue;
+
+        cptDone++;
+        this->applyDestroyFunction( id, data[id] );
+        this->swap( id, last );
         --last;
     }
 
-    data.resize( data.size() - index.size() );
-    keys.resize( data.size() - index.size() );
+    data.resize( data.size() - cptDone );
+    keys.resize( keys.size() - cptDone );
     this->lastElementIndex = last;
 
     _topologyData->endEdit();
-    return;
 }
 
 
 template <typename TopologyElementType, typename VecT>
 void TopologySparseDataHandler <TopologyElementType, VecT>::renumber( const sofa::helper::vector<unsigned int>& )
 {
-    std::cerr << "WARNING: renumber event on topology SparseData is not yet handled" << std::endl;
+    msg_warning("TopologySparseDataHandler") << "renumber event on topology SparseData is not yet handled" ;
 }
 
 
@@ -191,7 +158,7 @@ template <typename TopologyElementType, typename VecT>
 void TopologySparseDataHandler <TopologyElementType, VecT>::addOnMovedPosition(const sofa::helper::vector<unsigned int> &,
         const sofa::helper::vector<TopologyElementType> &)
 {
-    std::cerr << "WARNING: addOnMovedPosition event on topology SparseData is not yet handled" << std::endl;
+    msg_warning("TopologySparseDataHandler") << "addOnMovedPosition event on topology SparseData is not yet handled" ;
 }
 
 
@@ -199,9 +166,8 @@ void TopologySparseDataHandler <TopologyElementType, VecT>::addOnMovedPosition(c
 template <typename TopologyElementType, typename VecT>
 void TopologySparseDataHandler <TopologyElementType, VecT>::removeOnMovedPosition(const sofa::helper::vector<unsigned int> &)
 {
-    std::cerr << "WARNING: removeOnMovedPosition event on topology SparseData is not yet handled" << std::endl;
+    msg_warning("TopologySparseDataHandler") << "removeOnMovedPosition event on topology SparseData is not yet handled" ;
 }
-
 
 
 

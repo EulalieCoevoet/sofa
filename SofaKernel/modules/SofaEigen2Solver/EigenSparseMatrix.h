@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -25,6 +22,7 @@
 #ifndef SOFA_COMPONENT_LINEARSOLVER_EigenSparseMatrix_H
 #define SOFA_COMPONENT_LINEARSOLVER_EigenSparseMatrix_H
 
+#include <SofaEigen2Solver/config.h>
 #include "EigenBaseSparseMatrix.h"
 #include <sofa/defaulttype/Mat.h>
 #include <SofaBaseLinearSolver/CompressedRowSparseMatrix.h>
@@ -32,6 +30,7 @@
 #include <sofa/helper/vector.h>
 #include <Eigen/Core>
 #include <Eigen/Sparse>
+#include <sofa/helper/OwnershipSPtr.h>
 
 namespace sofa
 {
@@ -143,31 +142,6 @@ public:
     {
         this->resize(nbBlockRows * Nout, nbBlockCols * Nin);
     }
-
-
-//    /// Finalize the matrix after a series of insertions. Add the values from the temporary list to the compressed matrix, and clears the list.
-//    virtual void compress()
-//    {
-//        Inherit::compress();
-
-//        if( incomingBlocks.empty() ) return;
-//        compress_incomingBlocks();
-//        //        cerr<<"compress, before incoming blocks " << this->eigenMatrix << endl;
-//        //        cerr<<"compress, incoming blocks " << this->compressedIncoming << endl;
-//        this->compressedMatrix += this->compressedIncoming;
-//        //        cerr<<"compress, final value " << this->eigenMatrix << endl;
-//        this->compressedMatrix.finalize();
-//    }
-
-//    /** Return write access to an incoming block.
-//    Note that this does not give access to the compressed matrix.
-//    The block belongs to a temporary list which will be added to the compressed matrix using method compress().
-//    */
-//    Block& wBlock( int i, int j )
-//    {
-//        return incomingBlocks[i][j];
-//    }
-
 
     /// Schedule the addition of the block at the given place. Scheduled additions must be finalized using function compress().
     void addBlock( unsigned row, unsigned col, const Block& b )
@@ -282,26 +256,17 @@ public:
     void copyFrom( const CompressedRowSparseMatrix< defaulttype::Mat<Nout,Nin, AnyReal> >& crs )
     {
         this->resize( crs.rowSize(), crs.colSize() );
-//        cerr<<"copyFrom, size " << crs.rowSize() << ", " << crs.colSize()<< ", block rows: " << crs.rowIndex.size() << endl;
-//        cerr<<"copyFrom, crs = " << crs << endl;
 
 //        int rowStarted = 0;
         for (unsigned int xi = 0; xi < crs.rowIndex.size(); ++xi)  // for each non-null block row
         {
             int blRow = crs.rowIndex[xi];      // block row
 
-//            while( rowStarted<blRow*Nout )   // make sure all the rows are started, even the empty ones
-//            {
-//                this->compressedMatrix.startVec(rowStarted);
-//                rowStarted++;
-//            }
-
             typename CompressedRowSparseMatrix<Block>::Range rowRange(crs.rowBegin[xi], crs.rowBegin[xi+1]);
 
             for( unsigned r=0; r<Nout; r++ )   // process one scalar row after another
             {
                 if(r+ blRow*Nout >= (unsigned)this->rowSize() ) break;
-//                cerr<<"copyFrom,  startVec " << rowStarted << endl;
 //                this->compressedMatrix.startVec(rowStarted++);
 
 
@@ -313,7 +278,6 @@ public:
                         {
                         this->add(r + blRow*Nout, c + blCol*Nin, b[r][c]);
 //                        this->compressedMatrix.insertBack(r + blRow*Nout, c + blCol*Nin) = b[r][c];
-//                        cerr<<"copyFrom,  insert at " << r + blRow*Nout << ", " << c + blCol*Nin << endl;
                         }
 
                 }
@@ -322,10 +286,6 @@ public:
         this->compress();
 
     }
-
-#ifdef _OPENMP
-#define EIGENSPARSEMATRIX_PARALLEL
-#endif
 
 protected:
 
@@ -340,7 +300,7 @@ protected:
 		// use optimized product if possible
         if(canCast(data)) {
 
-#ifdef EIGENSPARSEMATRIX_PARALLEL
+#if (SOFAEIGEN2SOLVER_HAVE_OPENMP == 1)
             if( alias(result, data) )
                 map(result) = linearsolver::mul_EigenSparseDenseMatrix_MT( this->compressedMatrix, map(data).template cast<Real>() );
             else
@@ -357,24 +317,23 @@ protected:
 			
 			return;
 		}
-
 		// convert the data to Eigen type
         VectorEigenOut aux1(this->colSize(),1), aux2(this->rowSize(),1);
-        for(unsigned i = 0, n = data.size(); i < n; ++i) {
+        for(size_t i = 0, n = data.size(); i < n; ++i) {
 			for(unsigned j = 0; j < Nin; ++j) {
                 aux1[Nin * i + j] = data[i][j];
 			}
 		}
 		
         // compute the product
-#ifdef EIGENSPARSEMATRIX_PARALLEL
+#if (SOFAEIGEN2SOLVER_HAVE_OPENMP == 1)
         aux2.noalias() = linearsolver::mul_EigenSparseDenseMatrix_MT( this->compressedMatrix, aux1 );
 #else
         aux2.noalias() = this->compressedMatrix * aux1;
 #endif
-
+        
         // convert the result back to the Sofa type
-        for(unsigned i = 0, n = result.size(); i < n; ++i) {
+        for(size_t i = 0, n = result.size(); i < n; ++i) {
 			for(unsigned j = 0; j < Nout; ++j) {
                 result[i][j] = aux2[Nout * i + j];
 			}
@@ -390,7 +349,7 @@ protected:
 		// use optimized product if possible
 		if( canCast(data) ) {
 
-#ifdef EIGENSPARSEMATRIX_PARALLEL
+#if (SOFAEIGEN2SOLVER_HAVE_OPENMP == 1)
             if( alias(result, data) )
                 map(result) += linearsolver::mul_EigenSparseDenseMatrix_MT( this->compressedMatrix, this->map(data).template cast<Real>() * fact ).template cast<OutReal>();
             else
@@ -420,7 +379,7 @@ protected:
 		}
         
         // compute the product
-#ifdef EIGENSPARSEMATRIX_PARALLEL
+#if (SOFAEIGEN2SOLVER_HAVE_OPENMP == 1)
         aux2.noalias() = linearsolver::mul_EigenSparseDenseMatrix_MT( this->compressedMatrix, aux1 );
 #else
         aux2.noalias() = this->compressedMatrix * aux1;
@@ -442,7 +401,7 @@ protected:
 		// use optimized product if possible
 		if(canCast(result)) {
 
-#ifdef EIGENSPARSEMATRIX_PARALLEL
+#if (SOFAEIGEN2SOLVER_HAVE_OPENMP == 1)
             if( alias(result, data) )
                 map(result) += linearsolver::mul_EigenSparseDenseMatrix_MT( this->compressedMatrix.transpose(), this->map(data).template cast<Real>() * fact ).template cast<InReal>();
             else {
@@ -465,21 +424,21 @@ protected:
 		// convert the data to Eigen type
         VectorEigenOut aux1(this->rowSize()), aux2(this->colSize());
 
-        for(unsigned i = 0, n = data.size(); i < n; ++i) {
+        for(size_t i = 0, n = data.size(); i < n; ++i) {
 			for(unsigned j = 0; j < Nout; ++j) {
 				aux1[Nout * i + j] = data[i][j];
 			}
 		}
 		
 		// compute the product
-#ifdef EIGENSPARSEMATRIX_PARALLEL
+#if (SOFAEIGEN2SOLVER_HAVE_OPENMP == 1)
         aux2.noalias() = linearsolver::mul_EigenSparseDenseMatrix_MT( this->compressedMatrix.transpose(), aux1 );
 #else
         aux2.noalias() = this->compressedMatrix.transpose() * aux1;
 #endif
 
 		// convert the result back to the Sofa type
-        for(unsigned i = 0, n = result.size(); i < n; ++i) {
+        for(size_t i = 0, n = result.size(); i < n; ++i) {
 			for(unsigned j = 0; j < Nin; ++j) {
                 result[i][j] += aux2[Nin * i + j] * fact;
 			}
@@ -585,13 +544,8 @@ private:
 
 };
 
-#ifndef SOFA_FLOAT
-template<> inline const char* EigenSparseMatrix<defaulttype::Vec3dTypes, defaulttype::Vec1dTypes >::Name() { return "EigenSparseMatrix3d1d"; }
-#endif
+template<> inline const char* EigenSparseMatrix<defaulttype::Vec3Types, defaulttype::Vec1Types >::Name() { return "EigenSparseMatrix3d1d"; }
 
-#ifndef SOFA_DOUBLE
-template<> inline const char* EigenSparseMatrix<defaulttype::Vec3fTypes, defaulttype::Vec1fTypes >::Name() { return "EigenSparseMatrix3f1f"; }
-#endif
 
 // max: much cleaner like this :)
 
@@ -599,6 +553,70 @@ template<> inline const char* EigenSparseMatrix<defaulttype::Vec3fTypes, default
 } // namespace linearsolver
 
 } // namespace component
+
+
+
+    /// Converts a BaseMatrix to a eigen sparse matrix encapsulted in a OwnershipSPtr.
+    /// It the conversion needs to create a temporary matrix, it will be automatically deleted
+    /// by the OwnershipSPtr (with ownership).
+    /// It the conversion did not create a temporary data, and points to an existing matrix,
+    /// the OwnershipSPtr does not take the ownership and won't delete anything.
+    /// @TODO move this somewhere else?
+    /// @author Matthieu Nesme
+    template<class mat>
+    helper::OwnershipSPtr<mat> convertSPtr( const defaulttype::BaseMatrix* m) {
+        assert( m );
+
+        {
+        typedef component::linearsolver::EigenBaseSparseMatrix<SReal> matrixr;
+        const matrixr* smr = dynamic_cast<const matrixr*> (m);
+        // no need to create temporary data, so the SPtr does not take this ownership
+        if ( smr ) return helper::OwnershipSPtr<mat>(&smr->compressedMatrix, false);
+        }
+
+        msg_warning("EigenSparseMatrix")<<"convertSPtr: slow matrix conversion (scalar type conversion)";
+
+        {
+        typedef component::linearsolver::EigenBaseSparseMatrix<double> matrixd;
+        const matrixd* smd = dynamic_cast<const matrixd*> (m);
+        // the cast is creating a temporary matrix, the SPtr takes its ownership, so its deletion will be transparent
+        if ( smd ) return helper::OwnershipSPtr<mat>( new mat(smd->compressedMatrix.cast<SReal>()), true );
+        }
+
+        {
+        typedef component::linearsolver::EigenBaseSparseMatrix<float> matrixf;
+        const matrixf* smf = dynamic_cast<const matrixf*>(m);
+        // the cast is creating a temporary matrix, the SPtr takes its ownership, so its deletion will be transparent
+        if( smf ) return helper::OwnershipSPtr<mat>( new mat(smf->compressedMatrix.cast<SReal>()), true );
+        }
+
+        msg_warning("EigenSparseMatrix")<<"convertSPtr: very slow matrix conversion (from BaseMatrix)";
+
+        mat* res = new mat(m->rowSize(), m->colSize());
+
+        res->reserve(res->rows() * res->cols());
+        for(unsigned i = 0, n = res->rows(); i < n; ++i) {
+            res->startVec( i );
+            for(unsigned j = 0, k = res->cols(); j < k; ++j) {
+                SReal e = m->element(i, j);
+                if( e ) res->insertBack(i, j) = e;
+            }
+        }
+
+        // a temporary matrix is created, the SPtr takes its ownership, so its deletion will be transparent
+        return helper::OwnershipSPtr<mat>(res, true);
+    }
+
+
+namespace defaulttype {
+
+template<class TIn, class TOut>
+struct DataTypeInfo< component::linearsolver::EigenSparseMatrix<TIn, TOut> > 
+    : DataTypeInfo< typename component::linearsolver::EigenSparseMatrix<TIn, TOut>::Inherit > {
+    
+};
+
+}
 
 } // namespace sofa
 

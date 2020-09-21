@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -49,15 +46,8 @@ using sofa::defaulttype::Mat;
 using sofa::core::behavior::ForceField;
 using sofa::core::MechanicalParams;
 
-#ifndef SOFA_DOUBLE
-using sofa::defaulttype::Vec3fTypes;
-using sofa::defaulttype::Rigid3fTypes;
-#endif
-
-#ifndef SOFA_FLOAT
-using sofa::defaulttype::Vec3dTypes;
-using sofa::defaulttype::Rigid3dTypes;
-#endif
+using sofa::defaulttype::Vec3Types;
+using sofa::defaulttype::Rigid3Types;
 
 template<typename DataTypes>
 struct TorsionForceFieldTraits
@@ -106,16 +96,12 @@ public:
 	TorsionForceField();
 	virtual ~TorsionForceField();
 
-	virtual void bwdInit();
-	virtual void addForce(const MechanicalParams *, DataVecDeriv &f, const DataVecCoord &x, const DataVecDeriv &v);
-	virtual void addDForce(const MechanicalParams *mparams, DataVecDeriv &df, const DataVecDeriv &dx);
-	virtual void addKToMatrix(defaulttype::BaseMatrix *matrix, double kFact, unsigned int &offset);
+	void bwdInit() override;
+	void addForce(const MechanicalParams *, DataVecDeriv &f, const DataVecCoord &x, const DataVecDeriv &v) override;
+	void addDForce(const MechanicalParams *mparams, DataVecDeriv &df, const DataVecDeriv &dx) override;
+	void addKToMatrix(defaulttype::BaseMatrix *matrix, double kFact, unsigned int &offset) override;
 
-    virtual SReal getPotentialEnergy(const core::MechanicalParams* /*mparams*/, const DataVecCoord&  /* x */) const
-    {
-        serr << "Get potentialEnergy not implemented" << sendl;
-        return 0.0;
-    }
+    SReal getPotentialEnergy(const core::MechanicalParams* /*mparams*/, const DataVecCoord&  /* x */) const override;
 
 public :
 	Data<VecId> m_indices;		///< indices of the selected nodes.
@@ -127,31 +113,17 @@ protected :
 	Pos m_u;					///< normalized axis
 };
 
-#ifndef SOFA_DOUBLE
 template<>
-void TorsionForceField<Rigid3fTypes>::addForce(const core::MechanicalParams *, DataVecDeriv &f, const DataVecCoord &x, const DataVecDeriv &v);
+void TorsionForceField<Rigid3Types>::addForce(const core::MechanicalParams *, DataVecDeriv &f, const DataVecCoord &x, const DataVecDeriv &v);
 
 template<>
-void TorsionForceField<Rigid3fTypes>::addDForce(const core::MechanicalParams *mparams, DataVecDeriv &df, const DataVecDeriv &dx);
-#endif
+void TorsionForceField<Rigid3Types>::addDForce(const core::MechanicalParams *mparams, DataVecDeriv &df, const DataVecDeriv &dx);
 
-#ifndef SOFA_FLOAT
-template<>
-void TorsionForceField<Rigid3dTypes>::addForce(const core::MechanicalParams *, DataVecDeriv &f, const DataVecCoord &x, const DataVecDeriv &v);
 
-template<>
-void TorsionForceField<Rigid3dTypes>::addDForce(const core::MechanicalParams *mparams, DataVecDeriv &df, const DataVecDeriv &dx);
-#endif
+#if  !defined(SOFA_COMPONENT_FORCEFIELD_TORSIONFORCEFIELD_CPP)
+extern template class SOFA_BOUNDARY_CONDITION_API TorsionForceField<Vec3Types>;
+extern template class SOFA_BOUNDARY_CONDITION_API TorsionForceField<Rigid3Types>;
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_FORCEFIELD_TORSIONFORCEFIELD_CPP)
-#ifndef SOFA_FLOAT
-extern template class SOFA_BOUNDARY_CONDITION_API TorsionForceField<Vec3dTypes>;
-extern template class SOFA_BOUNDARY_CONDITION_API TorsionForceField<Rigid3dTypes>;
-#endif
-#ifndef SOFA_DOUBLE
-extern template class SOFA_BOUNDARY_CONDITION_API TorsionForceField<Vec3fTypes>;
-extern template class SOFA_BOUNDARY_CONDITION_API TorsionForceField<Rigid3fTypes>;
-#endif
 #endif
 
 } // namespace forcefield

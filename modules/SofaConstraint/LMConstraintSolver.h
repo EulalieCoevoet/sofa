@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -58,9 +55,9 @@ protected:
     typedef linearsolver::SparseMatrixEigen    SparseMatrixEigen;
     typedef linearsolver::SparseVectorEigen    SparseVectorEigen;
 
-    typedef helper::set< sofa::core::behavior::BaseMechanicalState* > SetDof;
+    typedef std::set< sofa::core::behavior::BaseMechanicalState* > SetDof;
     typedef std::map< const sofa::core::behavior::BaseMechanicalState *, SparseMatrixEigen > DofToMatrix;
-    typedef std::map< const sofa::core::behavior::BaseMechanicalState *, helper::set<unsigned int> > DofToMask;
+    typedef std::map< const sofa::core::behavior::BaseMechanicalState *, std::set<unsigned int> > DofToMask;
     typedef std::map< const sofa::core::behavior::BaseMechanicalState *, core::behavior::BaseConstraintCorrection* > DofToConstraintCorrection;
 
 public:
@@ -68,28 +65,28 @@ public:
 protected:
     LMConstraintSolver();
 public:
-    virtual void init();
-    virtual void reinit() {graphKineticEnergy.setDisplayed(traceKineticEnergy.getValue());};
+    void init() override;
+    void reinit() override {graphKineticEnergy.setDisplayed(traceKineticEnergy.getValue());};
 
-    virtual void removeConstraintCorrection(core::behavior::BaseConstraintCorrection *s);
+    void removeConstraintCorrection(core::behavior::BaseConstraintCorrection *s) override;
 
-    virtual bool prepareStates(const core::ConstraintParams *, MultiVecId res1, MultiVecId res2=MultiVecId::null());
-    virtual bool buildSystem(const core::ConstraintParams *, MultiVecId res1, MultiVecId res2=MultiVecId::null());
-    virtual bool solveSystem(const core::ConstraintParams *, MultiVecId res1, MultiVecId res2=MultiVecId::null());
-    virtual bool applyCorrection(const core::ConstraintParams *, MultiVecId res1, MultiVecId res2=MultiVecId::null());
+    bool prepareStates(const core::ConstraintParams *, MultiVecId res1, MultiVecId res2=MultiVecId::null()) override;
+    bool buildSystem(const core::ConstraintParams *, MultiVecId res1, MultiVecId res2=MultiVecId::null()) override;
+    bool solveSystem(const core::ConstraintParams *, MultiVecId res1, MultiVecId res2=MultiVecId::null()) override;
+    bool applyCorrection(const core::ConstraintParams *, MultiVecId res1, MultiVecId res2=MultiVecId::null()) override;
 
-    virtual void handleEvent( core::objectmodel::Event *e);
+    void handleEvent( core::objectmodel::Event *e) override;
 
 
 
-    Data<bool> constraintAcc;
-    Data<bool> constraintVel;
-    Data<bool> constraintPos;
-    Data<unsigned int> numIterations;
-    Data<double> maxError;
-    mutable Data<std::map < std::string, sofa::helper::vector<double> > > graphGSError;
-    Data< bool > traceKineticEnergy;
-    mutable Data<std::map < std::string, sofa::helper::vector<double> > > graphKineticEnergy;
+    Data<bool> constraintAcc; ///< Constraint the acceleration
+    Data<bool> constraintVel; ///< Constraint the velocity
+    Data<bool> constraintPos; ///< Constraint the position
+    Data<unsigned int> numIterations; ///< Number of iterations for Gauss-Seidel when solving the Constraints
+    Data<double> maxError; ///< threshold for the residue of the Gauss-Seidel algorithm
+    mutable Data<std::map < std::string, sofa::helper::vector<double> > > graphGSError; ///< Graph of residuals at each iteration
+    Data< bool > traceKineticEnergy; ///< Trace the evolution of the Kinetic Energy throughout the solution of the system
+    mutable Data<std::map < std::string, sofa::helper::vector<double> > > graphKineticEnergy; ///< Graph of the kinetic energy of the system
 
 
 
@@ -139,14 +136,14 @@ protected:
             bool isPositionChangesUpdateVelocity,
             const SparseMatrixEigen  &invM_Ltrans,
             const VectorEigen  &Lambda,
-            const sofa::helper::set< unsigned int > &dofUsed,
+            const std::set< unsigned int > &dofUsed,
             sofa::core::behavior::BaseMechanicalState* dof) const;
 
 
     ///
     virtual void buildLMatrix          ( const sofa::core::behavior::BaseMechanicalState *dof,
             const std::list<unsigned int> &idxEquations,unsigned int constraintOffset,
-            SparseMatrixEigen& L, sofa::helper::set< unsigned int > &dofUsed ) const;
+            SparseMatrixEigen& L, std::set< unsigned int > &dofUsed ) const;
     virtual void buildInverseMassMatrix( const sofa::core::behavior::BaseMechanicalState* mstate,
             const core::behavior::BaseConstraintCorrection* constraintCorrection,
             SparseMatrixEigen& matrix) const;

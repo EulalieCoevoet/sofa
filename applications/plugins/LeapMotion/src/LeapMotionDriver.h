@@ -1,34 +1,29 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
 
 #include <sofa/core/behavior/BaseController.h>
-#include <SofaOpenglVisual//OglModel.h>
+#include <SofaOpenglVisual/OglModel.h>
 #include <SofaUserInteraction/Controller.h>
-//#include <sofa/core/behavior/MechanicalState.h>
 #include <sofa/core/visual/VisualParams.h>
-//#include <sofa/defaulttype/SolidTypes.h>
 #include <sofa/defaulttype/VecTypes.h>
 #include <sofa/defaulttype/RigidTypes.h>
 #include <sofa/helper/system/thread/CTime.h>
@@ -84,18 +79,18 @@ public:
 
     int animEventCounter;
 
-    Data< double > scale;
-    Data< Vec3d > translation;
-    Data< sofa::defaulttype::Vector3 > rotation;
-    Data< Rigid3dTypes::Coord > handPalmCoordinate;
-    Data< Vec3d > sphereCenter;
-    Data< double > sphereRadius;
-    Data< sofa::helper::vector< Rigid3dTypes::Coord > > fingersCoordinates;
-    Data< int > gestureType;
-    Data< Vec3d > gesturePosition;
-    Data< Vec3d > gestureDirection;
-    Data< int > scrollDirection;
-    Data< bool > displayHand;
+    Data< double > scale; ///< Default scale applied to the Leap Motion Coordinates. 
+    Data< Vec3d > translation; ///< Position of the tool/hand in the Leap Motion reference frame
+    Data< sofa::defaulttype::Vector3 > rotation; ///< Rotation of the DOFs of the hand
+    Data< Rigid3dTypes::Coord > handPalmCoordinate; ///< Coordinate of the hand detected by the Leap Motion
+    Data< Vec3d > sphereCenter; ///< Center of the sphere of the hand detected by the Leap Motion
+    Data< double > sphereRadius; ///< Radius of the sphere of the hand detected by the Leap Motion
+    Data< sofa::helper::vector< Rigid3dTypes::Coord > > fingersCoordinates; ///< Coordinate of the fingers detected by the Leap Motion
+    Data< int > gestureType; ///< Type of the current gesture detected by the Leap Motion
+    Data< Vec3d > gesturePosition; ///< Position of the current gesture detected by the Leap Motion
+    Data< Vec3d > gestureDirection; ///< Direction of the current gesture detected by the Leap Motion
+    Data< int > scrollDirection; ///< Enter 0 if no scrolling (1 if scoll increases the value, 2 if scroll decreases it)
+    Data< bool > displayHand; ///< display the hand detected by the Leap Motion
     Data< double > speed;
 
     LeapMotionDriver();

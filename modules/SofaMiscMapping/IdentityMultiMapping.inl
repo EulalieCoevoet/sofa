@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -106,7 +103,9 @@ IdentityMultiMapping<TIn, TOut>::~IdentityMultiMapping()
 template <class TIn, class TOut>
 void IdentityMultiMapping<TIn, TOut>::apply(const core::MechanicalParams* mparams, const helper::vector<OutDataVecCoord*>& dataVecOutPos, const helper::vector<const InDataVecCoord*>& dataVecInPos)
 {
-    OutVecCoord& out = *(dataVecOutPos[0]->beginEdit(mparams));
+    SOFA_UNUSED(mparams);
+
+    OutVecCoord& out = *(dataVecOutPos[0]->beginEdit());
 
     unsigned offset = 0;
     for(unsigned i=0; i<dataVecInPos.size(); i++ )
@@ -120,13 +119,15 @@ void IdentityMultiMapping<TIn, TOut>::apply(const core::MechanicalParams* mparam
         offset += inpos.size();
     }
 
-    dataVecOutPos[0]->endEdit(mparams);
+    dataVecOutPos[0]->endEdit();
 }
 
 template <class TIn, class TOut>
 void IdentityMultiMapping<TIn, TOut>::applyJ(const core::MechanicalParams* mparams, const helper::vector<OutDataVecDeriv*>& dataVecOutVel, const helper::vector<const InDataVecDeriv*>& dataVecInVel)
 {
-    OutVecDeriv& out = *(dataVecOutVel[0]->beginEdit(mparams));
+    SOFA_UNUSED(mparams);
+
+    OutVecDeriv& out = *(dataVecOutVel[0]->beginEdit());
 
     unsigned offset = 0;
     for(unsigned i=0; i<dataVecInVel.size(); i++ )
@@ -141,18 +142,20 @@ void IdentityMultiMapping<TIn, TOut>::applyJ(const core::MechanicalParams* mpara
         offset += in.size();
     }
 
-    dataVecOutVel[0]->endEdit(mparams);
+    dataVecOutVel[0]->endEdit();
 }
 
 template <class TIn, class TOut>
 void IdentityMultiMapping<TIn, TOut>::applyJT(const core::MechanicalParams* mparams, const helper::vector<InDataVecDeriv*>& dataVecOutForce, const helper::vector<const OutDataVecDeriv*>& dataVecInForce)
 {
+    SOFA_UNUSED(mparams);
+
     const OutVecDeriv& in = dataVecInForce[0]->getValue();
 
     unsigned offset = 0;
     for(unsigned i=0; i<dataVecOutForce.size(); i++ )
     {
-        InVecDeriv& out = *dataVecOutForce[i]->beginEdit(mparams);
+        InVecDeriv& out = *dataVecOutForce[i]->beginEdit();
 
         for(unsigned int j=0; j<out.size(); j++)
         {
@@ -160,7 +163,7 @@ void IdentityMultiMapping<TIn, TOut>::applyJT(const core::MechanicalParams* mpar
                 helper::peq( out[j], in[offset+j]);
         }
 
-        dataVecOutForce[i]->endEdit(mparams);
+        dataVecOutForce[i]->endEdit();
 
         offset += out.size();
     }
@@ -171,7 +174,7 @@ void IdentityMultiMapping<TIn, TOut>::applyJT(const core::MechanicalParams* mpar
 template <class TIn, class TOut>
 void IdentityMultiMapping<TIn, TOut>::applyJT( const core::ConstraintParams* /*cparams*/, const helper::vector< InDataMatrixDeriv* >& /*dOut*/, const helper::vector< const OutDataMatrixDeriv* >& /*dIn*/)
 {
-//    serr<<"applyJT on matrix is not implemented"<<sendl;
+
 }
 
 

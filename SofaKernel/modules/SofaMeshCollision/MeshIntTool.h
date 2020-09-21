@@ -1,3 +1,24 @@
+/******************************************************************************
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
+*******************************************************************************
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef SOFA_COMPONENT_COLLISION_MESHINTTOOL_H
 #define SOFA_COMPONENT_COLLISION_MESHINTTOOL_H
 #include "config.h"
@@ -117,7 +138,6 @@ int MeshIntTool::computeIntersection(TSphere<DataTypes> & e1, Point& e2,typename
     }
     else
     {
-        //intersection->serr<<"WARNING: null distance between contact detected"<<intersection->sendl;
         detection->normal= typename DataTypes::Coord(1,0,0);
     }
     detection->point[0] = e1.getContactPointByNormal( -detection->normal );
@@ -153,7 +173,6 @@ int MeshIntTool::computeIntersection(Line& e2, TSphere<DataTypes>& e1,typename D
 
     typename DataTypes::Coord P = e1.center();
     typename DataTypes::Coord QP = P-Q;
-    //typename DataTypes::Coord PQ = Q-P;
 
     if (QP.norm2() >= myAlarmDist*myAlarmDist)
         return 0;
@@ -173,7 +192,6 @@ int MeshIntTool::computeIntersection(Line& e2, TSphere<DataTypes>& e1,typename D
     }
     else
     {
-        //intersection->serr<<"WARNING: null distance between contact detected"<<intersection->sendl;
         detection->normal= typename DataTypes::Coord(1,0,0);
     }
     detection->point[1]=e1.getContactPointByNormal( detection->normal );
@@ -211,7 +229,7 @@ int MeshIntTool::computeIntersection(Triangle& tri, TSphere<DataTypes>& sph,type
 }
 
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_COLLISION_MESHINTTOOL_CPP)
+#if  !defined(SOFA_COMPONENT_COLLISION_MESHINTTOOL_CPP)
 extern template SOFA_MESH_COLLISION_API int MeshIntTool::computeIntersection(TCapsule<sofa::defaulttype::Vec3Types>& cap, Point& pnt,SReal alarmDist,SReal contactDist,OutputVector* contacts);
 extern template SOFA_MESH_COLLISION_API int MeshIntTool::doCapPointInt(TCapsule<sofa::defaulttype::Vec3Types>& cap, const sofa::defaulttype::Vector3& q,SReal alarmDist,SReal contactDist,OutputVector* contacts);
 extern template SOFA_MESH_COLLISION_API int MeshIntTool::computeIntersection(TCapsule<sofa::defaulttype::Vec3Types>& cap, Line& lin,SReal alarmDist,SReal contactDist,OutputVector* contacts);

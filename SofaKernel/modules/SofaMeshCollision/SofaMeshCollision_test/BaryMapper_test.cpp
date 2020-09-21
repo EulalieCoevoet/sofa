@@ -1,7 +1,28 @@
+/******************************************************************************
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
+*******************************************************************************
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #include <SofaTest/Sofa_test.h>
 #include <SofaTest/PrimitiveCreation.h>
 #include <SofaMeshCollision/BarycentricContactMapper.h>
-#include <SofaBaseMechanics/BarycentricMapping.h>
+#include <SofaBaseMechanics/BarycentricMappers/BarycentricMapperMeshTopology.h>
 
 namespace sofa {
 
@@ -10,9 +31,10 @@ using core::objectmodel::New;
 
 typedef sofa::component::topology::MeshTopology MeshTopology;
 typedef sofa::simulation::Node::SPtr NodePtr;
-typedef sofa::component::collision::TriangleModel TriangleModel;
+typedef sofa::component::collision::TriangleCollisionModel<sofa::defaulttype::Vec3Types> TriangleModel;
 typedef sofa::defaulttype::Vec3Types DataTypes;
 typedef DataTypes::VecCoord VecCoord;
+
 struct BaryMapperTest  : public ::testing::Test{
 
 
@@ -63,7 +85,7 @@ MeshTopology* BaryMapperTest::initMesh(NodePtr &father){
 //        helper::ParticleMask *_maskTo)
 //    : TopologyBarycentricMapper<In,Out>(fromTopology, toTopology),
 //      maskFrom(_maskFrom), maskTo(_maskTo),
-//      matrixJ(NULL), updateJ(true)
+//      matrixJ(nullptr), updateJ(true)
 //{
 //}
 
@@ -72,7 +94,7 @@ bool BaryMapperTest::test_inside(SReal alpha,SReal beta){
     sofa::simulation::Node::SPtr father = New<sofa::simulation::tree::GNode>();
     MeshTopology * topo = initMesh(father);
     //makeTri()
-    component::mapping::BarycentricMapperMeshTopology<DataTypes, DataTypes>::SPtr mapper = sofa::core::objectmodel::New<component::mapping::BarycentricMapperMeshTopology<DataTypes, DataTypes> >(topo,(component::topology::PointSetTopologyContainer*)0x0/*model->getMeshTopology(), (topology::PointSetTopologyContainer*)NULL, &model->getMechanicalState()->forceMask, &mstate->forceMask*/);
+    component::mapping::BarycentricMapperMeshTopology<DataTypes, DataTypes>::SPtr mapper = sofa::core::objectmodel::New<component::mapping::BarycentricMapperMeshTopology<DataTypes, DataTypes> >(topo,(component::topology::PointSetTopologyContainer*)0x0/*model->getMeshTopology(), (topology::PointSetTopologyContainer*)nullptr, &model->getMechanicalState()->forceMask, &mstate->forceMask*/);
 
     helper::StateMask maskFrom, maskTo;
     maskFrom.assign( triPts.size(), true );
@@ -97,7 +119,7 @@ bool BaryMapperTest::test_outside(int index){
     sofa::simulation::Node::SPtr father = New<sofa::simulation::tree::GNode>();
     MeshTopology * topo = initMesh(father);
     //makeTri()
-    component::mapping::BarycentricMapperMeshTopology<DataTypes, DataTypes>::SPtr mapper = sofa::core::objectmodel::New<component::mapping::BarycentricMapperMeshTopology<DataTypes, DataTypes> >(topo,(component::topology::PointSetTopologyContainer*)0x0/*model->getMeshTopology(), (topology::PointSetTopologyContainer*)NULL, &model->getMechanicalState()->forceMask, &mstate->forceMask*/);
+    component::mapping::BarycentricMapperMeshTopology<DataTypes, DataTypes>::SPtr mapper = sofa::core::objectmodel::New<component::mapping::BarycentricMapperMeshTopology<DataTypes, DataTypes> >(topo,(component::topology::PointSetTopologyContainer*)0x0/*model->getMeshTopology(), (topology::PointSetTopologyContainer*)nullptr, &model->getMechanicalState()->forceMask, &mstate->forceMask*/);
 
     helper::StateMask maskFrom, maskTo;
     maskFrom.assign( triPts.size(), true );
@@ -125,4 +147,3 @@ TEST_F(BaryMapperTest, out_2 ) { ASSERT_TRUE( test_outside(2)); }
 
 
 }
-

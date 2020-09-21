@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -48,14 +45,14 @@ public:
     SOFA_CLASS(GenerateRigidMass,core::DataEngine);
 
     GenerateRigidMass();
-    ~GenerateRigidMass();
+    ~GenerateRigidMass() override;
 
     /// Initialization method called at graph modification, during bottom-up traversal.
-    virtual void init();
+    void init() override;
     /// Update method called when variables used in precomputation are modified.
-    virtual void reinit();
+    void reinit() override;
     /// Update the output values
-    virtual void update();
+    void doUpdate() override;
 
 protected:
 
@@ -72,19 +69,19 @@ protected:
       * Data Fields
       */
     /// input
-    Data< Real > m_density; // kg * m^-3
-    Data< helper::vector< Vector3 > > m_positions;
-    Data< helper::vector< MTriangle > > m_triangles;
-    Data< helper::vector< MQuad > > m_quads;
-    Data< helper::vector< MPolygon > > m_polygons; // must be convex
+    Data< Real > m_density; ///< kg * m^-3
+    Data< helper::vector< Vector3 > > m_positions; ///< input: positions of the vertices
+    Data< helper::vector< MTriangle > > m_triangles; ///< input: triangles of the mesh
+    Data< helper::vector< MQuad > > m_quads; ///< input: quads of the mesh
+    Data< helper::vector< MPolygon > > m_polygons; ///< must be convex
 
     /// output
     Data< MassType > rigidMass;
-    Data< Real > mass;
-    Data< Real > volume;
-    Data < Mat3x3 > inertiaMatrix;
-    Data< Vec3 > massCenter;
-    Data< Vector3 > centerToOrigin;
+    Data< Real > mass; ///< output: mass of the mesh
+    Data< Real > volume; ///< output: volume of the mesh
+    Data < Mat3x3 > inertiaMatrix; ///< output: the inertia matrix of the mesh
+    Data< Vec3 > massCenter; ///< output: the gravity center of the mesh
+    Data< Vector3 > centerToOrigin; ///< output: vector going from the mass center to the space origin
 
     /**
       * Protected methods
@@ -100,25 +97,15 @@ protected:
     helper::fixed_array<SReal,10> afIntegral;
 
 public:
-
-    template <class T>
-    static bool canCreate ( T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg )
-    {
-        return core::DataEngine::canCreate (obj, context, arg);
-    }
-
-    virtual std::string getTemplateName() const;
-    static std::string templateName(const GenerateRigidMass<DataTypes,MassType>*);
+    /// Implementing the GetCustomTemplateName is mandatory to have a custom template name paremters
+    /// instead of the default one generated automatically by the SOFA_CLASS() macro.
+    static std::string GetCustomTemplateName();
 
 };
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_ENGINE_GENERATERIGIDMASS_CPP)
-#ifndef SOFA_FLOAT
-extern template class SOFA_GENERAL_ENGINE_API GenerateRigidMass<defaulttype::Rigid3dTypes, defaulttype::Rigid3dMass>;
-#endif
-#ifndef SOFA_DOUBLE
-extern template class SOFA_GENERAL_ENGINE_API GenerateRigidMass<defaulttype::Rigid3fTypes, defaulttype::Rigid3fMass>;
-#endif
+#if  !defined(SOFA_COMPONENT_ENGINE_GENERATERIGIDMASS_CPP)
+extern template class SOFA_GENERAL_ENGINE_API GenerateRigidMass<defaulttype::Rigid3Types, defaulttype::Rigid3Mass>;
+
 #endif
 
 } // namespace engine

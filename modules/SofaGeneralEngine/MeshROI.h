@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -26,9 +23,7 @@
 #define SOFA_COMPONENT_ENGINE_MESHROI_H
 #include "config.h"
 
-#if !defined(__GNUC__) || (__GNUC__ > 3 || (_GNUC__ == 3 && __GNUC_MINOR__ > 3))
-#pragma once
-#endif
+
 
 #include <sofa/defaulttype/Vec.h>
 #include <sofa/core/DataEngine.h>
@@ -72,15 +67,13 @@ protected:
 
     MeshROI();
 
-    ~MeshROI() {}
+    ~MeshROI() override {}
 public:
-    void init();
 
-    void reinit();
-
-    void update();
-
-    void draw(const core::visual::VisualParams*);
+    void init() override;
+    void reinit() override;
+    void doUpdate() override;
+    void draw(const core::visual::VisualParams*) override;
 
     /// Pre-construction check method called by ObjectFactory.
     /// Check that DataTypes matches the MechanicalState.
@@ -90,8 +83,12 @@ public:
         if (!arg->getAttribute("template"))
         {
             // only check if this template is correct if no template was given
-            if (context->getMechanicalState() && dynamic_cast<sofa::core::behavior::MechanicalState<DataTypes>*>(context->getMechanicalState()) == NULL)
+            if (context->getMechanicalState() && dynamic_cast<sofa::core::behavior::MechanicalState<DataTypes>*>(context->getMechanicalState()) == nullptr)
+            {
+                arg->logError(std::string("No mechanical state with the datatype '") + DataTypes::Name() +
+                              "' found in the context node.");
                 return false; // this template is not the same as the existing MechanicalState
+            }
         }
 
         return BaseObject::canCreate(obj, context, arg);
@@ -104,86 +101,74 @@ public:
         return core::objectmodel::BaseObject::create(tObj, context, arg);
     }
 
-    virtual std::string getTemplateName() const
-    {
-        return templateName(this);
-    }
-
-    static std::string templateName(const MeshROI<DataTypes>* = NULL)
-    {
-        return DataTypes::Name();
-    }
-
 protected:
-    bool CheckSameOrder(const CPos& A, const CPos& B, const CPos& pt, const CPos& norm);
+    bool checkSameOrder(const CPos& A, const CPos& B, const CPos& pt, const CPos& norm);
     bool isPointInMesh(const CPos& p);
-    bool isPointInMesh(const CPos& p, const Vec6& b);
-    bool isPointInMesh(const PointID& pid, const Vec6& b);
-    bool isEdgeInMesh(const Edge& e, const Vec6& b);
-    bool isTriangleInMesh(const Triangle& t, const Vec6& b);
-    bool isTetrahedronInMesh(const Tetra& t, const Vec6& b);
+    bool isPointInIndices(const unsigned int& i);
+    bool isPointInBoundingBox(const CPos& p);
+    bool isEdgeInMesh(const Edge& e);
+    bool isTriangleInMesh(const Triangle& t);
+    bool isTetrahedronInMesh(const Tetra& t);
+
+
+    void compute();
+    void checkInputData();
+    void computeBoundingBox();
 
 public:
     //Input
     // Global mesh
-    Data<VecCoord> f_X0;
-    Data<helper::vector<Edge> > f_edges;
-    Data<helper::vector<Triangle> > f_triangles;
-    Data<helper::vector<Tetra> > f_tetrahedra;
+    Data<VecCoord> d_X0; ///< Rest position coordinates of the degrees of freedom
+    Data<helper::vector<Edge> > d_edges; ///< Edge Topology
+    Data<helper::vector<Triangle> > d_triangles; ///< Triangle Topology
+    Data<helper::vector<Tetra> > d_tetrahedra; ///< Tetrahedron Topology
     // ROI mesh
-    Data<VecCoord> f_X0_i;
-    Data<helper::vector<Edge> > f_edges_i;
-    Data<helper::vector<Triangle> > f_triangles_i;
+    Data<VecCoord> d_X0_i; ///< ROI position coordinates of the degrees of freedom
+    Data<helper::vector<Edge> > d_edges_i; ///< ROI Edge Topology
+    Data<helper::vector<Triangle> > d_triangles_i; ///< ROI Triangle Topology
 
-    Data<bool> f_computeEdges;
-    Data<bool> f_computeTriangles;
-    Data<bool> f_computeTetrahedra;
-    Data<bool> f_computeTemplateTriangles;
+    Data<bool> d_computeEdges; ///< If true, will compute edge list and index list inside the ROI.
+    Data<bool> d_computeTriangles; ///< If true, will compute triangle list and index list inside the ROI.
+    Data<bool> d_computeTetrahedra; ///< If true, will compute tetrahedra list and index list inside the ROI.
+    Data<bool> d_computeTemplateTriangles; ///< Compute with the mesh (not only bounding box)
 
     //Output
-    Data<Vec6> f_box;
-    Data<SetIndex> f_indices;
-    Data<SetIndex> f_edgeIndices;
-    Data<SetIndex> f_triangleIndices;
-    Data<SetIndex> f_tetrahedronIndices;
-    Data<VecCoord > f_pointsInROI;
-    Data<helper::vector<Edge> > f_edgesInROI;
-    Data<helper::vector<Triangle> > f_trianglesInROI;
-    Data<helper::vector<Tetra> > f_tetrahedraInROI;
+    Data<Vec6> d_box; ///< Bounding box defined by xmin,ymin,zmin, xmax,ymax,zmax
+    Data<SetIndex> d_indices; ///< Indices of the points contained in the ROI
+    Data<SetIndex> d_edgeIndices; ///< Indices of the edges contained in the ROI
+    Data<SetIndex> d_triangleIndices; ///< Indices of the triangles contained in the ROI
+    Data<SetIndex> d_tetrahedronIndices; ///< Indices of the tetrahedra contained in the ROI
+    Data<VecCoord > d_pointsInROI; ///< Points contained in the ROI
+    Data<helper::vector<Edge> > d_edgesInROI; ///< Edges contained in the ROI
+    Data<helper::vector<Triangle> > d_trianglesInROI; ///< Triangles contained in the ROI
+    Data<helper::vector<Tetra> > d_tetrahedraInROI; ///< Tetrahedra contained in the ROI
 
-    Data<VecCoord > f_pointsOutROI;
-    Data<helper::vector<Edge> > f_edgesOutROI;
-    Data<helper::vector<Triangle> > f_trianglesOutROI;
-    Data<helper::vector<Tetra> > f_tetrahedraOutROI;
-    Data<SetIndex> f_indicesOut;
-    Data<SetIndex> f_edgeOutIndices;
-    Data<SetIndex> f_triangleOutIndices;
-    Data<SetIndex> f_tetrahedronOutIndices;
+    Data<VecCoord > d_pointsOutROI; ///< Points not contained in the ROI
+    Data<helper::vector<Edge> > d_edgesOutROI; ///< Edges not contained in the ROI
+    Data<helper::vector<Triangle> > d_trianglesOutROI; ///< Triangles not contained in the ROI
+    Data<helper::vector<Tetra> > d_tetrahedraOutROI; ///< Tetrahedra not contained in the ROI
+    Data<SetIndex> d_indicesOut; ///< Indices of the points not contained in the ROI
+    Data<SetIndex> d_edgeOutIndices; ///< Indices of the edges not contained in the ROI
+    Data<SetIndex> d_triangleOutIndices; ///< Indices of the triangles not contained in the ROI
+    Data<SetIndex> d_tetrahedronOutIndices; ///< Indices of the tetrahedra not contained in the ROI
 
     //Parameter
-    Data<bool> p_drawOut;
-    Data<bool> p_drawMesh;
-    Data<bool> p_drawBox;
-    Data<bool> p_drawPoints;
-    Data<bool> p_drawEdges;
-    Data<bool> p_drawTriangles;
-    Data<bool> p_drawTetrahedra;
-    Data<double> _drawSize;
-    Data<bool> p_doUpdate;
-    Data<bool> first;
+    Data<bool> d_drawOut; ///< Draw the data not contained in the ROI
+    Data<bool> d_drawMesh; ///< Draw Mesh used for the ROI
+    Data<bool> d_drawBox; ///< Draw the Bounding box around the mesh used for the ROI
+    Data<bool> d_drawPoints; ///< Draw Points
+    Data<bool> d_drawEdges; ///< Draw Edges
+    Data<bool> d_drawTriangles; ///< Draw Triangles
+    Data<bool> d_drawTetrahedra; ///< Draw Tetrahedra
+    Data<double> d_drawSize; ///< rendering size for mesh and topological elements
+    Data<bool> d_doUpdate; ///< Update the computation (not only at the init)
 };
 
-#if defined(SOFA_EXTERN_TEMPLATE) && !defined(SOFA_COMPONENT_ENGINE_MESHROI_CPP)
-#ifndef SOFA_FLOAT
-extern template class SOFA_GENERAL_ENGINE_API MeshROI<defaulttype::Vec3dTypes>;
-extern template class SOFA_GENERAL_ENGINE_API MeshROI<defaulttype::Rigid3dTypes>;
-extern template class SOFA_GENERAL_ENGINE_API MeshROI<defaulttype::Vec6dTypes>; //Phuoc
-#endif //SOFA_FLOAT
-#ifndef SOFA_DOUBLE
-extern template class SOFA_GENERAL_ENGINE_API MeshROI<defaulttype::Vec3fTypes>;
-extern template class SOFA_GENERAL_ENGINE_API MeshROI<defaulttype::Rigid3fTypes>;
-extern template class SOFA_GENERAL_ENGINE_API MeshROI<defaulttype::Vec6fTypes>; //Phuoc
-#endif //SOFA_DOUBLE
+#if  !defined(SOFA_COMPONENT_ENGINE_MESHROI_CPP)
+extern template class SOFA_GENERAL_ENGINE_API MeshROI<defaulttype::Vec3Types>;
+extern template class SOFA_GENERAL_ENGINE_API MeshROI<defaulttype::Rigid3Types>;
+extern template class SOFA_GENERAL_ENGINE_API MeshROI<defaulttype::Vec6Types>; //Phuoc
+ 
 #endif
 
 } // namespace engine

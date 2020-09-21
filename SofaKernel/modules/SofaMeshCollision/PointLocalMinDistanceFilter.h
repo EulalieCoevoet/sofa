@@ -1,23 +1,20 @@
 /******************************************************************************
-*       SOFA, Simulation Open-Framework Architecture, development version     *
-*                (c) 2006-2016 INRIA, USTL, UJF, CNRS, MGH                    *
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
 *                                                                             *
-* This library is free software; you can redistribute it and/or modify it     *
+* This program is free software; you can redistribute it and/or modify it     *
 * under the terms of the GNU Lesser General Public License as published by    *
 * the Free Software Foundation; either version 2.1 of the License, or (at     *
 * your option) any later version.                                             *
 *                                                                             *
-* This library is distributed in the hope that it will be useful, but WITHOUT *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
 * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
 * for more details.                                                           *
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
-* along with this library; if not, write to the Free Software Foundation,     *
-* Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.          *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************
-*                               SOFA :: Modules                               *
-*                                                                             *
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -46,7 +43,7 @@ namespace collision
 /**
  * @brief LocalMinDistance cone information class for a Point collision primitive.
  */
-class PointInfo : public InfoFilter //< Point >
+class SOFA_MESH_COLLISION_API PointInfo : public InfoFilter //< Point >
 {
 public:
     typedef std::vector< std::pair< sofa::defaulttype::Vector3, double > > TDataContainer;
@@ -54,31 +51,18 @@ public:
     /**
      * @brief Default constructor.
      */
-    PointInfo(LocalMinDistanceFilter *lmdFilters)
-        : InfoFilter(lmdFilters)
-    {
-
-    }
-
-    /**
-     * @brief Empty constructor. Required by PointData<>.
-     */
-    PointInfo()
-        : InfoFilter(NULL)
-    {
-
-    }
+    PointInfo(LocalMinDistanceFilter *lmdFilters = nullptr);
 
     /**
      * @brief Default destructor.
      */
-    virtual ~PointInfo() {}
+    ~PointInfo() override {}
 
     /**
      * @brief Returns the validity of a detected contact according to this PointInfo.
      */
     //virtual bool validate(const Point & /*p*/, const defaulttype::Vector3 & /*PQ*/);
-    virtual bool validate(const unsigned int /*p*/, const defaulttype::Vector3 & /*PQ*/);
+    bool validate(const unsigned int /*p*/, const defaulttype::Vector3 & /*PQ*/) override;
     /**
      * @brief Output stream.
      */
@@ -99,7 +83,7 @@ public:
      * @brief Computes the region of interest cone of the Point primitive.
      */
     //virtual void buildFilter(const Point & /*p*/);
-    virtual void buildFilter(unsigned int /*p*/);
+    void buildFilter(unsigned int /*p*/) override;
 
 protected:
 
@@ -119,18 +103,18 @@ public:
 
 protected:
     PointLocalMinDistanceFilter();
-    virtual ~PointLocalMinDistanceFilter();
+    ~PointLocalMinDistanceFilter() override;
 public:
 
     /**
      * @brief Scene graph initialization method.
      */
-    void init();
+    void init() override;
 
     /**
      * @brief Handle topological changes.
      */
-    void handleTopologyChange();
+    void handleTopologyChange() override;
 
     /**
      * @name These methods check the validity of a found intersection.
@@ -165,7 +149,7 @@ public:
     };
 
 private:
-    topology::PointData< sofa::helper::vector<PointInfo> > m_pointInfo;
+    topology::PointData< sofa::helper::vector<PointInfo> > m_pointInfo; ///< point filter data
     PointInfoHandler* pointInfoHandler;
     core::topology::BaseMeshTopology *bmt;
 };

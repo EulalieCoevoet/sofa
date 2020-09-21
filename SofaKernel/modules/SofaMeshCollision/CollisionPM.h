@@ -1,3 +1,24 @@
+/******************************************************************************
+*                 SOFA, Simulation Open-Framework Architecture                *
+*                    (c) 2006 INRIA, USTL, UJF, CNRS, MGH                     *
+*                                                                             *
+* This program is free software; you can redistribute it and/or modify it     *
+* under the terms of the GNU Lesser General Public License as published by    *
+* the Free Software Foundation; either version 2.1 of the License, or (at     *
+* your option) any later version.                                             *
+*                                                                             *
+* This program is distributed in the hope that it will be useful, but WITHOUT *
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       *
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License *
+* for more details.                                                           *
+*                                                                             *
+* You should have received a copy of the GNU Lesser General Public License    *
+* along with this program. If not, see <http://www.gnu.org/licenses/>.        *
+*******************************************************************************
+* Authors: The SOFA Team and external contributors (see Authors.txt)          *
+*                                                                             *
+* Contact information: contact@sofa-framework.org                             *
+******************************************************************************/
 #ifndef COLLISIONPM_H
 #define COLLISIONPM_H
 #include "config.h"
@@ -5,8 +26,9 @@
 #include <sofa/core/CollisionElement.h>
 #include <sofa/core/collision/Intersection.h>
 #include <sofa/core/collision/NarrowPhaseDetection.h>
-#include <boost/unordered_map.hpp>
+#include <unordered_map>
 #include <sofa/core/collision/Intersection.h>
+#include <sofa/helper/hash.h>
 
 namespace sofa
 {
@@ -83,14 +105,15 @@ namespace collision
             }
         };
 
-        typedef boost::unordered_map<std::pair<int,int>,CollidingPair> umap_collision;
+
+        typedef std::unordered_map<std::pair<int,int>,CollidingPair> umap_collision;
 
 
         CollidingPM(){
             for(int i = 0 ; i < sofa::core::CollisionModel::ENUM_TYPE_SIZE ; ++i){
                 for(int j = 0 ; j < sofa::core::CollisionModel::ENUM_TYPE_SIZE ; ++j){
                     _order[i][j] = 0;
-                    _intersectors[i][j] = 0x0;
+                    _intersectors[i][j] = nullptr;
                 }
             }
         }
@@ -178,8 +201,6 @@ namespace collision
             for(int i = 0 ; i < sofa::core::CollisionModel::ENUM_TYPE_SIZE ; ++i){
                 for(int j = 0 ; j < sofa::core::CollisionModel::ENUM_TYPE_SIZE ; ++j){
                     _coll_pairs[i][j].clear();
-//                    _order[i][j] = 0;
-//                    _intersectors[i][j] = 0;
                 }
             }
         }
